@@ -7,11 +7,18 @@ import edm4hep
 
 # I'm sure this exists already 
 def dRAngle(p1,p2):
-   dphi=p1.Phi()-p2.Phi()
-   if (dphi>math.pi) : dphi=2*math.pi-dphi
-   dtheta=p1.Theta()-p2.Theta()
-   dR=math.sqrt(dtheta*dtheta+dphi*dphi)
-   return dR
+    """ Calculate the angle between two particles in the eta-phi plane
+    Args:
+    p1 (TLorentzVector): 4-momentum vector of the first particle
+    p2 (TLorentzVector): 4-momentum vector of the second particle
+    Returns:
+    float: angle between the two particles in the eta-phi plane
+    """
+    dphi=p1.Phi()-p2.Phi()
+    if (dphi>math.pi) : dphi=2*math.pi-dphi
+    dtheta=p1.Theta()-p2.Theta()
+    dR=math.sqrt(dtheta*dtheta+dphi*dphi)
+    return dR
 
 # trick to prevent broken files (should not be a problem at CIEMAT)
 def open_root_file(file_path):

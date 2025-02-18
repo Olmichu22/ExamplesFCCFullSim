@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(description="Configure the analysis",
 parser.add_argument("-f","--sample",default="ZTauTau_SMPol_25Sept_MuonFix")
 parser.add_argument("-o","--outfile",default="effis_")
 parser.add_argument("-d","--decay",default=-777,type=int) # GEN 
-parser.add_argument("-p","--photonCut",default=0.1,type=float)
+parser.add_argument("-p","--photonCut",default=0.1,type=float) # Creo que esto es un corte de momento en general
 parser.add_argument("-R","--dRMax",default=0.4,type=float)
 parser.add_argument("-n","--neutronCut",default=1,type=float)
 parser.add_argument("-t","--test",default=True,type=bool)
