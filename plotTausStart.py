@@ -12,14 +12,14 @@ from modules import myutils
 
 import argparse
 parser = argparse.ArgumentParser(description="Configure the analysis",
-                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("-f","--sample",default="ZTauTau_SMPol_25Sept_MuonFix")
-parser.add_argument("-o","--outfile",default="firstTest_")
-parser.add_argument("-d","--decay",default=-777,type=int)
-parser.add_argument("-p","--photonCut",default=0.1,type=float)
-parser.add_argument("-R","--dRMax",default=0.4,type=float)
-parser.add_argument("-n","--neutronCut",default=1,type=float)
-parser.add_argument("-t","--test",default=True,type=bool)
+                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("-f", "--sample", default="ZTauTau_SMPol_25Sept_MuonFix", help="Sample file name to process")
+parser.add_argument("-o", "--outfile", default="firstTest_", help="Output file name prefix")
+parser.add_argument("-d", "--decay", default=-777, type=int, help="Decay mode to select (-777 for all)")
+parser.add_argument("-p", "--photonCut", default=0.1, type=float, help="Photon momentum cut value")
+parser.add_argument("-R", "--dRMax", default=0.4, type=float, help="Maximum delta R value")
+parser.add_argument("-n", "--neutronCut", default=1, type=float, help="Neutron momentum cut value")
+parser.add_argument("-t", "--test", default="True", type=str, help="Run in test mode with limited number of files")
 
 
 args = parser.parse_args()
@@ -34,7 +34,8 @@ fileOutName=args.outfile
 PNeutron=args.neutronCut
 selectDecay=args.decay
 sample=args.sample
-test=args.test
+
+test= True if args.test=="True" else False
 
 
 decayString="decay"+str(selectDecay)+"_"+str(dRMax)+"_"+str(args.photonCut)+"_"+str(PNeutron)
@@ -52,7 +53,7 @@ dir_path=path+"/"+sample
 names = ROOT.std.vector('string')()
 nfiles=len(os.listdir(dir_path))
 
-nfiles=1000
+nfiles=1000 #Maxium files to read
 if test==True:
    nfiles=5
 
@@ -103,97 +104,98 @@ countEvents=0
 # run over all events 
 for event in reader.get("events"):
 
-    if countEvents%500==0:
-        print ("... %d" %countEvents)
-    countEvents+=1
+   if countEvents%500==0:
+      print ("... %d" %countEvents)
+   countEvents+=1
 
-    # get the constituents
-    mc_particles = event.get( genparts )
-    pfos = event.get(pfobjects)
+   # get the constituents
+   mc_particles = event.get( genparts )
+   pfos = event.get(pfobjects)
 
-    # build the generator level taus 
-    genTaus=tauReco.findAllGenTaus(mc_particles)
-    nGenTaus=len(genTaus)
-    nGenTausHad=0 # we do not know this yet 
+   # build the generator level taus 
+   genTaus=tauReco.findAllGenTaus(mc_particles)
+   nGenTaus=len(genTaus)
+   nGenTausHad=0 # we do not know this yet 
 
-    # build the reconstructed level taus 
-    recoTaus= tauReco.findAllTaus(pfos,dRMax, minP,PNeutron)
-    nTaus=len(recoTaus)
+   # build the reconstructed level taus 
+   recoTaus= tauReco.findAllTaus(pfos,dRMax, minP,PNeutron)
+   nTaus=len(recoTaus)
 
-    for i in range(0,nGenTaus):
-          # read the tau information
-          genVisTauP4=genTaus[i][0] # to do: find a clearer dictionary for this
-          genTauId=genTaus[i][1]
-          genTauQ=genTaus[i][2]
-          genTauP4=genTaus[i][3]
-          #genTauDR=genTaus[i][4]
-          #genTauNConsts=genTaus[i][5]
-          #genTauConsts=genTaus[i][6]
+   for i in range(0,nGenTaus):
+      # read the tau information
+      genVisTauP4=genTaus[i][0] # to do: find a clearer dictionary for this
+      genTauId=genTaus[i][1]
+      genTauQ=genTaus[i][2]
+      genTauP4=genTaus[i][3]
+      #genTauDR=genTaus[i][4]
+      #genTauNConsts=genTaus[i][5]
+      #genTauConsts=genTaus[i][6]
 
-          # count only the hadronic decays to compare to reco: 
-          if genTauId<0:
-             nGenTausHad+=1 
+      # count only the hadronic decays to compare to reco: 
+      # Esto es un error? El decaimiento negativo es leptónico
+      if genTauId<0:
+         nGenTausHad+=1 
 
-          # in case you want to only plot a decay 
-          if selectDecay!=-777 and selectDecay!=genTauId:
-             continue 
+      # in case you want to only plot a decay 
+      if selectDecay!=-777 and selectDecay!=genTauId:
+         continue 
 
-          # maybe you want to add some cuts 
-          #if genVisTauP4.P()<5: continue 
-          #if abs(math.cos(genVisTauP4.Theta())>0.9): continue
+      # maybe you want to add some cuts 
+      #if genVisTauP4.P()<5: continue 
+      #if abs(math.cos(genVisTauP4.Theta())>0.9): continue
 
-          # check what is in one event:
-          #print ("Gen",genTauP4.P(),genVisTauP4.P(),genVisTauP4.Theta(),genVisTauP4.Phi(),genTauId,genTauQ,genTauDR)
+      # check what is in one event:
+      #print ("Gen",genTauP4.P(),genVisTauP4.P(),genVisTauP4.Theta(),genVisTauP4.Phi(),genTauId,genTauQ,genTauDR)
 
-          hGenTauP.Fill(genTauP4.P())
-          hGenVisTauP.Fill(genVisTauP4.P())
-          hGenVisTauMass.Fill(genVisTauP4.M())
-          hGenTauType.Fill(genTauId)
-          hGenTauQ.Fill(genTauQ)
-          hGenTauTheta.Fill(genTauP4.Theta())
-          hGenTauPhi.Fill(genTauP4.Phi())
+      hGenTauP.Fill(genTauP4.P())
+      hGenVisTauP.Fill(genVisTauP4.P())
+      hGenVisTauMass.Fill(genVisTauP4.M())
+      hGenTauType.Fill(genTauId)
+      hGenTauQ.Fill(genTauQ)
+      hGenTauTheta.Fill(genTauP4.Theta())
+      hGenTauPhi.Fill(genTauP4.Phi())
 
 
-    for j in range(0,nTaus):
-          recoTauP4=recoTaus[j][0]
-          recoTauId=recoTaus[j][1]
-          recoTauQ=recoTaus[j][2]
-          #recoTauDR=recoTaus[j][3]
-          #recoTauNConsts=recoTaus[j][4]
-          #recoTauConsts=recoTaus[j][5]
+   for j in range(0,nTaus):
+      recoTauP4=recoTaus[j][0]
+      recoTauId=recoTaus[j][1]
+      recoTauQ=recoTaus[j][2]
+      #recoTauDR=recoTaus[j][3]
+      #recoTauNConsts=recoTaus[j][4]
+      #recoTauConsts=recoTaus[j][5]
 
-          # to make the code more economic we are checking gen and reco in parallel, but 
-          # there is a difference in the DM labelling:
-          # at reco level we count photons and at gen level pi0s: difference in the
-          # decay mode (1 gen can be 1 or 2 reco, etc )
-          recoDM=recoTauId
-          if recoTauId==2:
-             recoDM=1
-          elif recoTauId>=3 and recoTauId<10:
-             recoDM=3
-          elif (recoTauId>=11 and recoTauId<15):
-             recoDM=11
+      # to make the code more economic we are checking gen and reco in parallel, but 
+      # there is a difference in the DM labelling:
+      # at reco level we count photons and at gen level pi0s: difference in the
+      # decay mode (1 gen can be 1 or 2 reco, etc )
+      recoDM=recoTauId
+      if recoTauId==2:
+         recoDM=1
+      elif recoTauId>=3 and recoTauId<10:
+         recoDM=3
+      elif (recoTauId>=11 and recoTauId<15):
+         recoDM=11
 
-          if selectDecay!=-777 and selectDecay!=recoDM:
-             continue
+      if selectDecay!=-777 and selectDecay!=recoDM:
+         continue
 
-          # maybe you want to add some cuts 
-          #if genVisTauP4.P()<5: continue 
-          #if abs(math.cos(genVisTauP4.Theta())>0.9): continue
+      # maybe you want to add some cuts 
+      #if genVisTauP4.P()<5: continue 
+      #if abs(math.cos(genVisTauP4.Theta())>0.9): continue
 
-          # print information at the reco level
-          #  print ("Reco?",recoTauP4.P(),recoTauP4.Theta(),recoTauP4.Phi(),recoTauId,recoTauQ,recoTauDR)
+      # print information at the reco level
+      #  print ("Reco?",recoTauP4.P(),recoTauP4.Theta(),recoTauP4.Phi(),recoTauId,recoTauQ,recoTauDR)
 
-          hRecoTauType.Fill(recoTauId)
-          hRecoTauP.Fill(recoTauP4.P())
-          hRecoTauMass.Fill(recoTauP4.M())
-          hRecoTauTheta.Fill(recoTauP4.Theta())
-          hRecoTauPhi.Fill(recoTauP4.Phi())
-          hRecoTauQ.Fill(recoTauQ)
+      hRecoTauType.Fill(recoTauId)
+      hRecoTauP.Fill(recoTauP4.P())
+      hRecoTauMass.Fill(recoTauP4.M())
+      hRecoTauTheta.Fill(recoTauP4.Theta())
+      hRecoTauPhi.Fill(recoTauP4.Phi())
+      hRecoTauQ.Fill(recoTauQ)
 
-    hNTaus.Fill(nTaus)
-    hNGenTaus.Fill(nGenTaus)
-    hNGenTausHad.Fill(nGenTausHad)
+   hNTaus.Fill(nTaus)
+   hNGenTaus.Fill(nGenTaus)
+   hNGenTausHad.Fill(nGenTausHad)
 
 
 print ("-------------------------------------")

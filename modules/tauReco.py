@@ -27,6 +27,7 @@ def visTauGen(candTau):
    genTauP4=ROOT.TLorentzVector()
    genTauP4.SetXYZM(candTau.getMomentum().x,candTau.getMomentum().y,candTau.getMomentum().z,candTau.getMass())
 
+   # visible 4-momentum
    visTauP4=ROOT.TLorentzVector()
    visTauP4.SetXYZM(0,0,0,0)
    chargeTau=0
@@ -229,7 +230,7 @@ def findAllGenTaus(mc_particles):
    genTaus={}
    nGenTaus=0
    for particle in mc_particles:
-
+      # only taus
       if abs(particle.getPDG()) != 15:
          continue
       # in the pythia sample we need to check the genStatus:

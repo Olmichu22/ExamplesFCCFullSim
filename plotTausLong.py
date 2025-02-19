@@ -20,7 +20,8 @@ parser.add_argument("-d","--decay",default=-777,type=int) # GEN
 parser.add_argument("-p","--photonCut",default=0.1,type=float) # Creo que esto es un corte de momento en general
 parser.add_argument("-R","--dRMax",default=0.4,type=float)
 parser.add_argument("-n","--neutronCut",default=1,type=float)
-parser.add_argument("-t","--test",default=True,type=bool)
+parser.add_argument("-t", "--test", default="True", type=str, help="Run in test mode with limited number of files")
+
 
 
 args = parser.parse_args()
@@ -35,7 +36,8 @@ fileOutName=args.outfile
 PNeutron=args.neutronCut
 selectDecay=args.decay
 sample=args.sample
-test=args.test
+test= True if args.test=="True" else False
+
 
 decayString="decay"+str(selectDecay)+"_"+str(dRMax)+"_"+str(args.photonCut)+"_"+str(PNeutron)
 if selectDecay==-777:
@@ -193,279 +195,290 @@ countEvents=0
 # run over all events 
 for event in reader.get("events"):
 
-    if countEvents%1000==0:
-        print (".... %d" %countEvents)
-    countEvents+=1
+   if countEvents%1000==0:
+      print (".... %d" %countEvents)
+   countEvents+=1
 
-    mc_particles = event.get( genparts )
-    pfos = event.get(pfobjects)
+   mc_particles = event.get( genparts )
+   pfos = event.get(pfobjects)
 
-    genTaus=tauReco.findAllGenTaus(mc_particles)
-    nGenTaus=len(genTaus)
+   genTaus=tauReco.findAllGenTaus(mc_particles)
+   nGenTaus=len(genTaus)
 
-    recoTaus= tauReco.findAllTaus(pfos,dRMax, minP,PNeutron)
-    nTaus=len(recoTaus)
+   recoTaus= tauReco.findAllTaus(pfos,dRMax, minP,PNeutron)
+   nRecoTaus=len(recoTaus)
 
-    foundGen=False
+   foundGen=False
 
-    nGenTausType=0
-    nTausType=0
-    nGenTausHad=0
+   nGenTausType=0
+   nTausType=0
+   nGenTausHad=0
 
-    for i in range(0,nGenTaus):
-          genVisTauP4=genTaus[i][0] # to do: find a clearer dictionary for this
-          genTauId=genTaus[i][1]
-          genTauQ=genTaus[i][2]
-          genTauP4=genTaus[i][3]
-          genTauDR=genTaus[i][4]
-          genTauNConsts=genTaus[i][5]
-          genTauConsts=genTaus[i][6]
+   for i in range(0,nGenTaus):
+      genVisTauP4=genTaus[i][0] # to do: find a clearer dictionary for this
+      genTauId=genTaus[i][1]
+      genTauQ=genTaus[i][2]
+      genTauP4=genTaus[i][3]
+      genTauDR=genTaus[i][4] # Maximum angle between the tau and its constituents
+      genTauNConsts=genTaus[i][5]
+      genTauConsts=genTaus[i][6]
 
-          # remove leptonic decays 
-          if genTauId<0:
-             continue
+      # remove leptonic decays 
+      if genTauId<0:
+         continue
 
-          nGenTausHad+=1
+      nGenTausHad+=1
 
-          # pick only a decay mode in particular if you want 
-          if selectDecay!=-777 and selectDecay!=genTauId:
-             continue 
+      # pick only a decay mode in particular if you want 
+      if selectDecay!=-777 and selectDecay!=genTauId:
+         continue 
 
-          nGenTausType+=1
-          foundGen=True
+      nGenTausType+=1
+      foundGen=True
 
-          if genVisTauP4.P()<5: continue 
-          if abs(math.cos(genVisTauP4.Theta())>0.9): continue
+      # P4 Tau filters
+      if genVisTauP4.P()<5: continue 
+      if abs(math.cos(genVisTauP4.Theta())>0.9): continue
 
-          #print ("Gen",genTauP4.P(),genVisTauP4.P(),genVisTauP4.Theta(),genVisTauP4.Phi(),genTauId,genTauQ,genTauDR,genTauNConsts)
+      #print ("Gen",genTauP4.P(),genVisTauP4.P(),genVisTauP4.Theta(),genVisTauP4.Phi(),genTauId,genTauQ,genTauDR,genTauNConsts)
 
-          hGenTauPt.Fill(genTauP4.Pt())
-          hGenVisTauPt.Fill(genVisTauP4.Pt())
-          hGenTauP.Fill(genTauP4.P())
-          hGenVisTauP.Fill(genVisTauP4.P())
-          hGenVisTauMass.Fill(genVisTauP4.M())
-          hGenTauType.Fill(genTauId)
-          hGenTauQ.Fill(genTauQ)
-          h2DGenTauTypeMass.Fill(genTauId,genVisTauP4.M())
-          hGenTauEta.Fill(genTauP4.Eta())
-          hGenTauTheta.Fill(genTauP4.Theta())
+      # Fill histograms
+      hGenTauPt.Fill(genTauP4.Pt()) # Transverse momentum
+      hGenVisTauPt.Fill(genVisTauP4.Pt()) # Visible transverse momentum
+      hGenTauP.Fill(genTauP4.P()) # Momentum
+      hGenVisTauP.Fill(genVisTauP4.P()) # Visible momentum
+      hGenVisTauMass.Fill(genVisTauP4.M()) # Visible mass
+      hGenTauType.Fill(genTauId) # Tau decay type
+      hGenTauQ.Fill(genTauQ) # Tau charge
+      h2DGenTauTypeMass.Fill(genTauId,genVisTauP4.M()) # Tau decay type vs visible mass
+      hGenTauEta.Fill(genTauP4.Eta()) # Pseudo-rapidity
+      hGenTauTheta.Fill(genTauP4.Theta()) # Theta angle
 
-          hGenTauDR.Fill(genTauDR)
-          h2DGenTauDRType.Fill(genTauDR,genTauId)
-          h2DGenTauDRNConst.Fill(genTauDR,genTauNConsts)
+      hGenTauDR.Fill(genTauDR) # Angle of Tau Constituents
+      h2DGenTauDRType.Fill(genTauDR,genTauId) # Angle of Tau Constituents vs Tau decay type
+      h2DGenTauDRNConst.Fill(genTauDR,genTauNConsts) # Angle of Tau Constituents vs Number of constituents
 
-          countPionsRun=0
+      countPionsRun=0
 
-          #print ("all GEN")
-          # Look inside the generator level tau: check the constituents (decay products)
+      #print ("all GEN")
+      # Look inside the generator level tau: check the constituents (decay products)
 
-          for c in range(0,genTauNConsts):
-             const=genTauConsts[c]
-             constP4=ROOT.TLorentzVector()
-             constP4.SetXYZM(const.getMomentum().x,const.getMomentum().y,const.getMomentum().z,const.getMass())
+      # For each generator level tau, check the constituents and fill histograms
+      for c in range(0,genTauNConsts):
+         const=genTauConsts[c]
+         constP4=ROOT.TLorentzVector()
+         constP4.SetXYZM(const.getMomentum().x,const.getMomentum().y,const.getMomentum().z,const.getMass())
 
-             hGenConstP.Fill(constP4.P())
-             h2DGenConstPType.Fill(constP4.P(),genTauId)
-             hGenConstPOverTauP.Fill(constP4.P()/genVisTauP4.P())
+         # Fill histograms
+         hGenConstP.Fill(constP4.P()) # Constituent momentum
+         h2DGenConstPType.Fill(constP4.P(),genTauId) # Constituent momentum vs Tau decay type
+         hGenConstPOverTauP.Fill(constP4.P()/genVisTauP4.P()) # Constituent momentum over Tau momentum
 
-             # PDG ID for Pi0s == 111
-             if const.getPDG()==111:
-                hGenConstPi0P.Fill(constP4.P())
-                h2DGenConstPi0PType.Fill(constP4.P(),genTauId)
-                hGenConstPi0POverTauP.Fill(constP4.P()/genVisTauP4.P())
-                # Pi0s decay to Photons 
-                daughtersPi0=const.getDaughters()
-                for dauPhoton in daughtersPi0:
-                    dauPhotonP4=ROOT.TLorentzVector()
-                    dauPhotonP4.SetXYZM(dauPhoton.getMomentum().x,dauPhoton.getMomentum().y,dauPhoton.getMomentum().z,dauPhoton.getMass())
-                    hGenConstPhotonP.Fill(dauPhotonP4.P())
-                    h2DGenConstPhotonPType.Fill(dauPhotonP4.P(),genTauId)
-                    hGenConstPhotonPOverTauP.Fill(dauPhotonP4.P()/genVisTauP4.P())             
+         # Filling values for Pi0s
+         # PDG ID for Pi0s == 111
+         if const.getPDG()==111:
+            hGenConstPi0P.Fill(constP4.P())
+            h2DGenConstPi0PType.Fill(constP4.P(),genTauId)
+            hGenConstPi0POverTauP.Fill(constP4.P()/genVisTauP4.P())
+            # Pi0s decay to Photons 
+            daughtersPi0=const.getDaughters()
+            # For each photon in the decay of a Pi0
+            for dauPhoton in daughtersPi0:
+               dauPhotonP4=ROOT.TLorentzVector()
+               dauPhotonP4.SetXYZM(dauPhoton.getMomentum().x,dauPhoton.getMomentum().y,dauPhoton.getMomentum().z,dauPhoton.getMass())
+               hGenConstPhotonP.Fill(dauPhotonP4.P())
+               h2DGenConstPhotonPType.Fill(dauPhotonP4.P(),genTauId)
+               hGenConstPhotonPOverTauP.Fill(dauPhotonP4.P()/genVisTauP4.P())             
 
-             elif abs(const.getPDG())==211:  # PDG ID for charged pions
-                hGenConstPionP.Fill(constP4.P())
-                h2DGenConstPionPType.Fill(constP4.P(),genTauId)
-                hGenConstPionPOverTauP.Fill(constP4.P()/genVisTauP4.P())
-                if countPionsRun==0:
-                     hGenConstPion1P.Fill(constP4.P())
-                     countPionsRun+=1
-                elif countPionsRun==1:
-                     hGenConstPion2P.Fill(constP4.P())
-                     countPionsRun+=1
-                elif countPionsRun==2:
-                     hGenConstPion3P.Fill(constP4.P())
-                     countPionsRun+=1
+         # Filling values for Pions (charged)
+         elif abs(const.getPDG())==211:  # PDG ID for charged pions
+            hGenConstPionP.Fill(constP4.P())
+            h2DGenConstPionPType.Fill(constP4.P(),genTauId)
+            hGenConstPionPOverTauP.Fill(constP4.P()/genVisTauP4.P())
+            # Counting the number of pions (three options)
+            if countPionsRun==0:
+               hGenConstPion1P.Fill(constP4.P())
+               countPionsRun+=1
+            elif countPionsRun==1:
+               hGenConstPion2P.Fill(constP4.P())
+               countPionsRun+=1
+            elif countPionsRun==2:
+               hGenConstPion3P.Fill(constP4.P())
+               countPionsRun+=1
 
 
-          findMatch=-1
-          dRMatch=1
+      findMatch=-1
+      dRMatch=1
 
-          # For each generator level tau, find the reconstructed tau that is closest:
-          for j in range(0,nTaus):
-            recoTauP4=recoTaus[j][0] # to do: find a clearer dictionary for this
-            recoTauId=recoTaus[j][1]
-            recoTauQ=recoTaus[j][2]
-            recoTauDR=recoTaus[j][3]
-            recoTauNConsts=recoTaus[j][4]
-            recoTauConsts=recoTaus[j][5]
+      # For each generator level tau, find the reconstructed tau that is closest:
+      for j in range(0,nRecoTaus):
+         recoTauP4=recoTaus[j][0] # to do: find a clearer dictionary for this
+         recoTauId=recoTaus[j][1]
+         recoTauQ=recoTaus[j][2]
+         recoTauDR=recoTaus[j][3]
+         recoTauNConsts=recoTaus[j][4]
+         recoTauConsts=recoTaus[j][5]
 
-            # we want to study migrations: keep all the decays but count how many are good 
-            # careful, at reco level we count photons and at gen level pi0s: difference in the
-            # decay mode (1 gen can be 1,2 reco)
+         # we want to study migrations: keep all the decays but count how many are good 
+         # careful, at reco level we count photons and at gen level pi0s: difference in the
+         # decay mode (1 gen can be 1,2 reco)
 
-            recoDM=recoTauId
-            if recoTauId==2:
-              recoDM=1
-            elif (recoTauId>=11 and recoTauId<15):
-              recoDM=11
-            elif recoTauId>=3 and recoTauId<10:
-              recoDM=3
+         recoDM=recoTauId
+         if recoTauId==2:
+            recoDM=1
+         elif (recoTauId>=11 and recoTauId<15):
+            recoDM=11
+         elif recoTauId>=3 and recoTauId<10:
+            recoDM=3
 
-            if selectDecay!=-777 and selectDecay==recoDM:
-                nTausType+=1
+         if selectDecay!=-777 and selectDecay==recoDM:
+               nTausType+=1
 
-            # but remove at least the leptonic ones / failed ID
-            if recoTauId<0:
-              continue
+         # but remove at least the leptonic ones / failed ID
+         if recoTauId<0:
+            continue
 
-            angleMatch=myutils.dRAngle(recoTauP4,genVisTauP4)
+         angleMatch=myutils.dRAngle(recoTauP4,genVisTauP4)
 
-            # find closest
-            if angleMatch<dRMatch:
-               dRMatch=angleMatch
-               findMatch=j
+         # find closest
+         if angleMatch<dRMatch:
+            dRMatch=angleMatch
+            findMatch=j
           
           # If you have not found it, continue: this is a efficiency loss 
-          if findMatch==-1:
-             continue 
+      if findMatch==-1:
+         continue 
 
-          # now, get the kinematics of the matched reco tau
-          recoTauP4=recoTaus[findMatch][0] 
-          recoTauId=recoTaus[findMatch][1]
-          recoTauQ=recoTaus[findMatch][2]
-          recoTauDR=recoTaus[findMatch][3]
-          recoTauNConsts=recoTaus[findMatch][4]
-          recoTauConsts=recoTaus[findMatch][5]
+      # now, get the kinematics of the matched reco tau
+      recoTauP4=recoTaus[findMatch][0] 
+      recoTauId=recoTaus[findMatch][1]
+      recoTauQ=recoTaus[findMatch][2]
+      recoTauDR=recoTaus[findMatch][3]
+      recoTauNConsts=recoTaus[findMatch][4]
+      recoTauConsts=recoTaus[findMatch][5]
 
 #          print ("Reco?",recoTauP4.P(),recoTauId,recoTauQ,recoTauDR,recoTauNConsts)
 
 
           # Now that we have a matched (gen,reco) pair, more checks for efficiency and resolution
 
-          countPionsRun=0
-          #print ("Matched GEN!")
-          # GEN: Look inside the tau, constituents: 
-          for c in range(0,genTauNConsts):
-             const=genTauConsts[c]
-             constP4=ROOT.TLorentzVector()
-             constP4.SetXYZM(const.getMomentum().x,const.getMomentum().y,const.getMomentum().z,const.getMass())
+      countPionsRun=0
+      #print ("Matched GEN!")
+      # GEN: Look inside the tau, constituents: 
+      
+      # Filling histograms for the matched tau with gen level information
+      for c in range(0,genTauNConsts):
+         const=genTauConsts[c]
+         constP4=ROOT.TLorentzVector()
+         constP4.SetXYZM(const.getMomentum().x,const.getMomentum().y,const.getMomentum().z,const.getMass())
 
-             hMatchedGenConstP.Fill(constP4.P())
-             hMatchedGenConstPOverTauP.Fill(constP4.P()/genVisTauP4.P())
+         hMatchedGenConstP.Fill(constP4.P())
+         hMatchedGenConstPOverTauP.Fill(constP4.P()/genVisTauP4.P())
 
-             if const.getPDG()==111:
-                hMatchedGenConstPi0P.Fill(constP4.P())
-                hMatchedGenConstPi0POverTauP.Fill(constP4.P()/genVisTauP4.P())
-                daughtersPi0=const.getDaughters()
-                for dauPhoton in daughtersPi0:
-                    dauPhotonP4=ROOT.TLorentzVector()
-                    dauPhotonP4.SetXYZM(dauPhoton.getMomentum().x,dauPhoton.getMomentum().y,dauPhoton.getMomentum().z,dauPhoton.getMass())
-                    hMatchedGenConstPhotonP.Fill(dauPhotonP4.P())
-                    hMatchedGenConstPhotonPOverTauP.Fill(dauPhotonP4.P()/genVisTauP4.P())             
+         if const.getPDG()==111:
+            hMatchedGenConstPi0P.Fill(constP4.P())
+            hMatchedGenConstPi0POverTauP.Fill(constP4.P()/genVisTauP4.P())
+            daughtersPi0=const.getDaughters()
+            for dauPhoton in daughtersPi0:
+               dauPhotonP4=ROOT.TLorentzVector()
+               dauPhotonP4.SetXYZM(dauPhoton.getMomentum().x,dauPhoton.getMomentum().y,dauPhoton.getMomentum().z,dauPhoton.getMass())
+               hMatchedGenConstPhotonP.Fill(dauPhotonP4.P())
+               hMatchedGenConstPhotonPOverTauP.Fill(dauPhotonP4.P()/genVisTauP4.P())             
 
-             elif abs(const.getPDG())==211:
-                hMatchedGenConstPionP.Fill(constP4.P())
-                hMatchedGenConstPionPOverTauP.Fill(constP4.P()/genVisTauP4.P())
-                if countPionsRun==0:
-                     hMatchedGenConstPion1P.Fill(constP4.P())
-                     countPionsRun+=1
-                elif countPionsRun==1:
-                     hMatchedGenConstPion2P.Fill(constP4.P())
-                     countPionsRun+=1
-                elif countPionsRun==2:
-                     hMatchedGenConstPion3P.Fill(constP4.P())
-                     countPionsRun+=1
+         elif abs(const.getPDG())==211:
+            hMatchedGenConstPionP.Fill(constP4.P())
+            hMatchedGenConstPionPOverTauP.Fill(constP4.P()/genVisTauP4.P())
+            if countPionsRun==0:
+               hMatchedGenConstPion1P.Fill(constP4.P())
+               countPionsRun+=1
+            elif countPionsRun==1:
+               hMatchedGenConstPion2P.Fill(constP4.P())
+               countPionsRun+=1
+            elif countPionsRun==2:
+               hMatchedGenConstPion3P.Fill(constP4.P())
+               countPionsRun+=1
 
-          countPionsRun=0
-          # RECO:  Look inside the tau, constituents: 
-          for c in range(0,recoTauNConsts):
-             const=recoTauConsts[c]
-             constP4=ROOT.TLorentzVector()
-             constP4.SetXYZM(const.getMomentum().x,const.getMomentum().y,const.getMomentum().z,const.getMass())
-             hRecoConstP.Fill(constP4.P())
-             h2DRecoConstPType.Fill(constP4.P(),recoTauId)
-             hRecoConstPOverTauP.Fill(constP4.P()/recoTauP4.P())
+      countPionsRun=0
+      # RECO:  Look inside the tau, constituents:
+      # Filling histograms for the matched tau with reco level information 
+      for c in range(0,recoTauNConsts):
+         const=recoTauConsts[c]
+         constP4=ROOT.TLorentzVector()
+         constP4.SetXYZM(const.getMomentum().x,const.getMomentum().y,const.getMomentum().z,const.getMass())
+         hRecoConstP.Fill(constP4.P())
+         h2DRecoConstPType.Fill(constP4.P(),recoTauId)
+         hRecoConstPOverTauP.Fill(constP4.P()/recoTauP4.P())
 
-             if const.getCharge()==0:
-                hRecoConstPhotonP.Fill(constP4.P())
-                h2DRecoConstPhotonPType.Fill(constP4.P(),recoTauId)
-                hRecoConstPhotonPOverTauP.Fill(constP4.P()/recoTauP4.P())
+         if const.getCharge()==0:
+            hRecoConstPhotonP.Fill(constP4.P())
+            h2DRecoConstPhotonPType.Fill(constP4.P(),recoTauId)
+            hRecoConstPhotonPOverTauP.Fill(constP4.P()/recoTauP4.P())
 
-             else:
-                hRecoConstPionP.Fill(constP4.P())
-                h2DRecoConstPionPType.Fill(constP4.P(),recoTauId)
-                hRecoConstPionPOverTauP.Fill(constP4.P()/recoTauP4.P())
-                if countPionsRun==0:
-                     hRecoConstPion1P.Fill(constP4.P())
-                     countPionsRun+=1
-                elif countPionsRun==1:
-                     hRecoConstPion2P.Fill(constP4.P())
-                     countPionsRun+=1
-                elif countPionsRun==2:
-                     hRecoConstPion3P.Fill(constP4.P())
-                     countPionsRun+=1
+         else:
+            hRecoConstPionP.Fill(constP4.P())
+            h2DRecoConstPionPType.Fill(constP4.P(),recoTauId)
+            hRecoConstPionPOverTauP.Fill(constP4.P()/recoTauP4.P())
+            if countPionsRun==0:
+               hRecoConstPion1P.Fill(constP4.P())
+               countPionsRun+=1
+            elif countPionsRun==1:
+               hRecoConstPion2P.Fill(constP4.P())
+               countPionsRun+=1
+            elif countPionsRun==2:
+               hRecoConstPion3P.Fill(constP4.P())
+               countPionsRun+=1
 
 
           # Many plots 
 
-          hRecoTauType.Fill(recoTauId)
-          hRecoTauPt.Fill(recoTauP4.Pt())
-          hRecoTauP.Fill(recoTauP4.P())
+      hRecoTauType.Fill(recoTauId)
+      hRecoTauPt.Fill(recoTauP4.Pt())
+      hRecoTauP.Fill(recoTauP4.P())
 
-          hRecoTauMass.Fill(recoTauP4.M())
-          hRecoTauQ.Fill(recoTauQ)
-          h2DRecoTauTypeMass.Fill(recoTauId,recoTauP4.M())
-          hRecoTauEta.Fill(recoTauP4.Eta())
-          hRecoTauTheta.Fill(recoTauP4.Theta()) 
+      hRecoTauMass.Fill(recoTauP4.M())
+      hRecoTauQ.Fill(recoTauQ)
+      h2DRecoTauTypeMass.Fill(recoTauId,recoTauP4.M())
+      hRecoTauEta.Fill(recoTauP4.Eta())
+      hRecoTauTheta.Fill(recoTauP4.Theta()) 
 
-          hRecoTauDR.Fill(recoTauDR)
-          h2DRecoTauDRType.Fill(recoTauDR,recoTauId)
-          h2DRecoTauDRNConst.Fill(recoTauDR,recoTauNConsts)
+      hRecoTauDR.Fill(recoTauDR)
+      h2DRecoTauDRType.Fill(recoTauDR,recoTauId)
+      h2DRecoTauDRNConst.Fill(recoTauDR,recoTauNConsts)
 
-          hMatchedGenTauPt.Fill(genTauP4.Pt())
-          hMatchedGenVisTauPt.Fill(genVisTauP4.Pt())
-          hMatchedGenTauP.Fill(genTauP4.P())
-          hMatchedGenVisTauP.Fill(genVisTauP4.P())
+      hMatchedGenTauPt.Fill(genTauP4.Pt())
+      hMatchedGenVisTauPt.Fill(genVisTauP4.Pt())
+      hMatchedGenTauP.Fill(genTauP4.P())
+      hMatchedGenVisTauP.Fill(genVisTauP4.P())
 
-          hMatchedGenVisTauMass.Fill(genVisTauP4.M())
-          hMatchedGenTauType.Fill(genTauId)
-          hMatchedGenTauQ.Fill(genTauQ)
-          hMatched2DGenTauTypeMass.Fill(genTauId,genVisTauP4.M())
-          hMatchedGenTauEta.Fill(genTauP4.Eta())
-          hMatchedGenTauTheta.Fill(genTauP4.Theta())
+      hMatchedGenVisTauMass.Fill(genVisTauP4.M())
+      hMatchedGenTauType.Fill(genTauId)
+      hMatchedGenTauQ.Fill(genTauQ)
+      hMatched2DGenTauTypeMass.Fill(genTauId,genVisTauP4.M())
+      hMatchedGenTauEta.Fill(genTauP4.Eta())
+      hMatchedGenTauTheta.Fill(genTauP4.Theta())
 
-          hMatchedGenTauDR.Fill(genTauDR)
-          hMatched2DGenTauDRType.Fill(genTauDR,genTauId)
-          hMatched2DGenTauDRNConst.Fill(genTauDR,genTauNConsts)
+      hMatchedGenTauDR.Fill(genTauDR)
+      hMatched2DGenTauDRType.Fill(genTauDR,genTauId)
+      hMatched2DGenTauDRNConst.Fill(genTauDR,genTauNConsts)
 
-          h2DTauPt.Fill(recoTauP4.Pt(),genVisTauP4.Pt())
-          h2DTauMass.Fill(recoTauP4.M(),genVisTauP4.M())
-          h2DTauType.Fill(recoTauId,genTauId)
-          h2DTauP.Fill(recoTauP4.P(),genVisTauP4.P())
+      h2DTauPt.Fill(recoTauP4.Pt(),genVisTauP4.Pt())
+      h2DTauMass.Fill(recoTauP4.M(),genVisTauP4.M())
+      h2DTauType.Fill(recoTauId,genTauId)
+      h2DTauP.Fill(recoTauP4.P(),genVisTauP4.P())
 
-          h2DTauDR.Fill(recoTauDR,genTauDR)
+      h2DTauDR.Fill(recoTauDR,genTauDR)
 
-          # Resolution plots:
-          if genVisTauP4.P()!=0:
-             hResTauPt.Fill( (recoTauP4.Pt()-genVisTauP4.Pt())/genVisTauP4.Pt())
-             hResTauMass.Fill( (recoTauP4.M()-genVisTauP4.M())/genVisTauP4.M())
-             hResTauP.Fill( (recoTauP4.P()-genVisTauP4.P())/genVisTauP4.P())
+      # Resolution plots:
+      if genVisTauP4.P()!=0:
+         hResTauPt.Fill( (recoTauP4.Pt()-genVisTauP4.Pt())/genVisTauP4.Pt())
+         hResTauMass.Fill( (recoTauP4.M()-genVisTauP4.M())/genVisTauP4.M())
+         hResTauP.Fill( (recoTauP4.P()-genVisTauP4.P())/genVisTauP4.P())
 
-    #print ("Taus???",nGenTaus,nTaus) 
-    hNTaus.Fill(nTaus)
-    hNTausType.Fill(nTausType)
-    hNGenTausType.Fill(nGenTausType)
-    hNGenTaus.Fill(nGenTausHad)
+   #print ("Taus???",nGenTaus,nTaus) 
+   hNTaus.Fill(nRecoTaus)
+   hNTausType.Fill(nTausType)
+   hNGenTausType.Fill(nGenTausType)
+   hNGenTaus.Fill(nGenTausHad)
 
 
 # Do efficiencies (divide matched gen by all gen)
