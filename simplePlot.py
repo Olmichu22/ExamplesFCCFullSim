@@ -24,7 +24,11 @@ xLabels_dict = {"histoRecoTauType":"Reco Tau Type",
                 "histoGenTauTheta":"Gen Tau Theta",
                 "histoGenTauVisMass":"Gen Tau Visible Mass",
                 "hGenTauP":"Gen Tau P",
-                "hGenVisTauP":"Gen Tau Visible P"}
+                "hGenVisTauP":"Gen Tau Visible P",
+                "hEffiGenVisTauPt":"Gen Tau Visible P",
+                "hEffiGenTauType":"Gen Tau Type",
+                "hEffiGenTauTheta":"Gen Tau Theta",
+                "hEffiGenVisTauMass":"Gen Vis Mass (GeV)"}
 
 ROOT.gStyle.SetOptStat(0)
 
@@ -39,7 +43,7 @@ colors=[getattr(ROOT,args.colors[i]) for i in range(0,len(args.colors))]
 
 files={}
 for i in range(0,len(samples)):
-  files[i]=ROOT.TFile("firstTest_"+samples[i]+"_"+tag+".root")
+  files[i]=ROOT.TFile("effis_"+samples[i]+"_"+tag+".root")
 
 #Format for the rate histograms:
 def formatHisto(file,variab,rename,titleX,color=ROOT.kBlack):
@@ -47,7 +51,7 @@ def formatHisto(file,variab,rename,titleX,color=ROOT.kBlack):
   histo.SetName(rename)
   histo.SetXTitle(titleX)
   histo.SetLineColor(color)
-  histo.SetLineWidth(2)
+  # histo.SetLineWidth(2)
   #histo.SetMarkerColor(color)
   #histo.SetMarkerStyle(20)
   histo.Sumw2()
@@ -77,15 +81,15 @@ for var in variabs:
           max=histo[i].GetMaximum()
 
   # some style tricks 
-  #if "Mass" in var:
-  #   histo[0].GetXaxis().SetRangeUser(0,3)
+  if "Mass" in var:
+    histo[0].GetXaxis().SetRangeUser(0,2)
 
   #if "Type" in var:
   #   histo[0].GetXaxis().SetRangeUser(-1,20)
   #   histo[0].SetMinimum(1)
 
   histo[0].SetMaximum(max*1.4)
-  histo[0].GetYaxis().SetTitle("Events (not normalized to xsec)")
+  histo[0].GetYaxis().SetTitle("Efficiency")
 
   iv=iv+1
   leg.Draw()
