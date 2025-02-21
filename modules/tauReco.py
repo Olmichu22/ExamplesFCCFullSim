@@ -13,8 +13,7 @@ def visTauGen(candTau):
    """ Check a generator level tau candidate, find the decay, and compute visible (meson) variables.
 
    Args:
-       candTau (Particle Object): Particle object with the tau candidate information.
-
+       candTau (Particle ObjefindAllGenZs
    Returns:
        Tuple: Tuple with the visible 4-momentum, the tau ID, the charge, the true 4-momentum, the maximum angle between constituents, the number of constituents, and the constituents.
    """
@@ -93,7 +92,7 @@ def visTauGen(candTau):
       tauID=-11
    elif countOther>0: # refinement: check what these are 
       tauID=-2
-   elif abs(chargeTau)==1: # at gen level if this happens something failed
+   elif abs(chargeTau)==1: 
       if (countPionsTauGen==1):
                tauID=countPi0TauGen
       elif (countPionsTauGen==3):
