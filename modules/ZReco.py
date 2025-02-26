@@ -40,6 +40,8 @@ def visTauZ(candZ):
     const[nconst] = visGentauParticle
     nconst += 1
     visZP4 += visGentauParticle.getvisMomentum()
+    print(f"Mass dau {nconst}: {visGentauParticle.getVisMass()}")
+    print(f"Cummulate Mass {visZP4.M()}")
     chargeZ += visGentauParticle.getCharge()
 
   # set the maximum angle between the
