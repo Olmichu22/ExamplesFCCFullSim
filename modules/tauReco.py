@@ -47,6 +47,7 @@ def visTauGen(candTau):
 
          # we want to compare the reco P4 to the 'visible' gen P4: skip neutrinos
          # PDG ID of Neutrinos
+
          if (dauPDG==12 or dauPDG==14 or dauPDG==16):
             continue 
 

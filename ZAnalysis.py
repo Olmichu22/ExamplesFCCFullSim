@@ -6,8 +6,8 @@ import numpy as np
 from podio import root_io
 import edm4hep
 from pathlib import Path
-
-from modules import tauReco
+import pandas as pd
+from modules import ZReco
 from modules import myutils 
 
 import argparse
@@ -70,4 +70,68 @@ pfobjects="PandoraPFOs"
 
 hGenZP = TH1F("histoGenZP", "Gen Z momentum", 50, 0, 100)
 hGenVisZP = TH1F("histoGenVisZP", "Gen Z visible momentum", 50, 0, 100)
-hGenVisZMass
+hGenZMass = TH1F("histoGenZMass", "Gen Z mass", 100, 0, 100)
+hGenVisZMass = TH1F("histoGenVisZMass", "Gen Z visible mass", 100, 0, 100)
+hGenTausTheta = TH1F("histoGenTausTheta", "Gen taus theta", 100, 0, 3.2)
+hGenZTausType = TH1F("histoGenZTausType", "Gen Z Taus Decay type", 40,-20,20)
+
+hGenZTausTypeDict = {}
+
+print("------------------------------------")
+print("Start processing!")
+
+countEvents = 0
+for event in reader.get("events"):
+    if countEvents%500==0:
+        print("... %d" %countEvents)
+    countEvents += 1
+    # get the constituents
+    mc_particles = event.get(genparts)
+    pfos = event.get(pfobjects)
+    
+    # Reco of Z boson at generator level
+    genZs = ZReco.findAllGenZs(mc_particles)
+    nGenZs = len(genZs)
+    
+    for i in range(nGenZs):
+        genZ = genZs[i]
+        hGenZP.Fill(genZ.getMomentum().P())
+        hGenVisZP.Fill(genZ.getvisMomentum().P())
+        hGenZMass.Fill(genZ.getMass())
+        hGenVisZMass.Fill(genZ.getVisMass())
+        hGenTausTheta.Fill(genZ.getMaxAngle())
+        daugenZ = genZ.getDaughters()
+        for ndau in range(len(daugenZ)):
+            if daugenZ[ndau].getID() not in hGenZTausTypeDict.keys():
+                hGenZTausTypeDict[daugenZ[ndau].getID()] = 0
+            hGenZTausTypeDict[daugenZ[ndau].getID()] += 1
+            hGenZTausType.Fill(daugenZ[ndau].getID())
+
+# Normalization of hGenZTausType (1 over sum of all entries)
+norm = 1/hGenZTausType.GetEntries()
+hGenZTausType.Scale(norm)
+
+total_taus_decays = 0
+for decay in hGenZTausTypeDict.keys():
+    total_taus_decays += hGenZTausTypeDict[decay]
+
+hGenZTausTypedf = pd.DataFrame(hGenZTausTypeDict.items(), columns=["Decay", "Count"])
+hGenZTausTypedf["Fraction"] = hGenZTausTypedf["Count"]/total_taus_decays
+hGenZTausTypedf["Fraction"] = hGenZTausTypedf["Fraction"].apply(lambda x: "{:.2%}".format(x))
+hGenZTausTypedf = hGenZTausTypedf.sort_values(by="Count", ascending=False)
+hGenZTausTypedf.to_csv("GenZTausDecay.csv", index=False)
+
+print("------------------------------------")
+print("Processed %d events" %countEvents)
+print("Plots saved in %s" %fileOutName)
+print("====================================")
+
+# Save histograms
+outfile = ROOT.TFile(fileOutName, "RECREATE")
+hGenZP.Write()
+hGenVisZP.Write()
+hGenZMass.Write()
+hGenVisZMass.Write() 
+hGenTausTheta.Write()
+hGenZTausType.Write()
+outfile.Close()

@@ -40,8 +40,8 @@ def visTauZ(candZ):
     const[nconst] = visGentauParticle
     nconst += 1
     visZP4 += visGentauParticle.getvisMomentum()
-    print(f"Mass dau {nconst}: {visGentauParticle.getVisMass()}")
-    print(f"Cummulate Mass {visZP4.M()}")
+    # print(f"Mass dau {nconst}: {visGentauParticle.getVisMass()}")
+    # print(f"Cummulate Mass {visZP4.M()}")
     chargeZ += visGentauParticle.getCharge()
 
   # set the maximum angle between the
@@ -83,10 +83,10 @@ def findAllGenZs(mc_particles):
     
     # 2: final state tau (to not double count)
     
-    print("StatusID: ", particle.getGeneratorStatus())
-    print("Hijos: ", [Pid.getPDG() for Pid in particle.getDaughters()])
-    print("Status hijos: ", [Pid.getGeneratorStatus() for Pid in particle.getDaughters()])
-    print("\n")
+    # print("StatusID: ", particle.getGeneratorStatus())
+    # print("Hijos: ", [Pid.getPDG() for Pid in particle.getDaughters()])
+    # print("Status hijos: ", [Pid.getGeneratorStatus() for Pid in particle.getDaughters()])
+    # print("\n")
     
     # Tau decay and final state in the daughters
     if 15 not in [Pid.getPDG() for Pid in particle.getDaughters()] or 2 not in [Pid.getGeneratorStatus() for Pid in particle.getDaughters()]:
