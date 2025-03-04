@@ -244,12 +244,17 @@ def findAllGenTaus(mc_particles):
          continue
 #        print ("genTau!",particle.getGeneratorStatus())
 
-      tauP4=ROOT.TLorentzVector()
-      tauP4.SetXYZM(particle.getMomentum().x,particle.getMomentum().y,particle.getMomentum().z,particle.getMass())
+      # tauP4=ROOT.TLorentzVector()
+      # tauP4.SetXYZM(particle.getMomentum().x,particle.getMomentum().y,particle.getMomentum().z,particle.getMass())
 
-      genTau=visTauGen(particle)
-      visTauP4=genTau[0]
-      genTauId=genTau[1]
+      genTau_data=visTauGen(particle)
+      genTau = GenParticle(genTau_data[0], genTau_data[1], genTau_data[2], genTau_data[3], genTau_data[4], genTau_data[5], genTau_data[6])
+      if genTau.getCharge()<0:
+         genTau.setPDG(15)
+      else:
+         genTau.setPDG(-15)
+      # visTauP4=genTau[0]
+      # genTauId=genTau[1]
 
       genTaus[nGenTaus]=genTau
       nGenTaus+=1

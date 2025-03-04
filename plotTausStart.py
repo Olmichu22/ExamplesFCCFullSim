@@ -123,10 +123,10 @@ for event in reader.get("events"):
 
    for i in range(0,nGenTaus):
       # read the tau information
-      genVisTauP4=genTaus[i][0] # to do: find a clearer dictionary for this
-      genTauId=genTaus[i][1]
-      genTauQ=genTaus[i][2]
-      genTauP4=genTaus[i][3]
+      genVisTauP4=genTaus[i].getvisMomentum()
+      genTauId=genTaus[i].getID()
+      genTauQ=genTaus[i].getvisCharge()
+      genTauP4=genTaus[i].getMomentum()
       #genTauDR=genTaus[i][4]
       #genTauNConsts=genTaus[i][5]
       #genTauConsts=genTaus[i][6]
@@ -157,9 +157,9 @@ for event in reader.get("events"):
 
 
    for j in range(0,nTaus):
-      recoTauP4=recoTaus[j][0]
-      recoTauId=recoTaus[j][1]
-      recoTauQ=recoTaus[j][2]
+      recoTauP4=recoTaus[j].getMomentum()
+      recoTauId=recoTaus[j].getID()
+      recoTauQ=recoTaus[j].getCharge()
       #recoTauDR=recoTaus[j][3]
       #recoTauNConsts=recoTaus[j][4]
       #recoTauConsts=recoTaus[j][5]

@@ -80,6 +80,9 @@ class RecoParticle(Particle):
   def getID(self):
     return self.ID
   
+  def getPDG(self):
+    return self.PDGID
+  
   def getCharge(self):
     return self.charge  
   
@@ -97,6 +100,9 @@ class RecoParticle(Particle):
   
   def setID(self, ID):
     self.ID = ID
+  
+  def setPDG(self, PDGID):
+    self.PDGID = PDGID
   
   def setCharge(self, charge):
     self.charge = charge
@@ -134,26 +140,24 @@ class GenParticle(Particle):
       PDGID (int):  PDG ID of the particle.
   """
   
-  def __init__(self, visP4=None, ID=-1, charge=0, visCharge = 0, genP4=None, maxAngleConsts=0, nConsts=0, const=None, PDGID=-1):
+  def __init__(self, visP4=None, ID=-1, charge=0, genP4=None, maxAngleConsts=0, nConsts=0, const=None, PDGID=-1):
     """ Constructor of the Particle class."""
     # Initialize the parent class
     super(GenParticle, self).__init__(genP4, PDGID, ID, charge)
     
     self.visp4 = visP4 if visP4 is not None else ROOT.TLorentzVector(0, 0, 0, 0)
-    self.visCharge = visCharge
     self.maxAngle = maxAngleConsts
     self.nConst = nConsts
     self.const = const if const is not None else {}
     
+  def getPDG(self):
+    return self.PDGID
     
   def getID(self):
     return self.ID
 
   def getCharge(self):
     return self.charge
-  
-  def getvisCharge(self):
-    return self.visCharge
   
   def getMomentum(self):
     return self.p4
@@ -179,11 +183,12 @@ class GenParticle(Particle):
   def setID(self, ID):
     self.ID = ID
   
+  def setPDG(self, PDGID):
+    self.PDGID = PDGID
+  
   def setCharge(self, charge):
     self.charge = charge
-    
-  def setvisCharge(self, visCharge):
-    self.visCharge = visCharge
+  
   
   def setMomentum(self, candP):
     self.p4.SetXYZM(candP.getMomentum().x,
