@@ -4,6 +4,7 @@ import ROOT
 from array import array
 from podio import root_io
 import edm4hep
+from modules.ParticleObjects import GenParticle, RecoParticle
 
 from modules import myutils
 
@@ -141,8 +142,9 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP=0, PNeutron=10):
    countNeutrons=0
 
 #        print ('...lead',leadP4.P(),leadP4.Theta(),math.cos(leadP4.Theta())) # leadP4.Phi(),lead.getMass())
-
-   for cand in allPfs:
+   # Set to avoid duplicates
+   found_pions_id = set()
+   for key, cand in allPfs.items():
       if (cand==lead):
          continue 
 
@@ -171,6 +173,7 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP=0, PNeutron=10):
       # Counting pions and kaons
       if candPDG==211 :   # ignoring the difference between kaons and pions for now 
          countPions+=1
+         found_pions_id.add(key)
       # Counting photons (should be 2 x pi0s)
       if candPDG==22 :  # careful: here counting photons and not pi0s. Account for merged/lost photons.  
          countPhotons+=1
@@ -210,7 +213,7 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP=0, PNeutron=10):
 
       # return an object with P4, ID, Charge, AngleMax, nConsts, constIdx 
       # should be a class in the future
-      return (tauP4,tauID,chargeTau,maxConeTau,nConsts,const)
+      return (tauP4,tauID,chargeTau,maxConeTau,nConsts,const), found_pions_id
 
    else:
       tauP4.SetXYZM(0,0,0,0) # safety, always return an object 
@@ -268,23 +271,38 @@ def findAllTaus(pfos,dRMax,minPt,PNeutron):
    """
    taus={}
    nTaus=0
-
-   for pf in pfos:
+   # Dict to avoid duplicates
+   id_pfos = {i: pfos[i] for i in range(len(pfos))}
+   found_pions_id = set()
+   for key, pf in id_pfos.items():
       if (abs(pf.getPDG())!=211): 
          continue 
+      if key in found_pions_id:
+         continue
+         
+      recoTau_data, pions_id = buildTauFromPion(pf,id_pfos,dRMax,minPt,PNeutron)
+      recoTau = RecoParticle(recoTau_data[0], recoTau_data[1], recoTau_data[2], recoTau_data[3], recoTau_data[4], recoTau_data[5], recoTau_data[6])
+      if recoTau.getCharge()<0:
+         recoTau.setPDG(15)
+      else:
+         recoTau.setPDG(-15)
+      
+      # Add the main pion to pions_id
+      pions_id.add(key)
+      found_pions_id.update(pions_id)
+      
+      
+      # candTauP4=recoTau[0]
+      # candTauId=recoTau[1]
+      # candTauCharge=recoTau[2]
 
-      recoTau=buildTauFromPion(pf,pfos,dRMax,minPt,PNeutron)
-      candTauP4=recoTau[0]
-      candTauId=recoTau[1]
-      candTauCharge=recoTau[2]
-
-      # FIXME: this is very ugly, angular separation between taus to avoid duplicates
-      # in these samples most of the events have 1 tau (and 1 prong)
-      # in a real scenario this could be slow and we could veto events 
-      duplicate=False
-      for i in range(0,nTaus):
-         if (myutils.dRAngle(candTauP4,taus[i][0])<0.05): duplicate=True
-      if (duplicate==True): continue
+      # # FIXME: this is very ugly, angular separation between taus to avoid duplicates
+      # # in these samples most of the events have 1 tau (and 1 prong)
+      # # in a real scenario this could be slow and we could veto events 
+      # duplicate=False
+      # for i in range(0,nTaus):
+      #    if (myutils.dRAngle(candTauP4,taus[i][0])<0.05): duplicate=True
+      # if (duplicate==True): continue
 
       taus[nTaus]=recoTau
       nTaus+=1
