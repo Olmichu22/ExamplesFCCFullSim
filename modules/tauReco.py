@@ -217,7 +217,7 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP=0, PNeutron=10):
 
    else:
       tauP4.SetXYZM(0,0,0,0) # safety, always return an object 
-      return (tauP4,-1,0,0,0,0) 
+      return (tauP4,-1,0,0,0,0), found_pions_id
                  
 
 # loop over all gen taus 
