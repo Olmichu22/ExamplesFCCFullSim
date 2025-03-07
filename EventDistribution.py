@@ -7,7 +7,7 @@ from podio import root_io
 import edm4hep
 from pathlib import Path
 import pandas as pd
-from modules import tauReco
+from modules import tauReco, muonReco, electronReco
 from modules import ZReco
 from modules import myutils 
 
@@ -15,7 +15,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Configure the analysis",
                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-f", "--sample", default="ZTauTau_SMPol_25Sept_MuonFix", help="Sample file name to process")
-parser.add_argument("-o", "--outfile", default="firstTest_", help="Output file name prefix")
+parser.add_argument("-o", "--outfile", default="Event_dist_", help="Output file name prefix")
 parser.add_argument("-d", "--decay", default=-777, type=int, help="Decay mode to select (-777 for all)")
 parser.add_argument("-p", "--photonCut", default=0.1, type=float, help="Photon momentum cut value")
 parser.add_argument("-R", "--dRMax", default=0.4, type=float, help="Maximum delta R value")
@@ -74,6 +74,23 @@ pfobjects ="PandoraPFOs"
 #pfobjects ="TightSelectedPandoraPFOs"
 
 hRecoEventDist = TH1F("histRecoCardEventDist", "Number of Leptons per Event", 10, 0, 10) 
+hRecoEventTypeDist = TH1F("histRecoCardEventTypeDist", "Type of Leptons per Event", 7, -1, 6)
+hRecoEventMuonP = TH1F("histRecoCardEventMuonP", "Muon Momentum", 50, 0, 50)
+hRecoEventElectronP = TH1F("histRecoCardEventElectronP", "Electron Momentum", 50, 0, 50)
+hRecoEventTauP = TH1F("histRecoCardEventTauP", "Tau Momentum", 50, 0, 50)
+hRecoPairCharge = TH1F("histRecoCardEventOpositeCharge", "Oposite Charge", 10, -5, 5)
+hRecoEventCharge = TH1F("histRecoCardEventOpositeCharge", "Oposite Charge", 10, -5, 5)
+
+pair_cases = {
+  "muonmuon": 0,
+  "muonelectron": 1,
+  "electronmuon": 1,
+  "muontau": 2,
+  "taumuon": 2,
+  "electrontau": 3,
+  "tauelectron": 3,
+  "tautau": 4,
+}
 
 print ("-------------------------------------")
 print ("Start processing!")
@@ -92,36 +109,92 @@ for event in reader.get("events"):
 
   # get the number of leptons in the event
   recoTaus= tauReco.findAllTaus(pfos,dRMax, minP,PNeutron)
+  recoMuons = muonReco.findAllMuons(pfos, minP)
+  recoElectrons = electronReco.findAllElectrons(pfos, minP)
   nTaus=len(recoTaus)
-
+  nMuons=len(recoMuons)
+  nElectrons=len(recoElectrons)
   
-
-
-  for j in range(0,nTaus):
-    recoTauP4=recoTaus[j][0]
-    recoTauId=recoTaus[j][1]
-    recoTauQ=recoTaus[j][2]
-      #recoTauDR=recoTaus[j][3]
-      #recoTauNConsts=recoTaus[j][4]
-      #recoTauConsts=recoTaus[j][5]
-
-      # to make the code more economic we are checking gen and reco in parallel, but 
-      # there is a difference in the DM labelling:
-      # at reco level we count photons and at gen level pi0s: difference in the
-      # decay mode (1 gen can be 1 or 2 reco, etc )
-    recoDM=recoTauId
-    if recoTauId==2:
-      recoDM=1
-    elif recoTauId>=3 and recoTauId<10:
-      recoDM=3
-    elif (recoTauId>=11 and recoTauId<15):
-      recoDM=11
-
-    if selectDecay!=-777 and selectDecay!=recoDM:
+  nLeptons=nMuons+nElectrons+nTaus
+  recoLeptons = {}
+  
+  if nLeptons==0:
+    continue
+  
+  for i, muon in recoMuons.items():
+    recoLeptons[f"muon{i}"] = muon
+  for i, electron in recoElectrons.items():
+    recoLeptons[f"electron{i}"] = electron
+  for i, tau in recoTaus.items():
+    if tau.getID() == -13 or tau.getID() == -11:
       continue
+    recoLeptons[f"tau{i}"] = tau
+  
+  
+  # fill histograms depending on the number of leptons
+  if nLeptons == 2:
+    tot_charge = 0
+    key_code = ""
+    for i, lepton in recoLeptons.items():
+      tot_charge += lepton.getCharge()
+      key_code += i[:-1]
+    hRecoPairCharge.Fill(tot_charge)
+    hRecoEventTypeDist.Fill(pair_cases[key_code])
+    
+    
+  else:
+    tot_charge = 0
+    for i, lepton in recoLeptons.items():
+      tot_charge += lepton.getCharge()
+    hRecoEventCharge.Fill(tot_charge)
+    if nLeptons == 1:
+      hRecoEventTypeDist.Fill(-1)
+    else:
+      hRecoEventTypeDist.Fill(5)
+    
+  hRecoEventDist.Fill(nLeptons)
+      
+    
+
+
+  # for j in range(0,nTaus):
+  #   recoTauP4=recoTaus[j][0]
+  #   recoTauId=recoTaus[j][1]
+  #   recoTauQ=recoTaus[j][2]
+  #     #recoTauDR=recoTaus[j][3]
+  #     #recoTauNConsts=recoTaus[j][4]
+  #     #recoTauConsts=recoTaus[j][5]
+
+  #     # to make the code more economic we are checking gen and reco in parallel, but 
+  #     # there is a difference in the DM labelling:
+  #     # at reco level we count photons and at gen level pi0s: difference in the
+  #     # decay mode (1 gen can be 1 or 2 reco, etc )
+  #   recoDM=recoTauId
+  #   if recoTauId==2:
+  #     recoDM=1
+  #   elif recoTauId>=3 and recoTauId<10:
+  #     recoDM=3
+  #   elif (recoTauId>=11 and recoTauId<15):
+  #     recoDM=11
+
+  #   if selectDecay!=-777 and selectDecay!=recoDM:
+  #     continue
 
 
 print ("-------------------------------------")
 print ("Processed %d events" %countEvents)
+# save plots for later
+outfile=ROOT.TFile(fileOutName,"RECREATE")
+
+hRecoEventDist.Write()
+hRecoEventTypeDist.Write()
+hRecoEventMuonP.Write()
+hRecoEventElectronP.Write()
+hRecoEventTauP.Write()
+hRecoPairCharge.Write()
+hRecoEventCharge.Write()
+outfile.Close() 
 print ("Plots saved in %s" %fileOutName)
 print ("=====================================")
+
+

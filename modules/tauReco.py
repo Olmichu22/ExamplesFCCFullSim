@@ -286,7 +286,7 @@ def findAllTaus(pfos,dRMax,minPt,PNeutron):
          continue
          
       recoTau_data, pions_id = buildTauFromPion(pf,id_pfos,dRMax,minPt,PNeutron)
-      recoTau = RecoParticle(recoTau_data[0], recoTau_data[1], recoTau_data[2], recoTau_data[3], recoTau_data[4], recoTau_data[5], recoTau_data[6])
+      recoTau = RecoParticle(recoTau_data[0], recoTau_data[1], recoTau_data[2], recoTau_data[3], recoTau_data[4], recoTau_data[5])
       if recoTau.getCharge()<0:
          recoTau.setPDG(15)
       else:
