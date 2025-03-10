@@ -74,23 +74,24 @@ pfobjects ="PandoraPFOs"
 #pfobjects ="TightSelectedPandoraPFOs"
 
 hRecoEventDist = TH1F("histRecoCardEventDist", "Number of Leptons per Event", 10, 0, 10) 
-hRecoEventTypeDist = TH1F("histRecoCardEventTypeDist", "Type of Leptons per Event", 7, -1, 6)
 hRecoEventMuonP = TH1F("histRecoCardEventMuonP", "Muon Momentum", 50, 0, 50)
 hRecoEventElectronP = TH1F("histRecoCardEventElectronP", "Electron Momentum", 50, 0, 50)
 hRecoEventTauP = TH1F("histRecoCardEventTauP", "Tau Momentum", 50, 0, 50)
-hRecoPairCharge = TH1F("histRecoCardEventOpositeCharge", "Oposite Charge", 10, -5, 5)
+hRecoPairCharge = TH1F("histRecoCardEventOpositePairCharge", "Oposite Charge", 10, -5, 5)
 hRecoEventCharge = TH1F("histRecoCardEventOpositeCharge", "Oposite Charge", 10, -5, 5)
 
-pair_cases = {
-  "muonmuon": 0,
-  "muonelectron": 1,
-  "electronmuon": 1,
-  "muontau": 2,
-  "taumuon": 2,
-  "electrontau": 3,
-  "tauelectron": 3,
-  "tautau": 4,
-}
+# pair_cases = {
+#   "muonmuon": 0,
+#   "muonelectron": 1,
+#   "electronmuon": 1,
+#   "muontau": 2,
+#   "taumuon": 2,
+#   "electrontau": 3,
+#   "tauelectron": 3,
+#   "tautau": 4,
+# }
+pair_cases_set = set()
+pair_cases = {}
 
 print ("-------------------------------------")
 print ("Start processing!")
@@ -116,10 +117,18 @@ for event in reader.get("events"):
   nElectrons=len(recoElectrons)
   
   nLeptons=nMuons+nElectrons+nTaus
-  recoLeptons = {}
+  
+  
+  case = str(nTaus)+"tau"+str(nMuons)+"muon"+str(nElectrons)+"electron"
+  if case not in pair_cases_set:
+    pair_cases_set.add(case)
+    pair_cases[case] = 1
+  else:
+    pair_cases[case] += 1
   
   if nLeptons==0:
     continue
+  recoLeptons = {}
   
   for i, muon in recoMuons.items():
     recoLeptons[f"muon{i}"] = muon
@@ -134,12 +143,14 @@ for event in reader.get("events"):
   # fill histograms depending on the number of leptons
   if nLeptons == 2:
     tot_charge = 0
-    key_code = ""
     for i, lepton in recoLeptons.items():
       tot_charge += lepton.getCharge()
-      key_code += i[:-1]
+      #Key code for the pair
+      #Key code is the key i without the number
+      # if tot_charge == 0:
+      #   hRecoEventTypeDist.Fill(-1)
     hRecoPairCharge.Fill(tot_charge)
-    hRecoEventTypeDist.Fill(pair_cases[key_code])
+    # hRecoEventTypeDist.Fill(pair_cases[key_code])
     
     
   else:
@@ -147,13 +158,22 @@ for event in reader.get("events"):
     for i, lepton in recoLeptons.items():
       tot_charge += lepton.getCharge()
     hRecoEventCharge.Fill(tot_charge)
-    if nLeptons == 1:
-      hRecoEventTypeDist.Fill(-1)
-    else:
-      hRecoEventTypeDist.Fill(5)
     
   hRecoEventDist.Fill(nLeptons)
-      
+
+max_case = len(pair_cases)
+hRecoEventTypeDist = TH1F("histRecoCardEventTypeDist", "Type of Leptons per Event", max_case, 0, max_case)
+event_type = pd.DataFrame(columns=["case", "number"])
+event_type["case"] = pair_cases.keys()
+event_type["number"] = pair_cases.values()
+# Sort by number of cases
+event_type = event_type.sort_values(by="number", ascending=False)
+event_type["id"] = range(0, len(event_type))
+for i, row in event_type.iterrows():
+  hRecoEventTypeDist.Fill(row["id"], row["number"])
+
+event_type.to_csv("event_cases.csv", index=False)
+
     
 
 

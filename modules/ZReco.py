@@ -4,9 +4,9 @@ import ROOT
 from array import array
 from podio import root_io
 import edm4hep
-from modules import tauReco
+from modules import tauReco, muonReco, electronReco
 from modules import myutils
-from modules.ParticleObjects import GenParticle
+from modules.ParticleObjects import GenParticle, RecoParticle
     
   
 
@@ -61,7 +61,61 @@ def visTauZ(candZ):
    
   return genZ
 
-
+def findZ(pfos, dRMax, minP, PNeutron):
+  """ Find Z candidate starting from PFO collection by recognizing the decay products.
+  
+  Args:
+      pfos (PandoraPFOs): PandoraPFOs collection
+      dRMax (float): Maximum distance between the tau and the PFO.
+      minP (float): Minimum particle momentum.
+      PNeutron (float): Neutron momentum.
+  Returns:
+      recoZ (dict): Z candidate containing RecoParticle Objects."""
+  recoTaus= tauReco.findAllTaus(pfos,dRMax, minP,PNeutron)
+  recoMuons = muonReco.findAllMuons(pfos, minP)
+  recoElectrons = electronReco.findAllElectrons(pfos, minP)
+  nTaus=len(recoTaus)
+  nMuons=len(recoMuons)
+  nElectrons=len(recoElectrons)
+  
+  nLeptons=nMuons+nElectrons+nTaus
+  if nLeptons==0 or nLeptons != 2:
+    return None
+  
+  recoLeptons = {}
+  eventype_id_dict = {"muonmuon": 0,
+                      "muonelectron": 1,
+                      "muontau": 2,
+                      "electrontau": 3,
+                      "tautau": 4}
+  key = ""
+  for i, muon in recoMuons.items():
+    recoLeptons[f"muon{i}"] = muon
+    key += "muon"
+  for i, electron in recoElectrons.items():
+    recoLeptons[f"electron{i}"] = electron
+    key += "electron"
+  for i, tau in recoTaus.items():
+    # Ignore muons and electrons when looking for taus
+    if tau.getID() == -13 or tau.getID() == -11:
+      continue
+    recoLeptons[f"tau{i}"] = tau
+    key += "tau"
+  
+  tot_charge = 0
+  zP4 = ROOT.TLorentzVector() 
+  for i, lepton in recoLeptons.items():
+    tot_charge += lepton.getCharge()
+    zP4 += lepton.getP4()
+  
+  if tot_charge != 0:
+    return None
+  
+  even_type_id = eventype_id_dict[key]
+  recoZ = RecoParticle(zP4, even_type_id, 0, 0, 2, recoLeptons, 23)
+  return recoZ
+  
+  
 # loop over all gen taus 
 def findAllGenZs(mc_particles):
   """ Find all generator level Zs.
