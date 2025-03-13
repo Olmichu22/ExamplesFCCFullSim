@@ -17,7 +17,10 @@ parser = argparse.ArgumentParser(description="Configure the analysis",
 parser.add_argument("-f", "--sample", default="ZTauTau_SMPol_25Sept_MuonFix", help="Sample file name to process")
 parser.add_argument("-o", "--outfile", default="Event_dist_", help="Output file name prefix")
 parser.add_argument("-d", "--decay", default=-777, type=int, help="Decay mode to select (-777 for all)")
-parser.add_argument("-p", "--photonCut", default=0.1, type=float, help="Photon momentum cut value")
+parser.add_argument("-p", "--TauPCut", default=0.1, type=float, help="Tau momentum cut value")
+parser.add_argument("-m", "--MuonPCut", default=0.1, type=float, help="Electron momentum cut value")
+parser.add_argument("-e", "--ElectPCut", default=0.1, type=float, help="Muon momentum cut value")
+
 parser.add_argument("-R", "--dRMax", default=0.4, type=float, help="Maximum delta R value")
 parser.add_argument("-n", "--neutronCut", default=1, type=float, help="Neutron momentum cut value")
 parser.add_argument("-t", "--test", default="True", type=str, help="Run in test mode with limited number of files")
@@ -27,7 +30,9 @@ config = vars(args)
 print(config)
 
 dRMax=args.dRMax
-minP=args.photonCut
+minPTau=args.TauPCut
+minPMuon=args.MuonPCut
+minPElectron=args.ElectPCut
 selectDecay=args.decay
 fileOutName=args.outfile
 PNeutron=args.neutronCut
@@ -35,9 +40,9 @@ selectDecay=args.decay
 sample=args.sample
 test= True if args.test=="True" else False
 
-decayString="Event_dist_decay"+str(selectDecay)+"_"+str(dRMax)+"_"+str(args.photonCut)+"_"+str(PNeutron)
+decayString=f"Event_dist_decay{selectDecay}_{dRMax}_t{args.TauPCut}_m{args.MuonPCut }_e{args.ElectPCut}_n{PNeutron}"
 if selectDecay==-777:
-    decayString="Event_dist_decayall_"+str(dRMax)+"_"+str(args.photonCut)+"_"+str(PNeutron)
+    decayString=f"Event_dist_decayall_{dRMax}_t{args.TauPCut}_m{args.MuonPCut }_e{args.ElectPCut}_n{PNeutron}"
 fileOutName=args.outfile+decayString+".root"
 
 print ("=====================================")
@@ -49,6 +54,10 @@ filenames=[]
 dir_path=path+"/"+sample
 names = ROOT.std.vector('string')()
 nfiles=len(os.listdir(dir_path))
+
+outputpath = f"Images/ZReco/TCut {minPTau} ECut {minPElectron} MCut {minPMuon}"
+if not os.path.exists(outputpath):
+  os.makedirs(outputpath)
 
 nfiles=1000 #Maxium files to read
 if test==True:
@@ -92,6 +101,8 @@ hRecoEventCharge = TH1F("histRecoCardEventOpositeCharge", "Oposite Charge", 10, 
 # }
 pair_cases_set = set()
 pair_cases = {}
+pair_cases_charge = {-2.0:0, 0:0, 2.0:0}
+pair_cases_count = 0
 
 print ("-------------------------------------")
 print ("Start processing!")
@@ -109,9 +120,9 @@ for event in reader.get("events"):
   pfos = event.get(pfobjects)
 
   # get the number of leptons in the event
-  recoTaus= tauReco.findAllTaus(pfos,dRMax, minP,PNeutron)
-  recoMuons = muonReco.findAllMuons(pfos, minP)
-  recoElectrons = electronReco.findAllElectrons(pfos, minP)
+  recoTaus= tauReco.findAllTaus(pfos,dRMax, minPTau,PNeutron)
+  recoMuons = muonReco.findAllMuons(pfos, minPMuon)
+  recoElectrons = electronReco.findAllElectrons(pfos, minPElectron)
   nTaus=len(recoTaus)
   nMuons=len(recoMuons)
   nElectrons=len(recoElectrons)
@@ -132,23 +143,29 @@ for event in reader.get("events"):
   
   for i, muon in recoMuons.items():
     recoLeptons[f"muon{i}"] = muon
+    hRecoEventMuonP.Fill(muon.getMomentum().P())  
   for i, electron in recoElectrons.items():
     recoLeptons[f"electron{i}"] = electron
+    hRecoEventElectronP.Fill(electron.getMomentum().P())  
+    
   for i, tau in recoTaus.items():
     if tau.getID() == -13 or tau.getID() == -11:
       continue
     recoLeptons[f"tau{i}"] = tau
-  
+    hRecoEventTauP.Fill(tau.getMomentum().P())  
+
   
   # fill histograms depending on the number of leptons
   if nLeptons == 2:
     tot_charge = 0
+    pair_cases_count += 1
     for i, lepton in recoLeptons.items():
       tot_charge += lepton.getCharge()
       #Key code for the pair
       #Key code is the key i without the number
       # if tot_charge == 0:
       #   hRecoEventTypeDist.Fill(-1)
+    pair_cases_charge[tot_charge] += 1
     hRecoPairCharge.Fill(tot_charge)
     # hRecoEventTypeDist.Fill(pair_cases[key_code])
     
@@ -166,13 +183,25 @@ hRecoEventTypeDist = TH1F("histRecoCardEventTypeDist", "Type of Leptons per Even
 event_type = pd.DataFrame(columns=["case", "number"])
 event_type["case"] = pair_cases.keys()
 event_type["number"] = pair_cases.values()
+
+pair_cases_charge_df = pd.DataFrame(columns=["charge", "number"])
+pair_cases_charge_df["charge"] = pair_cases_charge.keys()
+pair_cases_charge_df["number"] = pair_cases_charge.values()
+# New row with total not using append
+pair_cases_charge_df.loc[-1] = ["total", pair_cases_charge_df["number"].sum()]
+pair_cases_charge_df.index = pair_cases_charge_df.index + 1
+pair_cases_charge_df.sort_index(inplace=True)
+pair_cases_charge_df.to_csv(outputpath+"/pair_cases_charge.csv", index=False)
+
+print(f"Parejas totales neutras {pair_cases_charge[0]}")
+
 # Sort by number of cases
 event_type = event_type.sort_values(by="number", ascending=False)
 event_type["id"] = range(0, len(event_type))
 for i, row in event_type.iterrows():
   hRecoEventTypeDist.Fill(row["id"], row["number"])
 
-event_type.to_csv("event_cases.csv", index=False)
+event_type.to_csv(outputpath+"/event_cases.csv", index=False)
 
     
 

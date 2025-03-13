@@ -21,7 +21,7 @@ def findAllMuons(pfos, minPt):
   muons={}
   nMuons=0
   for pf in pfos:
-    if (abs(pf.getPDG())!=11): 
+    if (abs(pf.getPDG())!=13): 
         continue 
 
     

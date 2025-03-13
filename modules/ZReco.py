@@ -61,7 +61,7 @@ def visTauZ(candZ):
    
   return genZ
 
-def findZ(pfos, dRMax, minP, PNeutron):
+def findZ(pfos, dRMax, minPTau, minPMuon, minPElectron, PNeutron):
   """ Find Z candidate starting from PFO collection by recognizing the decay products.
   
   Args:
@@ -71,9 +71,9 @@ def findZ(pfos, dRMax, minP, PNeutron):
       PNeutron (float): Neutron momentum.
   Returns:
       recoZ (dict): Z candidate containing RecoParticle Objects."""
-  recoTaus= tauReco.findAllTaus(pfos,dRMax, minP,PNeutron)
-  recoMuons = muonReco.findAllMuons(pfos, minP)
-  recoElectrons = electronReco.findAllElectrons(pfos, minP)
+  recoTaus= tauReco.findAllTaus(pfos, dRMax, minPTau, PNeutron)
+  recoMuons = muonReco.findAllMuons(pfos, minPMuon)
+  recoElectrons = electronReco.findAllElectrons(pfos, minPElectron)
   nTaus=len(recoTaus)
   nMuons=len(recoMuons)
   nElectrons=len(recoElectrons)
@@ -86,33 +86,58 @@ def findZ(pfos, dRMax, minP, PNeutron):
   eventype_id_dict = {"muonmuon": 0,
                       "muonelectron": 1,
                       "muontau": 2,
-                      "electrontau": 3,
-                      "tautau": 4}
+                      "electronelectron":3,
+                      "electrontau": 4,
+                      "tautau": 5}
   key = ""
+  ncomp = 0
   for i, muon in recoMuons.items():
-    recoLeptons[f"muon{i}"] = muon
+    # print("muon")
+    muon.setID(-13)
+    recoLeptons[ncomp] = muon
     key += "muon"
+    ncomp += 1
   for i, electron in recoElectrons.items():
-    recoLeptons[f"electron{i}"] = electron
+    # print("electron")
+    electron.setID(-11)
+    recoLeptons[ncomp] = electron
     key += "electron"
+    ncomp += 1
   for i, tau in recoTaus.items():
     # Ignore muons and electrons when looking for taus
     if tau.getID() == -13 or tau.getID() == -11:
       continue
-    recoLeptons[f"tau{i}"] = tau
+    recoLeptons[ncomp] = tau
     key += "tau"
+    ncomp += 1
+  
+  # if "electron" in key or "muon" in key:
+  #   print("Components ID before charge")
+  #   for i, lepton in recoLeptons.items():
+  #     print(lepton.getID(), lepton.getCharge())
+  #   print("\n")
   
   tot_charge = 0
   zP4 = ROOT.TLorentzVector() 
   for i, lepton in recoLeptons.items():
     tot_charge += lepton.getCharge()
-    zP4 += lepton.getP4()
+    zP4 += lepton.getMomentum()
   
   if tot_charge != 0:
     return None
   
+  # if "electron" in key or "muon" in key:
+  #   print("Components ID after charge")
+  #   for i, lepton in recoLeptons.items():
+  #     print(lepton.getID(), lepton.getCharge())
+
+  #   print("\n")
+    
+  # Change 
   even_type_id = eventype_id_dict[key]
   recoZ = RecoParticle(zP4, even_type_id, 0, 0, 2, recoLeptons, 23)
+  daughters_angle = myutils.dRAngle(*(l.getMomentum() for l in recoLeptons.values()))
+  recoZ.setMaxCone(daughters_angle)
   return recoZ
   
   

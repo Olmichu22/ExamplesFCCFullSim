@@ -92,6 +92,7 @@ for event in reader.get("events"):
     # Reco of Z boson at generator level
     genZs = ZReco.findAllGenZs(mc_particles)
     nGenZs = len(genZs)
+    print("Found %d Gen Zs" %nGenZs)
     
     for i in range(nGenZs):
         genZ = genZs[i]
