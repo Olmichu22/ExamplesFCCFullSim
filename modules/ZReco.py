@@ -11,7 +11,21 @@ from modules.ParticleObjects import GenParticle, RecoParticle
   
 
 # Check a generator level tau candidate, find the decay, 
-# and compute visible (meson) variables 
+# and compute visible (meson) variables
+def getDefTau(candTau):
+  """Recursive function that returns tau in last decay level (GeneratorStatus ==2).
+  args:
+      candTau (Particle Object): Particle object with the tau candidate information.
+  Returns:
+      Particle Object: Particle object with the tau candidate information.
+  """
+  if candTau.getGeneratorStatus() == 2:
+    return candTau
+  else:
+    for dau in candTau.getDaughters():
+      return getDefTau(dau)
+
+ 
 def visTauZ(candZ):
   """ Check a generator level Z candidate, find the decay, and compute visible (meson) variables.
 
@@ -34,9 +48,28 @@ def visTauZ(candZ):
   chargeZ = 0
   
   # loop over daughter particles of the Z
+  eventype_id_dict = {"muonmuon": 0,
+                    "muonelectron": 1,
+                    "electronmuon": 1,
+                    "muontau": 2,
+                    "taumuon": 2,
+                    "electronelectron":3,
+                    "electrontau": 4,
+                    "tauelectron": 4,
+                    "tautau": 5}
+  key = ""
+  
+  
   for dau in candZ.getDaughters():
-    visGenTau = tauReco.visTauGen(dau)
+    pre_decay_dau = getDefTau(dau) 
+    visGenTau = tauReco.visTauGen(pre_decay_dau)
     visGentauParticle = GenParticle(*visGenTau)
+    if visGentauParticle.getID() == -11:
+      key += "electron"
+    elif visGentauParticle.getID() == -13:
+      key += "muon"
+    else:
+      key += "tau"
     const[nconst] = visGentauParticle
     nconst += 1
     visZP4 += visGentauParticle.getvisMomentum()
@@ -58,6 +91,7 @@ def visTauZ(candZ):
   # set visible 4-momentum
   genZ.setvisMomentum(visZP4)
   genZ.setCharge(chargeZ)
+  genZ.setID(eventype_id_dict[key])
    
   return genZ
 
@@ -168,7 +202,8 @@ def findAllGenZs(mc_particles):
     # print("\n")
     
     # Tau decay and final state in the daughters
-    if 15 not in [Pid.getPDG() for Pid in particle.getDaughters()] or 2 not in [Pid.getGeneratorStatus() for Pid in particle.getDaughters()]:
+    
+    if 15 not in [Pid.getPDG() for Pid in particle.getDaughters()]:
         continue
     
 

@@ -8,7 +8,9 @@ import edm4hep
 from pathlib import Path
 import pandas as pd
 from modules import ZReco
-from modules import myutils 
+from modules import myutils
+from sklearn.metrics import confusion_matrix
+ 
 
 import argparse
 parser = argparse.ArgumentParser(description="Configure the analysis",
@@ -102,10 +104,10 @@ hMatchedGenZType = TH1F("histoMatchedGenZType", "",40,-20,20)
 
 hGenZTausTypeDict = {}
 hRecoZTausTypeDict = {}
+hRecoZTausTypeCoincidence = {"Reco":[], "Gen":[]}
 recodify_id_dict = {2:1,
                     12:11, 13:11, 14:11,
                     4:3, 5:3, 6:3, 9:3}
-
 
 print("------------------------------------")
 print("Start processing!")
@@ -150,8 +152,6 @@ for event in reader.get("events"):
   genZs = ZReco.findAllGenZs(mc_particles)
   nGenZs = len(genZs)
   genZ = genZs[0] if nGenZs==1 else None
-  if nGenZs > 1:
-    print("MAS DE UN Z EN GENERACIÓN")
   if genZ is not None:
   
   # for i in range(nGenZs):
@@ -171,6 +171,8 @@ for event in reader.get("events"):
   # Hard assumption: if we have a reco Z and a gen Z, they are the same
   # even if their constituents are not the same
   if recoZ is not None and genZ is not None:
+    hRecoZTausTypeCoincidence["Reco"].append(recoZ.getID())
+    hRecoZTausTypeCoincidence["Gen"].append(genZ.getID())
     hMatchedGenZP.Fill(genZ.getMomentum().P())
     hMatchedGenVisZP.Fill(genZ.getvisMomentum().P())
     hMatchedGenZVisMass.Fill(genZ.getVisMass())
@@ -210,6 +212,15 @@ hRecoZTausTypedf["Fraction"] = hRecoZTausTypedf["Count"]/total_Reco_taus_decays
 hRecoZTausTypedf["Fraction"] = hRecoZTausTypedf["Fraction"].apply(lambda x: "{:.2%}".format(x))
 hRecoZTausTypedf = hRecoZTausTypedf.sort_values(by="Count", ascending=False)
 hRecoZTausTypedf.to_csv(output_dir + "/RecoZTausDecay.csv", index=False)
+
+hRecoZTausTypeCoincidence = pd.DataFrame(hRecoZTausTypeCoincidence)
+hRecoZTausTypeCoincidence.to_csv(output_dir + "/RecoZTausTypeCoincidence.csv", index=False)
+# Confusion matrix
+cm = confusion_matrix(hRecoZTausTypeCoincidence["Gen"], hRecoZTausTypeCoincidence["Reco"])
+cm_df = pd.DataFrame(cm)
+cm_df.columns = [str(i) for i in range(6)]
+cm_df.index = [str(i) for i in range(6)]
+cm_df.to_csv(output_dir + "/ConfusionMatrix.csv", index=False)
 
 hEffiGenZP = hMatchedGenZP.Clone()
 hEffiGenZP.Divide(hGenZP)

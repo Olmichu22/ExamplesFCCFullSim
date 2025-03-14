@@ -22,7 +22,7 @@ parser.add_argument("-m", "--MuonPCut", default=0.1, type=float, help="Electron 
 parser.add_argument("-e", "--ElectPCut", default=0.1, type=float, help="Muon momentum cut value")
 
 parser.add_argument("-R", "--dRMax", default=0.4, type=float, help="Maximum delta R value")
-parser.add_argument("-n", "--neutronCut", default=1, type=float, help="Neutron momentum cut value")
+parser.add_argument("-n", "--NeutronCut", default=1, type=float, help="Neutron momentum cut value")
 parser.add_argument("-t", "--test", default="True", type=str, help="Run in test mode with limited number of files")
 
 args = parser.parse_args()
@@ -35,14 +35,14 @@ minPMuon=args.MuonPCut
 minPElectron=args.ElectPCut
 selectDecay=args.decay
 fileOutName=args.outfile
-PNeutron=args.neutronCut
+PNeutron=args.NeutronCut
 selectDecay=args.decay
 sample=args.sample
 test= True if args.test=="True" else False
 
-decayString=f"Event_dist_decay{selectDecay}_{dRMax}_t{args.TauPCut}_m{args.MuonPCut }_e{args.ElectPCut}_n{PNeutron}"
+decayString=f"decay{selectDecay}_{dRMax}_t{args.TauPCut}_m{args.MuonPCut }_e{args.ElectPCut}_n{PNeutron}"
 if selectDecay==-777:
-    decayString=f"Event_dist_decayall_{dRMax}_t{args.TauPCut}_m{args.MuonPCut }_e{args.ElectPCut}_n{PNeutron}"
+    decayString=f"decayAll_{dRMax}_t{args.TauPCut}_m{args.MuonPCut }_e{args.ElectPCut}_n{PNeutron}"
 fileOutName=args.outfile+decayString+".root"
 
 print ("=====================================")
@@ -55,7 +55,8 @@ dir_path=path+"/"+sample
 names = ROOT.std.vector('string')()
 nfiles=len(os.listdir(dir_path))
 
-outputpath = f"Images/ZReco/TCut {minPTau} ECut {minPElectron} MCut {minPMuon}"
+outputpath = f"Results/ZReco/Event_dist_decayAll_{args.dRMax}_t{args.TauPCut}_m{args.MuonPCut}_e{args.ElectPCut}_n{args.NeutronCut}"
+
 if not os.path.exists(outputpath):
   os.makedirs(outputpath)
 
@@ -82,12 +83,16 @@ genparts = "MCParticles"
 pfobjects ="PandoraPFOs"
 #pfobjects ="TightSelectedPandoraPFOs"
 
-hRecoEventDist = TH1F("histRecoCardEventDist", "Number of Leptons per Event", 10, 0, 10) 
-hRecoEventMuonP = TH1F("histRecoCardEventMuonP", "Muon Momentum", 50, 0, 50)
-hRecoEventElectronP = TH1F("histRecoCardEventElectronP", "Electron Momentum", 50, 0, 50)
-hRecoEventTauP = TH1F("histRecoCardEventTauP", "Tau Momentum", 50, 0, 50)
-hRecoPairCharge = TH1F("histRecoCardEventOpositePairCharge", "Oposite Charge", 10, -5, 5)
-hRecoEventCharge = TH1F("histRecoCardEventOpositeCharge", "Oposite Charge", 10, -5, 5)
+hRecoEventDist = TH1F("histRecoNLeptonsEventDist", "Number of Leptons per Event", 10, 0, 10) 
+hRecoEventMuonP = TH1F("histRecoEventMuonP", "Muon Momentum", 50, 0, 50)
+hRecoEventElectronP = TH1F("histRecoEventElectronP", "Electron Momentum", 50, 0, 50)
+hRecoEventTauP = TH1F("histRecoEventTauP", "Tau Momentum", 50, 0, 50)
+hRecoPairCharge = TH1F("histRecoPairCharge", "Oposite Charge", 10, -5, 5)
+hRecoEventCharge = TH1F("histRecoCharge", "Oposite Charge", 10, -5, 5)
+
+hRecoEventMuonP_nLeptons = {}
+hRecoEventElectronP_nLeptons = {}
+hRecoEventTauP_nLeptons = {}
 
 # pair_cases = {
 #   "muonmuon": 0,
@@ -139,42 +144,42 @@ for event in reader.get("events"):
   
   if nLeptons==0:
     continue
+  
+  if nLeptons not in hRecoEventMuonP_nLeptons.keys():
+    hRecoEventElectronP_nLeptons[nLeptons] = TH1F(f"histRecoEventElectronP_{nLeptons}Leptons", f"Electron Momentum {nLeptons} Leptons", 50, 0, 50)
+    hRecoEventMuonP_nLeptons[nLeptons] = TH1F(f"histRecoEventMuonP_{nLeptons}Leptons", f"Muon Momentum {nLeptons} Leptons", 50, 0, 50)
+    hRecoEventTauP_nLeptons[nLeptons] = TH1F(f"histRecoEventTauP_{nLeptons}Leptons", f"Tau Momentum {nLeptons} Leptons", 50, 0, 50)
+  
   recoLeptons = {}
   
   for i, muon in recoMuons.items():
     recoLeptons[f"muon{i}"] = muon
-    hRecoEventMuonP.Fill(muon.getMomentum().P())  
+    hRecoEventMuonP.Fill(muon.getMomentum().P())
+    hRecoEventMuonP_nLeptons[nLeptons].Fill(muon.getMomentum().P())
   for i, electron in recoElectrons.items():
     recoLeptons[f"electron{i}"] = electron
-    hRecoEventElectronP.Fill(electron.getMomentum().P())  
+    hRecoEventElectronP.Fill(electron.getMomentum().P())
+    hRecoEventElectronP_nLeptons[nLeptons].Fill(electron.getMomentum().P())  
     
   for i, tau in recoTaus.items():
     if tau.getID() == -13 or tau.getID() == -11:
       continue
     recoLeptons[f"tau{i}"] = tau
     hRecoEventTauP.Fill(tau.getMomentum().P())  
-
+    hRecoEventTauP_nLeptons[nLeptons].Fill(tau.getMomentum().P())
   
   # fill histograms depending on the number of leptons
-  if nLeptons == 2:
-    tot_charge = 0
-    pair_cases_count += 1
-    for i, lepton in recoLeptons.items():
-      tot_charge += lepton.getCharge()
-      #Key code for the pair
-      #Key code is the key i without the number
-      # if tot_charge == 0:
-      #   hRecoEventTypeDist.Fill(-1)
-    pair_cases_charge[tot_charge] += 1
+  tot_charge = 0
+  pair_cases_count += 1
+  for i, lepton in recoLeptons.items():
+    tot_charge += lepton.getCharge()
+  if nLeptons==2:
     hRecoPairCharge.Fill(tot_charge)
-    # hRecoEventTypeDist.Fill(pair_cases[key_code])
-    
-    
-  else:
-    tot_charge = 0
-    for i, lepton in recoLeptons.items():
-      tot_charge += lepton.getCharge()
-    hRecoEventCharge.Fill(tot_charge)
+    if tot_charge == 0:
+      pair_cases_charge[0] += 1
+    else:
+      pair_cases_charge[tot_charge] += 1
+  hRecoEventCharge.Fill(tot_charge)
     
   hRecoEventDist.Fill(nLeptons)
 
@@ -187,7 +192,6 @@ event_type["number"] = pair_cases.values()
 pair_cases_charge_df = pd.DataFrame(columns=["charge", "number"])
 pair_cases_charge_df["charge"] = pair_cases_charge.keys()
 pair_cases_charge_df["number"] = pair_cases_charge.values()
-# New row with total not using append
 pair_cases_charge_df.loc[-1] = ["total", pair_cases_charge_df["number"].sum()]
 pair_cases_charge_df.index = pair_cases_charge_df.index + 1
 pair_cases_charge_df.sort_index(inplace=True)
@@ -233,7 +237,17 @@ event_type.to_csv(outputpath+"/event_cases.csv", index=False)
 print ("-------------------------------------")
 print ("Processed %d events" %countEvents)
 # save plots for later
-outfile=ROOT.TFile(fileOutName,"RECREATE")
+outfile=ROOT.TFile(outputpath +"/"+fileOutName,"RECREATE")
+for key in hRecoEventMuonP_nLeptons.keys():
+  hRecoEventMuonP_nLeptons[key].Write()
+  hRecoEventElectronP_nLeptons[key].Write()
+  hRecoEventTauP_nLeptons[key].Write()
+  
+nleptons_keys = hRecoEventMuonP_nLeptons.keys()
+# Save keys as txt file
+with open(outputpath +"/"+fileOutName.replace(".root", "_keys.txt"), "w") as f:
+  for item in nleptons_keys:
+    f.write("%s\n" % item)
 
 hRecoEventDist.Write()
 hRecoEventTypeDist.Write()

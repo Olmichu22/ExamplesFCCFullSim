@@ -79,7 +79,7 @@ hGenZTausTypeDict = {}
 
 print("------------------------------------")
 print("Start processing!")
-
+countZ = 0
 countEvents = 0
 for event in reader.get("events"):
     if countEvents%500==0:
@@ -92,8 +92,9 @@ for event in reader.get("events"):
     # Reco of Z boson at generator level
     genZs = ZReco.findAllGenZs(mc_particles)
     nGenZs = len(genZs)
-    print("Found %d Gen Zs" %nGenZs)
-    
+#    print("Found %d Gen Zs" %nGenZs)
+    if len(genZs)>0:
+        countZ += 1
     for i in range(nGenZs):
         genZ = genZs[i]
         hGenZP.Fill(genZ.getMomentum().P())
@@ -126,7 +127,8 @@ print("------------------------------------")
 print("Processed %d events" %countEvents)
 print("Plots saved in %s" %fileOutName)
 print("====================================")
-
+print(countZ)
+print(countEvents)
 # Save histograms
 outfile = ROOT.TFile(fileOutName, "RECREATE")
 hGenZP.Write()
