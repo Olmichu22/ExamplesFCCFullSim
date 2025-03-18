@@ -1,6 +1,9 @@
 import sys
 import math
 import ROOT
+import yaml
+import os
+import argparse
 from array import array
 from podio import root_io
 import edm4hep
@@ -58,3 +61,25 @@ def sort_by_P(Tau):
     sortedTau = [tau for tau, _ in sorted_tau_with_P]
    
     return sortedTau
+
+def load_yaml_config(config_file, default_config):
+    """Load the YAML configuration file if it exists.
+    Args:
+    args (argparse.Namespace): command line arguments
+    config_file (str): path to the YAML configuration file
+    Returns:
+    dict: configuration parameters
+    """
+    if os.path.exists(config_file):
+        with open(config_file, "r") as file:
+            config = yaml.safe_load(file)
+            print(f"Loaded configuration parameters from '{config_file}'.")
+    elif default_config:
+        if not os.path.exists(default_config):
+            raise FileNotFoundError(f"Error: '{default_config}' does not exist.")
+        with open(default_config, "r") as file:
+            config = yaml.safe_load(file)
+            print(f"Loaded default configuration parameters from '{default_config}'.")
+    else:
+        print("No configuration file provided or found.")
+    return config              

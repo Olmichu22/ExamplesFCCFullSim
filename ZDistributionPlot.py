@@ -11,34 +11,30 @@ from pathlib import Path
 from modules import tauReco 
 from modules import myutils
 import argparse
+import yaml
 
 ROOT.gStyle.SetOptStat(0)
 
 parser = argparse.ArgumentParser(description="Configure the analysis",
                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-
-parser.add_argument("-p", "--TauPCut", default=0.1, type=float, help="Tau momentum cut value")
-parser.add_argument("-m", "--MuonPCut", default=0.1, type=float, help="Electron momentum cut value")
-parser.add_argument("-e", "--ElectPCut", default=0.1, type=float, help="Muon momentum cut value")
-parser.add_argument("-R", "--dRMax", default=0.4, type=float, help="Maximum delta R value")
-parser.add_argument("-n", "--NeutronCut", default=1, type=float, help="Neutron momentum cut value")
+parser.add_argument("-i", "--input", default="Results/ZReco/Event_dist_0.4_tph0.1_tpi0.1_m0.1_e1_n1", help="Input path where data to process is stored")
 
 args = parser.parse_args()
 
-minPTau=args.TauPCut
-minPMuon=args.ElectPCut
-minPElectron=args.MuonPCut
+inputBasePath = args.input
+with open(inputBasePath+"/config.yaml", "r") as yaml_file:
+  config = yaml.safe_load(yaml_file)
 
-# file = ROOT.TFile("Event_dist_Event_dist_decayall_0.4_t0.1_m0.5_e0.5_n1.root")
-inputpath = f"Results/ZReco/Event_dist_decayAll_{args.dRMax}_t{args.TauPCut}_m{args.MuonPCut}_e{args.ElectPCut}_n{args.NeutronCut}"
 
-outputpath = f"Results/ZReco/Event_dist_decayAll_{args.dRMax}_t{args.TauPCut}_m{args.MuonPCut}_e{args.ElectPCut}_n{args.NeutronCut}/Images"
+outputpath = inputBasePath+"/Images"
+
 if not os.path.exists(outputpath):
     os.makedirs(outputpath)
 
-decayString = f"Event_dist_decayAll_{args.dRMax}_t{args.TauPCut}_m{args.MuonPCut }_e{args.ElectPCut}_n{args.NeutronCut}"
-file_path = inputpath+"/"+decayString+".root"
+file_path = config["output"]["outputpath"]+config["output"]["outputfile"]
+nLeptons_file = config["output"]["nLeptons_keys"]
+
 
 
 variabs = ["histRecoNLeptonsEventDist",
@@ -57,10 +53,9 @@ plot_titles_config = {"histRecoNLeptonsEventDist": {"x": "Number of Leptons", "y
                       }
 
 
-colors = ["kBlack", "kRed", "kGreen", "kBlue", "kYellow", "kMagenta", "kCyan", "kOrange", "kSpring", "kTeal", "kAzure", "kViolet", "kPink"]
+colors = ["kBlack", "kRed", "kGreen", "kBlue", "kOrange", "kMagenta", "kCyan", "kYellow", "kSpring", "kTeal", "kAzure", "kViolet", "kPink"]
 colors = colors=[getattr(ROOT,colors[i]) for i in range(0,len(colors))]
 # Read nLeptons values from a text file
-nLeptons_file = inputpath+"/"+decayString+"_keys.txt"
 with open(nLeptons_file, "r") as file:
   nLeptons_values = [int(line.strip()) for line in file.readlines()]
 
@@ -102,17 +97,23 @@ for var in variabs:
   
 for key in same_hist_variabs.keys():
   c=ROOT.TCanvas("c"+key)
-  leg=ROOT.TLegend(0.75,0.89,0.95,0.75)
-  leg.SetFillStyle(0)
+  leg=ROOT.TLegend()
+  leg.SetFillStyle(1)
   leg.SetFillColor(0)
   leg.SetLineColor(0)
+  leg.SetTextSize(0.03)
   for i, var in enumerate(same_hist_variabs[key]):
     histo = file.Get(var)
+    # Normalize histograms
+    # if histo.Integral()!=0:
+    #   histo.Scale(1/histo.Integral())
     histo.SetLineColor(plot_titles_config[var]["color"])
     histo.Draw("hist same")
     leg.AddEntry(histo, plot_titles_config[var]["title"], "l")
   histo.SetXTitle(plot_titles_config[var]["x"])
   histo.SetYTitle(plot_titles_config[var]["y"])
-  histo.SetTitle(f"Histogram of {key} P for {nLeptons_values[i]} Leptons")
+  histo.SetTitle(f"Histogram of {key} P")
+  
   leg.Draw()
-  c.SaveAs(outputpath+"/"+key+".png")
+  # c.SetLogy()
+  c.SaveAs(outputpath+"/"+"P_perNLeptons_"+key+".png")

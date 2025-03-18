@@ -6,6 +6,8 @@ import numpy as np
 from podio import root_io
 import edm4hep
 from pathlib import Path
+from pprint import pprint
+import yaml
 
 
 from modules import tauReco 
@@ -14,35 +16,58 @@ from modules import myutils
 import argparse
 parser = argparse.ArgumentParser(description="Configure the analysis",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("-f","--sample",default="ZTauTau_SMPol_25Sept_MuonFix")
-parser.add_argument("-o","--outfile",default="effis_")
-parser.add_argument("-d","--decay",default=-777,type=int) # GEN 
-parser.add_argument("-p","--photonCut",default=0.1,type=float) # Creo que esto es un corte de momento en general
-parser.add_argument("-R","--dRMax",default=0.4,type=float)
-parser.add_argument("-n","--neutronCut",default=1,type=float)
+parser.add_argument("-f","--sample")
+parser.add_argument("-o","--outfile")
+parser.add_argument("-d","--decay", type=int) # GEN 
+parser.add_argument("-p","--TauPhotonPCut", type=float) # Creo que esto es un corte de momento en general
+parser.add_argument("-i","--TauPionPCut", type=float)
+parser.add_argument("-R","--dRMax", type=float)
+parser.add_argument("-n","--NeutronCut", type=float)
 parser.add_argument("-t", "--test", default="True", type=str, help="Run in test mode with limited number of files")
-
-
+parser.add_argument("-c", "--config", default="config.yaml", type=str, help="Configuration file")
 
 args = parser.parse_args()
-config = vars(args)
-print(config)
+default_config = "config/default/taurecolong.yaml"
+config = myutils.load_yaml_config(args.config, default_config)
 
-# get configuration parameters
-dRMax=args.dRMax
-minP=args.photonCut
-selectDecay=args.decay
-fileOutName=args.outfile
-PNeutron=args.neutronCut
-selectDecay=args.decay
-sample=args.sample
-test= True if args.test=="True" else False
+dRMax=args.dRMax if args.dRMax != None else config["cuts"]["dRMax"]
+minPTauPhoton=args.TauPhotonPCut if args.TauPhotonPCut != None else config["cuts"]["TauPhotonPCut"]
+minPTauPion=args.TauPionPCut if args.TauPionPCut != None else config["cuts"]["TauPionPCut"]
+PNeutron=args.NeutronCut if args.NeutronCut != None else config["cuts"]["NeutronCut"]
+
+# We can use same config but different decay mode
+# Priority is given to the decay mode in the command line
+if args.decay not in config["general"]["decay"] and args.decay != None:
+  config["general"]["decay"].append(args.decay)
+  selectDecay = args.decay
+else:
+  selectDecay = args.decay if args.decay !=None else config["general"]["decay"][0]
+  
+sample=args.sample if args.sample!= None else config["general"]["sample"]
+test_arg = args.test if args.test != None else config["general"]["test"]
+test= True if test_arg=="True" else False
+outfile=args.outfile if args.outfile!= None else config["general"]["outfile"]
+
+outputbasepath = "Results/TauReco/"
 
 
-decayString="decay"+str(selectDecay)+"_"+str(dRMax)+"_"+str(args.photonCut)+"_"+str(PNeutron)
+cut_string = f"_{dRMax}_tph{minPTauPhoton}_tpi{minPTauPion}_n{PNeutron}"
+decayString = f"decay{selectDecay}"+cut_string
 if selectDecay==-777:
-    decayString="decayAll_"+str(dRMax)+"_"+str(args.photonCut)+"_"+str(PNeutron)
-fileOutName=args.outfile+decayString+".root"
+    decayString = "decayAll"+cut_string
+fileOutName = outfile+decayString+".root"
+
+outputpath = outputbasepath+outfile+cut_string[1:]+"/"
+
+# Finish the configuration
+config["output"]["outputpath"] = outputpath
+config["output"]["outputfile"] = fileOutName
+
+if not os.path.exists(outputpath):
+  os.makedirs(outputpath)
+
+print("Configuration:")
+pprint(config, indent = 4)
 
 print ("=====================================")
 
@@ -120,9 +145,9 @@ hRecoConstP=TH1F("hRecoConstP","",500,0,50)
 hRecoConstPhotonP=TH1F("hRecoConstPhotonP","",500,0,50)
 hRecoConstPionP=TH1F("hRecoConstPionP","",500,0,50)
 
-h2DRecoConstPType      =TH2F("hRecoConstPType","",500,0,50,15,0,15)
+h2DRecoConstPType=TH2F("hRecoConstPType","",500,0,50,15,0,15)
 h2DRecoConstPhotonPType=TH2F("hRecoConstPhotonPType","",500,0,50,15,0,15)
-h2DRecoConstPionPType  =TH2F("hRecoConstPionPType","",500,0,50,15,0,15)
+h2DRecoConstPionPType=TH2F("hRecoConstPionPType","",500,0,50,15,0,15)
 
 hRecoConstPOverTauP=TH1F("hRecoConstPOverTauP","",100,0,2)
 hRecoConstPhotonPOverTauP=TH1F("hRecoConstPhotonPOverTauP","",100,0,2)
@@ -145,10 +170,10 @@ hGenConstPi0P=TH1F("hGenConstPi0P","",500,0,50)
 hGenConstPionP=TH1F("hGenConstPionP","",500,0,50)
 hGenConstPhotonP=TH1F("hGenConstPhotonP","",500,0,50)
 
-h2DGenConstPType      =TH2F("hGenConstPType","",500,0,50,15,0,15)
-h2DGenConstPi0PType=TH2F("hGenConstPi0PType","",500,0,50,15,0,15)
-h2DGenConstPionPType  =TH2F("hGenConstPionPType","",500,0,50,15,0,15)
-h2DGenConstPhotonPType=TH2F("hGenConstPhotonPType","",500,0,50,15,0,15)
+h2DGenConstPType = TH2F("hGenConstPType","",500,0,50,15,0,15)
+h2DGenConstPi0PType = TH2F("hGenConstPi0PType","",500,0,50,15,0,15)
+h2DGenConstPionPType = TH2F("hGenConstPionPType","",500,0,50,15,0,15)
+h2DGenConstPhotonPType = TH2F("hGenConstPhotonPType","",500,0,50,15,0,15)
 
 hGenConstPOverTauP=TH1F("hGenConstPOverTauP","",100,0,2)
 hGenConstPi0POverTauP=TH1F("hGenConstPi0POverTauP","",100,0,2)
@@ -205,7 +230,7 @@ for event in reader.get("events"):
    genTaus=tauReco.findAllGenTaus(mc_particles)
    nGenTaus=len(genTaus)
 
-   recoTaus= tauReco.findAllTaus(pfos,dRMax, minP,PNeutron)
+   recoTaus= tauReco.findAllTaus(pfos,dRMax, minPTauPhoton, minPTauPion, PNeutron)
    nRecoTaus=len(recoTaus)
 
    foundGen=False
@@ -215,13 +240,13 @@ for event in reader.get("events"):
    nGenTausHad=0
 
    for i in range(0,nGenTaus):
-      genVisTauP4=genTaus[i][0] # to do: find a clearer dictionary for this
-      genTauId=genTaus[i][1]
-      genTauQ=genTaus[i][2]
-      genTauP4=genTaus[i][3]
-      genTauDR=genTaus[i][4] # Maximum angle between the tau and its constituents
-      genTauNConsts=genTaus[i][5]
-      genTauConsts=genTaus[i][6]
+      genVisTauP4=genTaus[i].getvisMomentum() # to do: find a clearer dictionary for this
+      genTauId=genTaus[i].getID()
+      genTauQ=genTaus[i].getCharge()
+      genTauP4=genTaus[i].getMomentum()
+      genTauDR=genTaus[i].getMaxAngle() # Maximum angle between the tau and its constituents
+      genTauNConsts=genTaus[i].getnConst()
+      genTauConsts=genTaus[i].getDaughters()
 
       # remove leptonic decays 
       if genTauId<0:
@@ -307,55 +332,21 @@ for event in reader.get("events"):
                countPionsRun+=1
 
 
-      findMatch=-1
       dRMatch=1
-
+      findMatch = tauReco.MatchRecoGenTau(genTaus[i], recoTaus, maxDRMatch=dRMatch, selectDecay=selectDecay)
       # For each generator level tau, find the reconstructed tau that is closest:
-      for j in range(0,nRecoTaus):
-         recoTauP4=recoTaus[j][0] # to do: find a clearer dictionary for this
-         recoTauId=recoTaus[j][1]
-         recoTauQ=recoTaus[j][2]
-         recoTauDR=recoTaus[j][3]
-         recoTauNConsts=recoTaus[j][4]
-         recoTauConsts=recoTaus[j][5]
-
-         # we want to study migrations: keep all the decays but count how many are good 
-         # careful, at reco level we count photons and at gen level pi0s: difference in the
-         # decay mode (1 gen can be 1,2 reco)
-
-         recoDM=recoTauId
-         if recoTauId==2:
-            recoDM=1
-         elif (recoTauId>=11 and recoTauId<15):
-            recoDM=11
-         elif recoTauId>=3 and recoTauId<10:
-            recoDM=3
-
-         if selectDecay!=-777 and selectDecay==recoDM:
-               nTausType+=1
-
-         # but remove at least the leptonic ones / failed ID
-         if recoTauId<0:
-            continue
-
-         angleMatch=myutils.dRAngle(recoTauP4,genVisTauP4)
-
-         # find closest
-         if angleMatch<dRMatch:
-            dRMatch=angleMatch
-            findMatch=j
-          
-          # If you have not found it, continue: this is a efficiency loss 
+            
+      # If you have not found it, continue: this is a efficiency loss 
       if findMatch==-1:
          continue 
 
       # now, get the kinematics of the matched reco tau
-      recoTauP4=recoTaus[findMatch][0] 
-      recoTauId=recoTaus[findMatch][1]
-      recoTauQ=recoTaus[findMatch][2]
-      recoTauDR=recoTaus[findMatch][3]
-      recoTauNConsts=recoTaus[findMatch][4]
-      recoTauConsts=recoTaus[findMatch][5]
+      recoTauP4=recoTaus[findMatch].getMomentum() 
+      recoTauId=recoTaus[findMatch].getID()
+      recoTauQ=recoTaus[findMatch].getCharge()
+      recoTauDR=recoTaus[findMatch].getMaxCone()
+      recoTauConsts=recoTaus[findMatch].getDaughters()
+      recoTauNConsts=recoTaus[findMatch].getnConst()
 
 #          print ("Reco?",recoTauP4.P(),recoTauId,recoTauQ,recoTauDR,recoTauNConsts)
 
@@ -517,12 +508,16 @@ hEffiGenTauType.Divide(hGenTauType)
 
 print ("-------------------------------------")
 print ("Processed %d events" %countEvents)
-print ("Plots saved in %s" %fileOutName)
+
+
+
+output_config_file = outputpath+"config.yaml"
+with open(output_config_file, "w") as file:
+    yaml.dump(config, file)
+    print(f"Saved configuration parameters to '{output_config_file}'.")
 print ("=====================================")
 
-
-# save plots for later
-outfile=ROOT.TFile(fileOutName,"RECREATE")
+outfile=ROOT.TFile(outputpath+fileOutName,"RECREATE")
 
 hGenTauPt.Write()
 hGenVisTauPt.Write()
@@ -651,5 +646,6 @@ hMatchedGenConstPion3P.Write()
 hGenConstPion3P.Write()
 hRecoConstPion3P.Write()
 
-
+print ("Plots saved in %s" %fileOutName)
+print ("=====================================")
 outfile.Close() 

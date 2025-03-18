@@ -1,0 +1,14 @@
+cuts:
+  NeutronCut: 1
+  TauPhotonPCut: 0.1
+  TauPionPCut: 0.1
+  dRMax: 0.4
+general:
+  decay:
+  - -777
+  outfile: effis
+  sample: ZTauTau_SMPol_25Sept_MuonFix
+  test: 'True'
+output:
+  outputfile: effisdecayAll_0.4_tph0.1_tpi0.1_n1.root
+  outputpath: Results/TauReco/effis0.4_tph0.1_tpi0.1_n1/

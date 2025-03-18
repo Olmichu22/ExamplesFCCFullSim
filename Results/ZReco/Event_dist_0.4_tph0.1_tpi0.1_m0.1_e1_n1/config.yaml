@@ -1,0 +1,19 @@
+cuts:
+  ElectPCut: 1
+  MuonPCut: 0.1
+  NeutronCut: 1
+  TauPhotonPCut: 0.1
+  TauPionPCut: 0.1
+  dRMax: 0.4
+general:
+  decay:
+  - -777
+  outfile: Event_dist_
+  sample: ZTauTau_SMPol_25Sept_MuonFix
+  test: 'True'
+output:
+  event_cases: Results/ZReco/Event_dist_0.4_tph0.1_tpi0.1_m0.1_e1_n1//event_cases.csv
+  nLeptons_keys: Results/ZReco/Event_dist_0.4_tph0.1_tpi0.1_m0.1_e1_n1/nLeptons_keys.txt
+  outputfile: Event_dist_decayAll_0.4_tph0.1_tpi0.1_m0.1_e1_n1.root
+  outputpath: Results/ZReco/Event_dist_0.4_tph0.1_tpi0.1_m0.1_e1_n1/
+  pair_cases_charge: Results/ZReco/Event_dist_0.4_tph0.1_tpi0.1_m0.1_e1_n1//pair_cases_charge.csv

@@ -84,6 +84,7 @@ hGenVisTauMass=TH1F("histoGenTauVisMass","",200,0,3)
 hGenTauQ=TH1F("histoGenTauQ","",3,-1.5,1.5)
 hGenTauTheta=TH1F("histoGenTauTheta","",100,0,3.15)
 hGenTauPhi=TH1F("histoGenTauPhi","",100,-3.2,3.2)
+hGenMaxConstAngle=TH1F("histoGenMaxConstAngle","",100,0,2)
 
 hRecoTauP=TH1F("histoRecoTauP","",50,0,50)
 hRecoTauType=TH1F("histoRecoTauType","",40,-20,20)
@@ -125,8 +126,9 @@ for event in reader.get("events"):
       # read the tau information
       genVisTauP4=genTaus[i].getvisMomentum()
       genTauId=genTaus[i].getID()
-      genTauQ=genTaus[i].getvisCharge()
+      genTauQ=genTaus[i].getCharge()
       genTauP4=genTaus[i].getMomentum()
+      genTauMaxAngle = genTaus[i].getMaxAngle()
       #genTauDR=genTaus[i][4]
       #genTauNConsts=genTaus[i][5]
       #genTauConsts=genTaus[i][6]
@@ -154,6 +156,7 @@ for event in reader.get("events"):
       hGenTauQ.Fill(genTauQ)
       hGenTauTheta.Fill(genTauP4.Theta())
       hGenTauPhi.Fill(genTauP4.Phi())
+      hGenMaxConstAngle.Fill(genTauMaxAngle)
 
 
    for j in range(0,nTaus):
@@ -214,6 +217,7 @@ hGenVisTauMass.Write()
 hGenTauQ.Write()
 hGenTauTheta.Write()
 hGenTauPhi.Write()
+hGenMaxConstAngle.Write()
 
 hRecoTauP.Write()
 hRecoTauType.Write()

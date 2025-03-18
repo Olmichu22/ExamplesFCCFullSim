@@ -9,56 +9,80 @@ from pathlib import Path
 import pandas as pd
 from modules import tauReco, muonReco, electronReco
 from modules import ZReco
-from modules import myutils 
+from modules import myutils
+import yaml
+from pprint import pprint
 
 import argparse
 parser = argparse.ArgumentParser(description="Configure the analysis",
                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("-f", "--sample", default="ZTauTau_SMPol_25Sept_MuonFix", help="Sample file name to process")
-parser.add_argument("-o", "--outfile", default="Event_dist_", help="Output file name prefix")
-parser.add_argument("-d", "--decay", default=-777, type=int, help="Decay mode to select (-777 for all)")
-parser.add_argument("-p", "--TauPCut", default=0.1, type=float, help="Tau momentum cut value")
-parser.add_argument("-m", "--MuonPCut", default=0.1, type=float, help="Electron momentum cut value")
-parser.add_argument("-e", "--ElectPCut", default=0.1, type=float, help="Muon momentum cut value")
-
-parser.add_argument("-R", "--dRMax", default=0.4, type=float, help="Maximum delta R value")
-parser.add_argument("-n", "--NeutronCut", default=1, type=float, help="Neutron momentum cut value")
-parser.add_argument("-t", "--test", default="True", type=str, help="Run in test mode with limited number of files")
+parser.add_argument("-f", "--sample", help="Sample file name to process")
+parser.add_argument("-o", "--outfile", help="Output file name prefix")
+parser.add_argument("-d", "--decay", type=int, help="Decay mode to select (-777 for all)")
+parser.add_argument("-p", "--TauPhotonPCut", type=float, help="Tau photon momentum cut value")
+parser.add_argument("-i","--TauPionPCut", type=float, help="Tau pion momentum cut value")
+parser.add_argument("-m", "--MuonPCut", type=float, help="Electron momentum cut value")
+parser.add_argument("-e", "--ElectPCut", type=float, help="Muon momentum cut value")
+parser.add_argument("-R", "--dRMax", type=float, help="Maximum delta R value")
+parser.add_argument("-n", "--NeutronCut", type=float, help="Neutron momentum cut value")
+parser.add_argument("-t", "--test", type=str, help="Run in test mode with limited number of files")
+parser.add_argument("-c", "--config", default="config.yaml", type=str, help="Configuration file")
 
 args = parser.parse_args()
-config = vars(args)
-print(config)
+default_config = "config/default/eventdist.yaml"
+config = myutils.load_yaml_config(args.config, default_config)
 
-dRMax=args.dRMax
-minPTau=args.TauPCut
-minPMuon=args.MuonPCut
-minPElectron=args.ElectPCut
-selectDecay=args.decay
-fileOutName=args.outfile
-PNeutron=args.NeutronCut
-selectDecay=args.decay
-sample=args.sample
-test= True if args.test=="True" else False
+dRMax=args.dRMax if args.dRMax != None else config["cuts"]["dRMax"]
+minPTauPhoton=args.TauPhotonPCut if args.TauPhotonPCut != None else config["cuts"]["TauPhotonPCut"]
+minPTauPion=args.TauPionPCut if args.TauPionPCut != None else config["cuts"]["TauPionPCut"]
+minPMuon=args.MuonPCut if args.MuonPCut != None else config["cuts"]["MuonPCut"]
+minPElectron=args.ElectPCut if args.ElectPCut != None else config["cuts"]["ElectPCut"]
+PNeutron=args.NeutronCut if args.NeutronCut != None else config["cuts"]["NeutronCut"]
 
-decayString=f"decay{selectDecay}_{dRMax}_t{args.TauPCut}_m{args.MuonPCut }_e{args.ElectPCut}_n{PNeutron}"
+# We can use same config but different decay mode
+# Priority is given to the decay mode in the command line
+if args.decay not in config["general"]["decay"] and args.decay != None:
+  config["general"]["decay"].append(args.decay)
+  selectDecay = args.decay
+else:
+  selectDecay = args.decay if args.decay !=None else config["general"]["decay"][0]
+  
+sample=args.sample if args.sample!= None else config["general"]["sample"]
+test_arg = args.test if args.test != None else config["general"]["test"]
+test= True if test_arg=="True" else False
+outfile=args.outfile if args.outfile!= None else config["general"]["outfile"]
+
+outputbasepath = "Results/ZReco/"
+
+
+cut_string = f"_{dRMax}_tph{minPTauPhoton}_tpi{minPTauPion}_m{minPMuon}_e{minPElectron}_n{PNeutron}"
+decayString = f"decay{selectDecay}"+cut_string
 if selectDecay==-777:
-    decayString=f"decayAll_{dRMax}_t{args.TauPCut}_m{args.MuonPCut }_e{args.ElectPCut}_n{PNeutron}"
-fileOutName=args.outfile+decayString+".root"
+    decayString = "decayAll"+cut_string
+fileOutName = outfile+decayString+".root"
 
+outputpath = outputbasepath+outfile+cut_string[1:]+"/"
+
+# Finish the configuration
+print(config["output"])
+config["output"]["outputpath"] = outputpath
+config["output"]["outputfile"] = fileOutName
+
+if not os.path.exists(outputpath):
+  os.makedirs(outputpath)
+
+print("Configuration:")
+pprint(config, indent = 4)
 print ("=====================================")
 
 # get all the files 
 path="/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
 file="out_reco_edm4hep_edm4hep"
 filenames=[]
-dir_path=path+"/"+sample
+dir_path=path+sample
 names = ROOT.std.vector('string')()
 nfiles=len(os.listdir(dir_path))
 
-outputpath = f"Results/ZReco/Event_dist_decayAll_{args.dRMax}_t{args.TauPCut}_m{args.MuonPCut}_e{args.ElectPCut}_n{args.NeutronCut}"
-
-if not os.path.exists(outputpath):
-  os.makedirs(outputpath)
 
 nfiles=1000 #Maxium files to read
 if test==True:
@@ -125,7 +149,7 @@ for event in reader.get("events"):
   pfos = event.get(pfobjects)
 
   # get the number of leptons in the event
-  recoTaus= tauReco.findAllTaus(pfos,dRMax, minPTau,PNeutron)
+  recoTaus= tauReco.findAllTaus(pfos, dRMax, minPTauPhoton, minPTauPion,PNeutron)
   recoMuons = muonReco.findAllMuons(pfos, minPMuon)
   recoElectrons = electronReco.findAllElectrons(pfos, minPElectron)
   nTaus=len(recoTaus)
@@ -183,21 +207,13 @@ for event in reader.get("events"):
     
   hRecoEventDist.Fill(nLeptons)
 
+
+# Create a DataFrame for the type of cases
 max_case = len(pair_cases)
 hRecoEventTypeDist = TH1F("histRecoCardEventTypeDist", "Type of Leptons per Event", max_case, 0, max_case)
 event_type = pd.DataFrame(columns=["case", "number"])
 event_type["case"] = pair_cases.keys()
 event_type["number"] = pair_cases.values()
-
-pair_cases_charge_df = pd.DataFrame(columns=["charge", "number"])
-pair_cases_charge_df["charge"] = pair_cases_charge.keys()
-pair_cases_charge_df["number"] = pair_cases_charge.values()
-pair_cases_charge_df.loc[-1] = ["total", pair_cases_charge_df["number"].sum()]
-pair_cases_charge_df.index = pair_cases_charge_df.index + 1
-pair_cases_charge_df.sort_index(inplace=True)
-pair_cases_charge_df.to_csv(outputpath+"/pair_cases_charge.csv", index=False)
-
-print(f"Parejas totales neutras {pair_cases_charge[0]}")
 
 # Sort by number of cases
 event_type = event_type.sort_values(by="number", ascending=False)
@@ -205,49 +221,53 @@ event_type["id"] = range(0, len(event_type))
 for i, row in event_type.iterrows():
   hRecoEventTypeDist.Fill(row["id"], row["number"])
 
-event_type.to_csv(outputpath+"/event_cases.csv", index=False)
 
-    
+# Create a DataFrame for the charge of the pairs
+pair_cases_charge_df = pd.DataFrame(columns=["charge", "number"])
+pair_cases_charge_df["charge"] = pair_cases_charge.keys()
+pair_cases_charge_df["number"] = pair_cases_charge.values()
+pair_cases_charge_df.loc[-1] = ["total", pair_cases_charge_df["number"].sum()]
+pair_cases_charge_df.index = pair_cases_charge_df.index + 1
+pair_cases_charge_df.sort_index(inplace=True)
 
-
-  # for j in range(0,nTaus):
-  #   recoTauP4=recoTaus[j][0]
-  #   recoTauId=recoTaus[j][1]
-  #   recoTauQ=recoTaus[j][2]
-  #     #recoTauDR=recoTaus[j][3]
-  #     #recoTauNConsts=recoTaus[j][4]
-  #     #recoTauConsts=recoTaus[j][5]
-
-  #     # to make the code more economic we are checking gen and reco in parallel, but 
-  #     # there is a difference in the DM labelling:
-  #     # at reco level we count photons and at gen level pi0s: difference in the
-  #     # decay mode (1 gen can be 1 or 2 reco, etc )
-  #   recoDM=recoTauId
-  #   if recoTauId==2:
-  #     recoDM=1
-  #   elif recoTauId>=3 and recoTauId<10:
-  #     recoDM=3
-  #   elif (recoTauId>=11 and recoTauId<15):
-  #     recoDM=11
-
-  #   if selectDecay!=-777 and selectDecay!=recoDM:
-  #     continue
-
+print(f"Total neutral pairs {pair_cases_charge[0]}")
 
 print ("-------------------------------------")
 print ("Processed %d events" %countEvents)
-# save plots for later
-outfile=ROOT.TFile(outputpath +"/"+fileOutName,"RECREATE")
+# Save Dicts and txt files
+
+
+# Save keys (number of leptons) as txt file  
+nleptons_keys = hRecoEventMuonP_nLeptons.keys()
+output_key_file = outputpath+"nLeptons_keys.txt"
+with open(output_key_file, "w") as f:
+  for item in nleptons_keys:
+    f.write("%s\n" % item)
+
+output_event_type_file = outputpath+"/event_cases.csv"
+event_type.to_csv(output_event_type_file, index=False)
+
+output_pair_cases_charge_file = outputpath+"/pair_cases_charge.csv"
+pair_cases_charge_df.to_csv(output_pair_cases_charge_file, index=False)
+
+# Add the keys to the configuration
+config["output"]["nLeptons_keys"] = output_key_file
+config["output"]["event_cases"] = output_event_type_file
+config["output"]["pair_cases_charge"] = output_pair_cases_charge_file
+
+# Save the configuration
+output_config_file = outputpath+"config.yaml"
+with open(output_config_file, "w") as file:
+    yaml.dump(config, file)
+    print(f"Saved configuration parameters to '{output_config_file}'.")
+print ("=====================================")
+
+outfile=ROOT.TFile(outputpath+fileOutName,"RECREATE")
 for key in hRecoEventMuonP_nLeptons.keys():
   hRecoEventMuonP_nLeptons[key].Write()
   hRecoEventElectronP_nLeptons[key].Write()
   hRecoEventTauP_nLeptons[key].Write()
-  
-nleptons_keys = hRecoEventMuonP_nLeptons.keys()
-# Save keys as txt file
-with open(outputpath +"/"+fileOutName.replace(".root", "_keys.txt"), "w") as f:
-  for item in nleptons_keys:
-    f.write("%s\n" % item)
+
 
 hRecoEventDist.Write()
 hRecoEventTypeDist.Write()
@@ -257,7 +277,7 @@ hRecoEventTauP.Write()
 hRecoPairCharge.Write()
 hRecoEventCharge.Write()
 outfile.Close() 
-print ("Plots saved in %s" %fileOutName)
+print ("Plots saved in %s" %outputpath+fileOutName)
 print ("=====================================")
 
 

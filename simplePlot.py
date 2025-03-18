@@ -14,21 +14,24 @@ parser.add_argument("-c","--colors",default=["kBlack"], nargs='+', type=str) # ,
 #variabs=["histoRecoTauType","histoRecoTauP","histoRecoTauMass","histoRecoTauTheta","histoGenTauP","histoGenTauType","histoGenTauVisP","histoGenTauTheta","histoGenTauVisMass"]
 #xLabels=["Tau Type, Reco","Reco Tau P (GeV)","Reco Tau Mass (GeV)","Tau Theta","Gen Tau P","Gen Tau Type","Gen Tau Visible P (GeV)","Gen Tau Theta","Gen Tau Visible Mass"]
 
-xLabels_dict = {"histoRecoTauType":"Reco Tau Type",
-                "histoRecoTauP":"Reco Tau P (GeV)",
-                "histoRecoTauMass":"Reco Tau Mass (GeV)",
-                "histoRecoTauTheta":"Reco Tau Theta",
-                "histoGenTauP":"Gen Tau P",
-                "histoGenTauType":"Gen Tau Type",
-                "histoGenTauVisP":"Gen Tau Visible P (GeV)",
-                "histoGenTauTheta":"Gen Tau Theta",
-                "histoGenTauVisMass":"Gen Tau Visible Mass",
-                "hGenTauP":"Gen Tau P",
-                "hGenVisTauP":"Gen Tau Visible P",
-                "hEffiGenVisTauPt":"Gen Tau Visible P",
-                "hEffiGenTauType":"Gen Tau Type",
-                "hEffiGenTauTheta":"Gen Tau Theta",
-                "hEffiGenVisTauMass":"Gen Vis Mass (GeV)"}
+xLabels_dict = {
+  "histoRecoTauType": {"labelx": "Reco Tau Type", "title": "Reco Tau Type"},
+  "histoRecoTauP": {"labelx": "Reco Tau P (GeV)", "title": "Reco Tau P (GeV)"},
+  "histoRecoTauMass": {"labelx": "Reco Tau Mass (GeV)", "title": "Reco Tau Mass (GeV)"},
+  "histoRecoTauTheta": {"labelx": "Reco Tau Theta (rad)", "title": "Reco Tau Theta (rad)"},
+  "histoGenTauP": {"labelx": "Gen Tau P", "title": "Gen Tau P"},
+  "histoGenTauType": {"labelx": "Gen Tau Type", "title": "Gen Tau Type"},
+  "histoGenTauVisP": {"labelx": "Gen Tau Visible P (GeV)", "title": "Gen Tau Visible P (GeV)"},
+  "histoGenTauTheta": {"labelx": "Gen Tau Theta (rad)", "title": "Gen Tau Theta (rad)"},
+  "histoGenTauVisMass": {"labelx": "Gen Tau Visible Mass", "title": "Gen Tau Visible Mass"},
+  "hGenTauP": {"labelx": "Gen Tau P", "title": "Gen Tau P"},
+  "hGenVisTauP": {"labelx": "Gen Tau Visible P", "title": "Gen Tau Visible P"},
+  "hEffiGenVisTauPt": {"labelx": "Gen Tau Visible P", "title": "Gen Tau Visible P"},
+  "hEffiGenTauType": {"labelx": "Gen Tau Type", "title": "Gen Tau Type"},
+  "hEffiGenTauTheta": {"labelx": "Gen Tau Theta (rad)", "title": "Gen Tau Theta (rad)"},
+  "hEffiGenVisTauMass": {"labelx": "Gen Vis Mass (GeV)", "title": "Gen Vis Mass (GeV)"},
+  "histoGenMaxConstAngle": {"labelx": "Gen Max Angle Const (rad)", "title": "Gen Max Angle Const (rad)"},
+}
 
 ROOT.gStyle.SetOptStat(0)
 
@@ -43,14 +46,15 @@ colors=[getattr(ROOT,args.colors[i]) for i in range(0,len(args.colors))]
 
 files={}
 for i in range(0,len(samples)):
-  files[i]=ROOT.TFile("effis_"+samples[i]+"_"+tag+".root")
+  files[i]=ROOT.TFile("firstTest_"+samples[i]+"_"+tag+".root")
 
 #Format for the rate histograms:
-def formatHisto(file,variab,rename,titleX,color=ROOT.kBlack):
+def formatHisto(file,variab,rename,titleX,title,color=ROOT.kBlack):
   histo = file.Get(variab)
   histo.SetName(rename)
   histo.SetXTitle(titleX)
   histo.SetLineColor(color)
+  histo.SetTitle(title)
   # histo.SetLineWidth(2)
   #histo.SetMarkerColor(color)
   #histo.SetMarkerStyle(20)
@@ -68,7 +72,7 @@ for var in variabs:
 
   histo={}
   for i in range(0,len(samples)):
-    histo[i]=formatHisto(files[i],var,samples[i]+var,xLabels[iv],colors[i])
+    histo[i]=formatHisto(files[i],var,samples[i]+var,xLabels[iv]["labelx"],xLabels[iv]["title"],colors[i])
     leg.AddEntry(histo[i],labels[i],"l")
 
   # hack loop get the maximum right
@@ -96,5 +100,5 @@ for var in variabs:
   c.SaveAs(var+".png")
   # Keep graph open
   
-  c.SetLogy()
-  c.SaveAs(var+"_LOG.png")
+  # c.SetLogy()
+  # c.SaveAs(var+"_LOG.png")

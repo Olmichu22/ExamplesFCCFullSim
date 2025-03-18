@@ -8,6 +8,50 @@ from modules.ParticleObjects import GenParticle, RecoParticle
 
 from modules import myutils
 
+def MatchRecoGenTau(genTau, recoTaus, maxDRMatch=1, selectDecay=-777):
+   """ Find the reconstructed tau that is closest to the generator level tau using the angle between the momenta.
+      Args:
+            genTau: generator level tau.
+            recoTaus: list of reconstructed taus.
+            maxDRMatch: maximum angle between the momenta.
+      Returns:
+            findMatch: index of the reconstructed tau that is closest to the generator level tau or -1 if no match is found
+   """
+   findMatch=-1
+   genVisTauP4 = genTau.getvisMomentum()
+   nRecoTaus = len(recoTaus)
+   for j in range(0,nRecoTaus):
+      recoTauP4=recoTaus[j].getMomentum()
+      recoTauId=recoTaus[j].getID()
+
+      # we want to study migrations: keep all the decays but count how many are good 
+      # careful, at reco level we count photons and at gen level pi0s: difference in the
+      # decay mode (1 gen can be 1,2 reco)
+
+      recoDM=recoTauId
+      if recoTauId==2:
+         recoDM=1
+      elif (recoTauId>=11 and recoTauId<15):
+         recoDM=11
+      elif recoTauId>=3 and recoTauId<10:
+         recoDM=3
+
+      if selectDecay!=-777 and selectDecay==recoDM:
+            nTausType+=1
+
+      # but remove at least the leptonic ones / failed ID
+      if recoTauId<0:
+         continue
+
+      angleMatch=myutils.dRAngle(recoTauP4, genVisTauP4)
+
+      # find closest
+      if angleMatch<maxDRMatch:
+         maxDRMatch=angleMatch
+         findMatch=j
+         
+   return findMatch
+
 # Check a generator level tau candidate, find the decay, 
 # and compute visible (meson) variables 
 def visTauGen(candTau):
@@ -107,7 +151,7 @@ def visTauGen(candTau):
 # Reversed procedure for reconstructed pfos
 # Starting from a pion, find particles in a cone around it, and 
 # build the tau 
-def buildTauFromPion(lead, allPfs, DRCone=1, minP=0, PNeutron=10):
+def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutron=10):
    """ Starting from a pion, find particles in a cone around it, and build the tau.
 
    Args:
@@ -159,8 +203,8 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP=0, PNeutron=10):
       if (dR>DRCone):  # cut to be tuned
          continue 
       # how low should we go in P?
-      if (candP4.P()<minP):
-         continue 
+      # if (candP4.P()<minP):
+      #    continue 
 
       # now check ID and clean
       # Ignore events with electrons and muons
@@ -171,11 +215,11 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP=0, PNeutron=10):
       if (candPDG==2112 and candP4.P()>PNeutron): # Pandora FIXME: pion -> neutron misID 
          countNeutrons+=1
       # Counting pions and kaons
-      if candPDG==211 :   # ignoring the difference between kaons and pions for now 
+      if candPDG==211 and candP4.P()>minP_pion:   # ignoring the difference between kaons and pions for now 
          countPions+=1
          found_pions_id.add(key)
       # Counting photons (should be 2 x pi0s)
-      if candPDG==22 :  # careful: here counting photons and not pi0s. Account for merged/lost photons.  
+      if candPDG==22 and candP4.P()>minP_photon:  # careful: here counting photons and not pi0s. Account for merged/lost photons.  
          countPhotons+=1
       else: 
          continue
@@ -262,7 +306,7 @@ def findAllGenTaus(mc_particles):
    return genTaus
 
 # function to find all reco taus starting from PFO collection 
-def findAllTaus(pfos,dRMax,minPt,PNeutron):
+def findAllTaus(pfos, dRMax, minP_photon, minP_pion, PNeutron):
    """ Find all tau candidates starting from PFO collection by recognizing the decay products.
 
    Args:
@@ -285,7 +329,7 @@ def findAllTaus(pfos,dRMax,minPt,PNeutron):
       if key in found_pions_id:
          continue
          
-      recoTau_data, pions_id = buildTauFromPion(pf,id_pfos,dRMax,minPt,PNeutron)
+      recoTau_data, pions_id = buildTauFromPion(pf, id_pfos, dRMax, minP_photon, minP_pion, PNeutron)
       recoTau = RecoParticle(recoTau_data[0], recoTau_data[1], recoTau_data[2], recoTau_data[3], recoTau_data[4], recoTau_data[5])
       if recoTau.getCharge()<0:
          recoTau.setPDG(15)
