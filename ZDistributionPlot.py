@@ -19,10 +19,13 @@ parser = argparse.ArgumentParser(description="Configure the analysis",
                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument("-i", "--input", default="Results/ZReco/Event_dist_0.4_tph0.1_tpi0.1_m0.1_e1_n1", help="Input path where data to process is stored")
-
+parser.add_argument("-d", "--decay", default=-777, help="Decay to analyze")
 args = parser.parse_args()
 
+
 inputBasePath = args.input
+decay = args.decay
+
 with open(inputBasePath+"/config.yaml", "r") as yaml_file:
   config = yaml.safe_load(yaml_file)
 
@@ -32,7 +35,14 @@ outputpath = inputBasePath+"/Images"
 if not os.path.exists(outputpath):
     os.makedirs(outputpath)
 
-file_path = config["output"]["outputpath"]+config["output"]["outputfile"]
+decay_str = "decayAll" if decay == -777 else f"decay{decay}"
+# Look for the output file in the outputfile list
+for outputfile in config["output"]["outputfiles"]:
+  if decay_str in outputfile:
+    file = outputfile
+    break
+
+file_path = config["output"]["outputpath"]+file
 nLeptons_file = config["output"]["nLeptons_keys"]
 
 

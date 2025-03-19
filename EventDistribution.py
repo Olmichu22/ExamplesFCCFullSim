@@ -64,9 +64,16 @@ fileOutName = outfile+decayString+".root"
 outputpath = outputbasepath+outfile+cut_string[1:]+"/"
 
 # Finish the configuration
-print(config["output"])
 config["output"]["outputpath"] = outputpath
-config["output"]["outputfile"] = fileOutName
+# Check if config["output"]["outputfile"] is a list
+if type(config["output"]["outputfile"]) is not list:
+   if config["output"]["outputfile"] is None:
+      config["output"]["outputfile"] = []
+   else:
+      config["output"]["outputfile"] = [config["output"]["outputfile"]]
+  
+if fileOutName not in config["output"]["outputfile"]:
+  config["output"]["outputfile"].append(fileOutName)
 
 if not os.path.exists(outputpath):
   os.makedirs(outputpath)

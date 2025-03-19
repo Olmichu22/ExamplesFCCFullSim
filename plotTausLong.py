@@ -8,6 +8,7 @@ import edm4hep
 from pathlib import Path
 from pprint import pprint
 import yaml
+import pandas as pd
 
 
 from modules import tauReco 
@@ -23,6 +24,7 @@ parser.add_argument("-p","--TauPhotonPCut", type=float) # Creo que esto es un co
 parser.add_argument("-i","--TauPionPCut", type=float)
 parser.add_argument("-R","--dRMax", type=float)
 parser.add_argument("-n","--NeutronCut", type=float)
+parser.add_argument("-r", "--MatchedGenMinDR", type=float)
 parser.add_argument("-t", "--test", default="True", type=str, help="Run in test mode with limited number of files")
 parser.add_argument("-c", "--config", default="config.yaml", type=str, help="Configuration file")
 
@@ -30,10 +32,14 @@ args = parser.parse_args()
 default_config = "config/default/taurecolong.yaml"
 config = myutils.load_yaml_config(args.config, default_config)
 
+# Cut Configuration
 dRMax=args.dRMax if args.dRMax != None else config["cuts"]["dRMax"]
 minPTauPhoton=args.TauPhotonPCut if args.TauPhotonPCut != None else config["cuts"]["TauPhotonPCut"]
 minPTauPion=args.TauPionPCut if args.TauPionPCut != None else config["cuts"]["TauPionPCut"]
 PNeutron=args.NeutronCut if args.NeutronCut != None else config["cuts"]["NeutronCut"]
+dRMatch=args.MatchedGenMinDR if args.MatchedGenMinDR != None else config["cuts"]["MatchedGenMinDR"]
+
+# General Configuration
 
 # We can use same config but different decay mode
 # Priority is given to the decay mode in the command line
@@ -48,6 +54,8 @@ test_arg = args.test if args.test != None else config["general"]["test"]
 test= True if test_arg=="True" else False
 outfile=args.outfile if args.outfile!= None else config["general"]["outfile"]
 
+
+# Output Configuration
 outputbasepath = "Results/TauReco/"
 
 
@@ -59,10 +67,18 @@ fileOutName = outfile+decayString+".root"
 
 outputpath = outputbasepath+outfile+cut_string[1:]+"/"
 
-# Finish the configuration
-config["output"]["outputpath"] = outputpath
-config["output"]["outputfile"] = fileOutName
 
+config["output"]["outputpath"] = outputpath
+# Check if config["output"]["outputfile"] is a list
+if type(config["output"]["outputfile"]) is not list:
+   if config["output"]["outputfile"] is None:
+      config["output"]["outputfile"] = []
+   else:
+      config["output"]["outputfile"] = [config["output"]["outputfile"]]
+  
+if fileOutName not in config["output"]["outputfile"]:
+  config["output"]["outputfile"].append(fileOutName)
+  
 if not os.path.exists(outputpath):
   os.makedirs(outputpath)
 
@@ -216,9 +232,16 @@ hNGenTaus=TH1F("histoNGenTaus","",6,0,6)
 hNTausType=TH1F("histoNTausType","",6,0,6)
 hNGenTausType=TH1F("histoNGenTausType","",6,0,6)
 
+hMatchedTausPRes=TH1F("histoMatchedTausPRes","",500,-10,10)
+hMatchedTausPtRes=TH1F("histoMatchedTausPRes","",500,-10,10)
+hMatchedTausChargeRes=TH1F("histoMatchedTausPRes","",500,-10,10)
+hMatchedTausMaxAngleRes=TH1F("histoMatchedTausPRes","",500,-10,10)
+hMatchedTausNCompRes=TH1F("histoMatchedTausPRes","",500,-10,10)
+
+true_predicted_label = {"GenID":[],"True":[], "Predicted":[]}
 countEvents=0
 # run over all events 
-for event in reader.get("events"):
+for eventid, event in enumerate(reader.get("events")):
 
    if countEvents%1000==0:
       print (".... %d" %countEvents)
@@ -261,9 +284,9 @@ for event in reader.get("events"):
       nGenTausType+=1
       foundGen=True
 
-      # P4 Tau filters
-      if genVisTauP4.P()<5: continue 
-      if abs(math.cos(genVisTauP4.Theta())>0.9): continue
+      # # P4 Tau filters
+      # if genVisTauP4.P()<5: continue 
+      # if abs(math.cos(genVisTauP4.Theta())>0.9): continue
 
       #print ("Gen",genTauP4.P(),genVisTauP4.P(),genVisTauP4.Theta(),genVisTauP4.Phi(),genTauId,genTauQ,genTauDR,genTauNConsts)
 
@@ -332,14 +355,16 @@ for event in reader.get("events"):
                countPionsRun+=1
 
 
-      dRMatch=1
       findMatch = tauReco.MatchRecoGenTau(genTaus[i], recoTaus, maxDRMatch=dRMatch, selectDecay=selectDecay)
       # For each generator level tau, find the reconstructed tau that is closest:
-            
+      
+      true_predicted_label["GenID"].append(str(eventid)+str(i))
+      true_predicted_label["True"].append(genTauId)      
       # If you have not found it, continue: this is a efficiency loss 
       if findMatch==-1:
+         true_predicted_label["Predicted"].append(-1)
          continue 
-
+      
       # now, get the kinematics of the matched reco tau
       recoTauP4=recoTaus[findMatch].getMomentum() 
       recoTauId=recoTaus[findMatch].getID()
@@ -347,6 +372,22 @@ for event in reader.get("events"):
       recoTauDR=recoTaus[findMatch].getMaxCone()
       recoTauConsts=recoTaus[findMatch].getDaughters()
       recoTauNConsts=recoTaus[findMatch].getnConst()
+      
+      recoDM=recoTauId
+      if recoTauId==2:
+         recoDM=1
+      elif (recoTauId>=11 and recoTauId<15):
+         recoDM=11
+      elif recoTauId>=3 and recoTauId<10:
+         recoDM=2
+         
+      true_predicted_label["Predicted"].append(recoDM)
+      
+      hMatchedTausPRes.Fill((recoTauP4.P()-genTauP4.P())/genTauP4.P())
+      hMatchedTausPtRes.Fill((recoTauP4.Pt()-genTauP4.Pt())/genTauP4.Pt())
+      hMatchedTausChargeRes.Fill(abs(recoTauQ)-abs(genTauQ)/abs(genTauQ))
+      hMatchedTausMaxAngleRes.Fill((recoTauDR-genTauDR)/genTauDR)
+      hMatchedTausNCompRes.Fill((recoTauNConsts-genTauNConsts)/genTauNConsts)
 
 #          print ("Reco?",recoTauP4.P(),recoTauId,recoTauQ,recoTauDR,recoTauNConsts)
 
@@ -509,7 +550,19 @@ hEffiGenTauType.Divide(hGenTauType)
 print ("-------------------------------------")
 print ("Processed %d events" %countEvents)
 
+decaystr = "decayAll" if selectDecay==-777 else "decay{}".format(selectDecay)
+true_predicted_label_output_file = outputpath+f"true_predicted_label_{decaystr}.csv"
+true_predicted_label_df = pd.DataFrame(true_predicted_label)
+true_predicted_label_df.to_csv(true_predicted_label_output_file, index=False)
 
+# Check if config["output"]["outputlabels"] is a list
+if type(config["output"]["outputlabels"]) is not list:
+   if config["output"]["outputlabels"] is None:
+      config["output"]["outputlabels"] = []
+   else:
+      config["output"]["outputlabels"] = [config["output"]["outputlabels"]]
+if true_predicted_label_output_file not in config["output"]["outputlabels"]:
+   config["output"]["outputlabels"].append(true_predicted_label_output_file)
 
 output_config_file = outputpath+"config.yaml"
 with open(output_config_file, "w") as file:
@@ -645,6 +698,12 @@ hRecoConstPion2P.Write()
 hMatchedGenConstPion3P.Write()
 hGenConstPion3P.Write()
 hRecoConstPion3P.Write()
+
+hMatchedTausPRes.Write()
+hMatchedTausPtRes.Write()
+hMatchedTausChargeRes.Write()
+hMatchedTausMaxAngleRes.Write()
+hMatchedTausNCompRes.Write()
 
 print ("Plots saved in %s" %fileOutName)
 print ("=====================================")
