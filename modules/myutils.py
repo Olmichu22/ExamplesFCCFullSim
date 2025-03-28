@@ -77,16 +77,38 @@ def load_yaml_config(config_file, default_config):
     Returns:
     dict: configuration parameters
     """
-    if os.path.exists(config_file):
+    if config_file is not None and os.path.exists(config_file):
         with open(config_file, "r") as file:
             config = yaml.safe_load(file)
-            print(f"Loaded configuration parameters from '{config_file}'.")
+            # print(f"Loaded configuration parameters from '{config_file}'.")
     elif default_config:
         if not os.path.exists(default_config):
             raise FileNotFoundError(f"Error: '{default_config}' does not exist. A valid default configuration file is required.")
         with open(default_config, "r") as file:
             config = yaml.safe_load(file)
-            print(f"Loaded default configuration parameters from '{default_config}'.")
+            # print(f"Loaded default configuration parameters from '{default_config}'.")
     else:
-        print("No configuration file provided or found.")
-    return config              
+        raise FileNotFoundError(f"Error: A valid default configuration file is required.")
+    return config
+
+def load_yaml_config(config_file, default_config):
+    """Load the YAML configuration file if it exists.
+    Args:
+    args (argparse.Namespace): command line arguments
+    config_file (str): path to the YAML configuration file
+    Returns:
+    dict: configuration parameters
+    """
+    if config_file is not None and os.path.exists(config_file):
+        with open(config_file, "r") as file:
+            config = yaml.safe_load(file)
+            # print(f"Loaded configuration parameters from '{config_file}'.")
+    elif default_config:
+        if not os.path.exists(default_config):
+            raise FileNotFoundError(f"Error: '{default_config}' does not exist. A valid default configuration file is required.")
+        with open(default_config, "r") as file:
+            config = yaml.safe_load(file)
+            # print(f"Loaded default configuration parameters from '{default_config}'.")
+    else:
+        raise FileNotFoundError(f"Error: A valid default configuration file is required.")
+    return config                

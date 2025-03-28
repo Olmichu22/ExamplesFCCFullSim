@@ -244,19 +244,25 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
    # tau decay). can be refined in the future. 
    if abs(chargeTau)==1:
       if (countPions==1 and countNeutrons==0):
-            if countPhotons<=4:
-               tauID=countPhotons
-            if countPhotons>4:
-                  tauID=5
+         if countPhotons<10:
+            tauID=countPhotons
+         else:
+            tauID=9
+         # if countPhotons<=4:
+            # tauID=countPhotons
+         # if countPhotons>4:
+               # tauID=5
 
       elif (countPions==3): 
-            if countPhotons<=2:
-               tauID=countPhotons+10 # more or less copied from the CMS convention for tauDecay
-            if countPhotons>2:
-               tauID=3+10 # capping the number of photons
+         tauID = countPhotons+10 # 3 pions + photons
+            # if countPhotons<=2:
+            #    tauID=countPhotons+10 # more or less copied from the CMS convention for tauDecay
+            # if countPhotons>2:
+            #    tauID=countPhotons+10 # capping the number of photons
 
       elif (countPions==1 and countNeutrons>0): # Future FIXME: Pandora pion->neutron misID issue 
-               tauID=15 
+         # tauID=15
+         tauID = -20 # To not interact with the other IDs 
 
 
       # return an object with P4, ID, Charge, AngleMax, nConsts, constIdx 
