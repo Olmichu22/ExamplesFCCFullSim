@@ -6,13 +6,17 @@ import numpy as np
 from podio import root_io
 import edm4hep
 from pathlib import Path
-from pprint import pprint
+import pprint
 import yaml
 import pandas as pd
 
 
 from modules import tauReco 
-from modules import myutils 
+from modules import myutils
+
+import logging
+
+ 
 
 import argparse
 parser = argparse.ArgumentParser(description="Configure the analysis",
@@ -24,22 +28,34 @@ parser.add_argument("-p","--TauPhotonPCut", type=float) # Creo que esto es un co
 parser.add_argument("-i","--TauPionPCut", type=float)
 parser.add_argument("-R","--dRMax", type=float)
 parser.add_argument("-n","--NeutronCut", type=float)
+parser.add_argument("-g","--generalPCut", type=float)
 parser.add_argument("-r", "--MatchedGenMinDR", type=float)
+parser.add_argument("-m", "--matchedCM", default="True", type=str, help="Use only matched taus to compute confusion matrix.")
 parser.add_argument("-t", "--test", default="True", type=str, help="Run in test mode with limited number of files")
 parser.add_argument("-c", "--config", default="config.yaml", type=str, help="Configuration file")
+parser.add_argument("-v", "--verbose", action="count", help="Increase verbosity level: -v for INFO, -vv for DEBUG"), 
 
 args = parser.parse_args()
+
+# ----------------------------------------------------------------------------
+# Load config (necessary for set up the logger)
 default_config = "config/default/taurecolong.yaml"
 config = myutils.load_yaml_config(args.config, default_config)
 
-# Cut Configuration
-dRMax=args.dRMax if args.dRMax != None else config["cuts"]["dRMax"]
-minPTauPhoton=args.TauPhotonPCut if args.TauPhotonPCut != None else config["cuts"]["TauPhotonPCut"]
-minPTauPion=args.TauPionPCut if args.TauPionPCut != None else config["cuts"]["TauPionPCut"]
-PNeutron=args.NeutronCut if args.NeutronCut != None else config["cuts"]["NeutronCut"]
-dRMatch=args.MatchedGenMinDR if args.MatchedGenMinDR != None else config["cuts"]["MatchedGenMinDR"]
 
-# General Configuration
+# Cut Configuration
+config["cuts"]["dRMax"] = args.dRMax if args.dRMax != None else config["cuts"]["dRMax"]
+config["cuts"]["TauPhotonPCut"] = args.TauPhotonPCut if args.TauPhotonPCut != None else config["cuts"]["TauPhotonPCut"]
+config["cuts"]["TauPionPCut"] = args.TauPionPCut if args.TauPionPCut != None else config["cuts"]["TauPionPCut"]
+config["cuts"]["NeutronCut"] = args.NeutronCut if args.NeutronCut != None else config["cuts"]["NeutronCut"]
+config["cuts"]["MatchedGenMinDR"] = args.MatchedGenMinDR if args.MatchedGenMinDR != None else config["cuts"]["MatchedGenMinDR"]
+config["cuts"]["generalPCut"] = args.generalPCut if args.generalPCut != None else config["cuts"]["generalPCut"]
+dRMax=config["cuts"]["dRMax"]
+minPTauPhoton=config["cuts"]["TauPhotonPCut"]
+minPTauPion=config["cuts"]["TauPionPCut"]
+PNeutron=config["cuts"]["NeutronCut"]
+dRMatch=config["cuts"]["MatchedGenMinDR"]
+generalPCut=config["cuts"]["generalPCut"]
 
 # We can use same config but different decay mode
 # Priority is given to the decay mode in the command line
@@ -48,18 +64,16 @@ if args.decay not in config["general"]["decay"] and args.decay != None:
   selectDecay = args.decay
 else:
   selectDecay = args.decay if args.decay !=None else config["general"]["decay"][0]
-  
-sample=args.sample if args.sample!= None else config["general"]["sample"]
-test_arg = args.test if args.test != None else config["general"]["test"]
-test= True if test_arg=="True" else False
-outfile=args.outfile if args.outfile!= None else config["general"]["outfile"]
+
+config["general"]["outfile"] = args.outfile if args.outfile!= None else config["general"]["outfile"]
+outfile = config["general"]["outfile"]
 
 
 # Output Configuration
 outputbasepath = "Results/TauReco/"
 
 
-cut_string = f"_{dRMax}_tph{minPTauPhoton}_tpi{minPTauPion}_n{PNeutron}"
+cut_string = f"_{dRMax}_tph{minPTauPhoton}_tpi{minPTauPion}_n{PNeutron}_g{generalPCut}"
 decayString = f"decay{selectDecay}"+cut_string
 if selectDecay==-777:
     decayString = "decayAll"+cut_string
@@ -81,40 +95,77 @@ if fileOutName not in config["output"]["outputfile"]:
   
 if not os.path.exists(outputpath):
   os.makedirs(outputpath)
+  
+  
+# Once set the output path, we can set the logger
+if args.verbose == 0:
+    log_level = logging.WARNING  # Only warnings and errors
+elif args.verbose == 1:
+    log_level = logging.INFO     # Informational messages
+else:
+    log_level = logging.DEBUG    # Debug messages for -vv or higher
 
-print("Configuration:")
-pprint(config, indent = 4)
+logging.basicConfig(
+    level=log_level,
+    format='%(asctime)s, %(levelname)s, [%(name)s] - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(outputpath + "/" +"app.log", mode='w')
+    ]
+)
+logger_config = logging.getLogger("config")
+logger_io = logging.getLogger("io")
+logger_process = logging.getLogger("processing")
 
-print ("=====================================")
+
+# Continue with the rest of configs
+
+  
+# General Configuration
+config["general"]["sample"] = args.sample if args.sample!= None else config["general"]["sample"]
+config["general"]["matchedCM"] = args.matchedCM if args.matchedCM != None else config["general"]["matchedCM"]
+config["general"]["test"] = args.test if args.test != None else config["general"]["test"]
+
+sample = config["general"]["sample"]
+matched_cm_arg = config["general"]["matchedCM"]
+matched_cm = True if matched_cm_arg=="True" else False
+test_arg = config["general"]["test"]
+test = True if test_arg=="True" else False
+
+logger_config.info("Configuration loaded!")
+logger_config.info("Configuration:\n%s", pprint.pformat(config, indent=4))
+
 
 # get all the files 
 path="/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
 file="out_reco_edm4hep_edm4hep"
 filenames=[]
 dir_path=path+"/"+sample
-names = ROOT.std.vector('string')()
+
 nfiles=len(os.listdir(dir_path))
 
 nfiles=1000
 if test==True:
-   nfiles=10
+   nfiles=5
 
-print ("Reading files from %s" %dir_path)
+logger_io.info("Reading files from %s", dir_path)
 for i in range(1,nfiles+1):
-    filename=dir_path+"/"+file+"_{}.root".format(i)
-    print (filename)
-    my_file = Path(filename)
-    if my_file.is_file():
-        root_file = myutils.open_root_file(filename)
-        if not root_file or root_file.IsZombie():
-            continue
-        filenames.append(filename)
+   filename=dir_path+"/"+file+"_{}.root".format(i)
+   logger_io.debug("Reading file %s", filename)
+   my_file = Path(filename)
+   if my_file.is_file():
+      root_file = myutils.open_root_file(filename)
+      if not root_file or root_file.IsZombie():
+         logger_io.warning("File %s is a zombie or could not be opened.", filename)
+         continue
+      filenames.append(filename)
 
-print ("Read %d files" %len(filenames))
 reader = root_io.Reader(filenames)
 
-print ("-------------------------------------")
+logger_io.info("Read %d files", len(filenames))
 
+# Configs and reading finished
+#----------------------------------------------------------------------
 
 
 # collections to use 
@@ -172,6 +223,15 @@ hRecoConstPionPOverTauP=TH1F("hRecoConstPionPOverTauP","",100,0,2)
 hRecoConstPion1P=TH1F("hRecoConstPion1P","",500,0,50)
 hRecoConstPion2P=TH1F("hRecoConstPion2P","",500,0,50)
 hRecoConstPion3P=TH1F("hRecoConstPion3P","",500,0,50)
+
+hGenConstNonMatchedPi3P=TH1F("hGenConstNonMatchedPi3P","",500,0,50)
+hRecoConstNonMatchedPi3P=TH1F("hRecoConstNonMatchedPi3P","",500,0,50)
+hRecoNonMatchedTauType=TH1F("hRecoNonMatchedTauType","",21,-1,20)
+hRecoNonMatchedPisP=TH1F("hRecoNonMatchedPisP","",500,0,50)
+
+hRecoConstPi0Mass = TH1F("hRecoConstPi0Mass","",100,0,2)
+hGenConstPi0Mass = TH1F("hGenConstPi0Mass","",100,0,2)
+hMatchedGenConstPi0Mass = TH1F("hMatchedConstPi0Mass","",100,0,2)
 
 hMatchedGenConstPion1P=TH1F("hMatchedGenConstPion1P","",500,0,50)
 hMatchedGenConstPion2P=TH1F("hMatchedGenConstPion2P","",500,0,50)
@@ -232,19 +292,20 @@ hNGenTaus=TH1F("histoNGenTaus","",6,0,6)
 hNTausType=TH1F("histoNTausType","",6,0,6)
 hNGenTausType=TH1F("histoNGenTausType","",6,0,6)
 
-hMatchedTausPRes=TH1F("histoMatchedTausPRes","",500,-10,10)
-hMatchedTausPtRes=TH1F("histoMatchedTausPRes","",500,-10,10)
-hMatchedTausChargeRes=TH1F("histoMatchedTausPRes","",500,-10,10)
-hMatchedTausMaxAngleRes=TH1F("histoMatchedTausPRes","",500,-10,10)
-hMatchedTausNCompRes=TH1F("histoMatchedTausPRes","",500,-10,10)
+hMatchedTausPRes=TH1F("histoMatchedTausPRes","",50,-10,10)
+hMatchedTausPtRes=TH1F("histoMatchedTausPt","",50,-10,10)
+hMatchedTausChargeRes=TH1F("histoMatchedTausChargeRes","",50,-10,10)
+hMatchedTausMaxAngleRes=TH1F("histoMatchedTausMaxAngleRes","",50,-10,10)
+hMatchedTausNCompRes=TH1F("histoMatchedTausNCompRes","",50,-10,10)
 
 true_predicted_label = {"GenID":[],"True":[], "Predicted":[]}
+unmatched_true_label = {}
 countEvents=0
 # run over all events 
 for eventid, event in enumerate(reader.get("events")):
-
+   logger_process.debug("Processing event %d", eventid)
    if countEvents%1000==0:
-      print (".... %d" %countEvents)
+      logger_process.info("Processing event %d", countEvents)
    countEvents+=1
 
    mc_particles = event.get( genparts )
@@ -252,10 +313,23 @@ for eventid, event in enumerate(reader.get("events")):
 
    genTaus=tauReco.findAllGenTaus(mc_particles)
    nGenTaus=len(genTaus)
+   
+   
+   logger_process.debug(
+    "Found %d gen taus. Details:\n%s",
+    nGenTaus,
+    "\n".join("GenTau %d: %s" % (i, tau) for i, tau in genTaus.items())
+   )
 
-   recoTaus= tauReco.findAllTaus(pfos,dRMax, minPTauPhoton, minPTauPion, PNeutron)
+   recoTaus = tauReco.findAllTaus(pfos,dRMax, minPTauPhoton, minPTauPion, PNeutron, generalPCut)
    nRecoTaus=len(recoTaus)
 
+   logger_process.debug(
+    "Found %d reconstructed taus. Details:\n%s",
+    nRecoTaus,
+    "\n".join("RecoTau %d: %s" % (i, tau) for i, tau in recoTaus.items())
+   )
+   
    foundGen=False
 
    nGenTausType=0
@@ -272,10 +346,16 @@ for eventid, event in enumerate(reader.get("events")):
       genTauConsts=genTaus[i].getDaughters()
 
       # remove leptonic decays 
-      if genTauId<0:
-         continue
+      if genTauId>=0:
+         nGenTausHad+=1
+      
+      # if genTauId < 0:
+      #    continue
+      
+      # nGenTausHad+=1
+         
 
-      nGenTausHad+=1
+
 
       # pick only a decay mode in particular if you want 
       if selectDecay!=-777 and selectDecay!=genTauId:
@@ -285,8 +365,8 @@ for eventid, event in enumerate(reader.get("events")):
       foundGen=True
 
       # # P4 Tau filters
-      # if genVisTauP4.P()<5: continue 
-      # if abs(math.cos(genVisTauP4.Theta())>0.9): continue
+      if genVisTauP4.P()<5: continue 
+      if abs(math.cos(genVisTauP4.Theta())>0.9): continue
 
       #print ("Gen",genTauP4.P(),genVisTauP4.P(),genVisTauP4.Theta(),genVisTauP4.Phi(),genTauId,genTauQ,genTauDR,genTauNConsts)
 
@@ -326,6 +406,7 @@ for eventid, event in enumerate(reader.get("events")):
          # PDG ID for Pi0s == 111
          if const.getPDG()==111:
             hGenConstPi0P.Fill(constP4.P())
+            hGenConstPi0Mass.Fill(constP4.M())
             h2DGenConstPi0PType.Fill(constP4.P(),genTauId)
             hGenConstPi0POverTauP.Fill(constP4.P()/genVisTauP4.P())
             # Pi0s decay to Photons 
@@ -354,17 +435,25 @@ for eventid, event in enumerate(reader.get("events")):
                hGenConstPion3P.Fill(constP4.P())
                countPionsRun+=1
 
-
-      findMatch = tauReco.MatchRecoGenTau(genTaus[i], recoTaus, maxDRMatch=dRMatch, selectDecay=selectDecay)
+      # Compare with reconstructed taus using angle matching
+      findMatch, nTausType = tauReco.MatchRecoGenTau(genTaus[i], recoTaus,nTausType, maxDRMatch=dRMatch, selectDecay=selectDecay)
       # For each generator level tau, find the reconstructed tau that is closest:
-      
-      true_predicted_label["GenID"].append(str(eventid)+str(i))
-      true_predicted_label["True"].append(genTauId)      
+      if not matched_cm:
+         true_predicted_label["GenID"].append(str(eventid)+str(i))
+         true_predicted_label["True"].append(genTauId)  
+    
       # If you have not found it, continue: this is a efficiency loss 
       if findMatch==-1:
-         true_predicted_label["Predicted"].append(-1)
+         logger_process.debug("No match found for gen tau %s", genTaus[i])
+         if not matched_cm:
+            # true_predicted_label["Predicted"].append(-1)
+            true_predicted_label["Predicted"].append(-2)
          continue 
       
+      logger_process.debug("Found matched tau. Details:\n%s", recoTaus[findMatch])
+      if matched_cm:
+         true_predicted_label["GenID"].append(str(eventid)+str(i))
+         true_predicted_label["True"].append(genTauId)  
       # now, get the kinematics of the matched reco tau
       recoTauP4=recoTaus[findMatch].getMomentum() 
       recoTauId=recoTaus[findMatch].getID()
@@ -373,13 +462,22 @@ for eventid, event in enumerate(reader.get("events")):
       recoTauConsts=recoTaus[findMatch].getDaughters()
       recoTauNConsts=recoTaus[findMatch].getnConst()
       
+      # Reassign the recoTauId to the recoDM
+      # This need to be checked as there exist other ID at Gen Level
       recoDM=recoTauId
+      n_pi0s=0
       if recoTauId==2:
-         recoDM=1
+         recoDM = 1
+         n_pi0s = 1
       elif (recoTauId>=11 and recoTauId<15):
-         recoDM=11
+         # nfotons
+         nPhotons = recoTauId % 10
+         n_pi0s = math.ceil(nPhotons/2)
+         recoDM = 10+n_pi0s
       elif recoTauId>=3 and recoTauId<10:
-         recoDM=2
+         nPhotons = recoTauId
+         n_pi0s = math.ceil(nPhotons/2)
+         recoDM = n_pi0s
          
       true_predicted_label["Predicted"].append(recoDM)
       
@@ -409,6 +507,7 @@ for eventid, event in enumerate(reader.get("events")):
 
          if const.getPDG()==111:
             hMatchedGenConstPi0P.Fill(constP4.P())
+            hMatchedGenConstPi0Mass.Fill(constP4.M())
             hMatchedGenConstPi0POverTauP.Fill(constP4.P()/genVisTauP4.P())
             daughtersPi0=const.getDaughters()
             for dauPhoton in daughtersPi0:
@@ -431,6 +530,9 @@ for eventid, event in enumerate(reader.get("events")):
                countPionsRun+=1
 
       countPionsRun=0
+      # Init empyu TLorentzVector for the photon momentum
+      photonCumulativeP4 = ROOT.TLorentzVector()
+      photonCumulativeP4.SetXYZM(0,0,0,0)
       # RECO:  Look inside the tau, constituents:
       # Filling histograms for the matched tau with reco level information 
       for c in range(0,recoTauNConsts):
@@ -441,11 +543,13 @@ for eventid, event in enumerate(reader.get("events")):
          h2DRecoConstPType.Fill(constP4.P(),recoTauId)
          hRecoConstPOverTauP.Fill(constP4.P()/recoTauP4.P())
 
+         
+         # This may be an error as we are confusing photons with neutrons
          if const.getCharge()==0:
             hRecoConstPhotonP.Fill(constP4.P())
             h2DRecoConstPhotonPType.Fill(constP4.P(),recoTauId)
             hRecoConstPhotonPOverTauP.Fill(constP4.P()/recoTauP4.P())
-
+            photonCumulativeP4+=constP4
          else:
             hRecoConstPionP.Fill(constP4.P())
             h2DRecoConstPionPType.Fill(constP4.P(),recoTauId)
@@ -460,8 +564,8 @@ for eventid, event in enumerate(reader.get("events")):
                hRecoConstPion3P.Fill(constP4.P())
                countPionsRun+=1
 
-
-          # Many plots 
+      if n_pi0s>0:
+         hRecoConstPi0Mass.Fill(photonCumulativeP4.M()/n_pi0s)
 
       hRecoTauType.Fill(recoTauId)
       hRecoTauPt.Fill(recoTauP4.Pt())
@@ -514,6 +618,9 @@ for eventid, event in enumerate(reader.get("events")):
 
 
 # Do efficiencies (divide matched gen by all gen)
+hEffiGenPi0Mass=hMatchedGenConstPi0Mass.Clone()
+hEffiGenPi0Mass.SetName("hEffiGenPi0Mass")
+hEffiGenPi0Mass.Divide(hGenConstPi0Mass)
 
 hEffiGenTauPt=hMatchedGenTauPt.Clone()
 hEffiGenTauPt.SetName("hEffiGenTauPt")
@@ -547,8 +654,7 @@ hEffiGenTauType=hMatchedGenTauType.Clone()
 hEffiGenTauType.SetName("hEffiGenTauType")
 hEffiGenTauType.Divide(hGenTauType)
 
-print ("-------------------------------------")
-print ("Processed %d events" %countEvents)
+logger_process.info("Found %d events", countEvents)
 
 decaystr = "decayAll" if selectDecay==-777 else "decay{}".format(selectDecay)
 true_predicted_label_output_file = outputpath+f"true_predicted_label_{decaystr}.csv"
@@ -567,10 +673,19 @@ if true_predicted_label_output_file not in config["output"]["outputlabels"]:
 output_config_file = outputpath+"config.yaml"
 with open(output_config_file, "w") as file:
     yaml.dump(config, file)
-    print(f"Saved configuration parameters to '{output_config_file}'.")
-print ("=====================================")
+    logger_io.info("Configuration file saved to %s", output_config_file)
 
 outfile=ROOT.TFile(outputpath+fileOutName,"RECREATE")
+
+hGenConstPi0Mass.Write()
+hEffiGenPi0Mass.Write()
+hRecoConstPi0Mass.Write()
+hMatchedGenConstPi0Mass.Write()
+
+hGenConstNonMatchedPi3P.Write()
+hRecoConstNonMatchedPi3P.Write()
+hRecoNonMatchedTauType.Write()
+hRecoNonMatchedPisP.Write()
 
 hGenTauPt.Write()
 hGenVisTauPt.Write()
@@ -705,6 +820,6 @@ hMatchedTausChargeRes.Write()
 hMatchedTausMaxAngleRes.Write()
 hMatchedTausNCompRes.Write()
 
-print ("Plots saved in %s" %fileOutName)
-print ("=====================================")
+logger_io.info("Output file %s", outputpath+fileOutName)
+logger_io.info("End of job")
 outfile.Close() 

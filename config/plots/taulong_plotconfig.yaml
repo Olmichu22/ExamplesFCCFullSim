@@ -81,7 +81,27 @@ variabs_hist:
   - hEffiGenTauEta
   - hEffiGenTauTheta
   - hEffiGenTauType
+  - hRecoConstPi0Mass
+  - hGenConstPi0Mass
+  - hMatchedConstPi0Mass
+  - hEffiGenPi0Mass
+  # - hGenConstNonMatchedPi3P
+  # - hRecoConstNonMatchedPi3P
+  # - hRecoNonMatchedTauType
+  # - hRecoNonMatchedPisP
 plot_together:
+  Pi0Mass:
+    variabs:
+      - hRecoConstPi0Mass
+      - hGenConstPi0Mass
+      - hMatchedConstPi0Mass
+    labels:
+      - Reco
+      - Gen
+      - Matched Gen
+    title: "Histogram of Pi0 Mass"
+    x: "Pi0 Mass [GeV]"
+    y: "Events"
   P:
     variabs:
       - histoGenTauP
@@ -308,6 +328,50 @@ plot_together:
     y: "Events"
 
 plot_titles_config_hist:
+  histoResTauPt:
+    x: "(Reco Pt - Gen Pt) / Gen Pt"
+    y: "Events"
+    title: "Histogram of Tau Pt Resolution"
+  histoResTauP:
+    x: "(Reco P - Gen P) / Gen P"
+    y: "Events"
+    title: "Histogram of Tau P Resolution"
+  histoResTauMass:
+    x: "(Reco Mass - Gen Mass) / Gen Mass"
+    y: "Events"
+    title: "Histogram of Tau Mass Resolution"
+  hRecoNonMatchedPisP:
+    x: "Pion P [GeV]"
+    y: "Events"
+    title: "Histogram of Reco Non-Matched Pion P"
+  hGenConstNonMatchedPi3P:
+    x: "Pion3 P [GeV]"
+    y: "Events"
+    title: "Histogram of Gen Non-Matched Pion3 P"
+  hRecoConstNonMatchedPi3P:
+    x: "Pion3 P [GeV]"
+    y: "Events"
+    title: "Histogram of Reco Non-Matched Pion3 P"
+  hRecoNonMatchedTauType:
+    x: "Tau Type"
+    y: "Events"
+    title: "Histogram of Reco Non-Matched Tau Type"
+  hRecoConstPi0Mass:
+    x: "Pi0 Mass [GeV]"
+    y: "Events"
+    title: "Histogram of Reco Pi0 Mass"
+  hGenConstPi0Mass:
+    x: "Pi0 Mass [GeV]"
+    y: "Events"
+    title: "Histogram of Gen Pi0 Mass"
+  hMatchedConstPi0Mass:
+    x: "Pi0 Mass [GeV]"
+    y: "Events"
+    title: "Histogram of Matched Gen Pi0 Mass"
+  hEffiGenPi0Mass:
+    x: "Pi0 Mass [GeV]"
+    y: "Efficiency"
+    title: "Efficiency: hMatchedConstPi0Mass / hGenConst"
   histoGenTauPt:
     x: "Gen Tau Pt [GeV]"
     y: "Events"
@@ -581,10 +645,10 @@ variabs_2d:
   - hRecoConstPType
   - hRecoConstPhotonPType
   - hRecoConstPionPType
-  - h2DGenConstPType
-  - h2DGenConstPi0PType
-  - h2DGenConstPionPType
-  - h2DGenConstPhotonPType
+  - hGenConstPType
+  - hGenConstPi0PType
+  - hGenConstPionPType
+  - hGenConstPhotonPType
   - histo2DGenTauTypeMass
   - histo2DRecoTauTypeMass
   - histoMatched2DGenTauTypeMass
@@ -599,7 +663,7 @@ variabs_2d:
   - histo2DTauDR
   - histo2DTauMass
   - histo2DTauType
-  - histo2DTauQ
+  # - histo2DTauQ
 
 plot_titles_config_2d:
   hRecoConstPType:
@@ -614,19 +678,19 @@ plot_titles_config_2d:
     x: "Reco Pion P [GeV]"
     y: "Type"
     title: "2D Histogram of Reco Pion P vs Type"
-  h2DGenConstPType:
+  hGenConstPType:
     x: "Gen Constituent P [GeV]"
     y: "Type"
     title: "2D Histogram of Gen Constituent P vs Type"
-  h2DGenConstPi0PType:
+  hGenConstPi0PType:
     x: "Gen Pi0 P [GeV]"
     y: "Type"
     title: "2D Histogram of Gen Pi0 P vs Type"
-  h2DGenConstPionPType:
+  hGenConstPionPType:
     x: "Gen Pion P [GeV]"
     y: "Type"
     title: "2D Histogram of Gen Pion P vs Type"
-  h2DGenConstPhotonPType:
+  hGenConstPhotonPType:
     x: "Gen Photon P [GeV]"
     y: "Type"
     title: "2D Histogram of Gen Photon P vs Type"

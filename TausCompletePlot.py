@@ -9,6 +9,33 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
+
+def id_to_key(event_id):
+  pi0 = "π⁰"
+  pi = "π"
+  mu = "μ"
+  e = "e"
+  n = "n"
+  neutrino = "ν"
+  tau = "τ"
+  
+  if event_id < 0:
+    if event_id == -13:
+      key = f"{tau} → {mu}{neutrino}"
+    elif event_id == -11:
+      key = f"{tau} → {e}{neutrino}"
+    else:
+      key = "Unknown"
+  elif event_id < 10:
+    key = f"{tau} → {pi}{event_id*pi0}{neutrino}"
+  elif event_id < 15:
+    key = f"{tau} → {3*pi}{(event_id-10)*pi0}{neutrino}"
+  elif event_id == 15:
+    key = f"{n} Contamination"
+  else:
+    key = "Unlabelled"
+  return key
+
 def plot_1D_hist(file, variabs, labels, outputpath):
     """
     Plots individual 1D histograms.
@@ -141,29 +168,32 @@ def plot_cm(results_df, outputpath):
     Each cell in the plot is annotated with its corresponding value (number or percentage).
     """
 
-    # Extract true and predicted labels
+     # Extract true and predicted labels
     y_true = results_df['True']
     y_pred = results_df['Predicted']
 
-    # Get the sorted list of unique classes present
+    # Get sorted list of unique classes present
     classes = np.unique(np.concatenate((y_true.values, y_pred.values)))
     
-    # Compute the confusion matrix using sklearn
+    # Generate display labels for the confusion matrix
+    mapped_classes = [id_to_key(cls) for cls in classes]
+    
+    # Compute confusion matrix
     cm = confusion_matrix(y_true, y_pred, labels=classes)
     
-    # Create output directory for the confusion matrix if it does not exist
+    # Create output directory if it doesn't exist
     cm_dir = os.path.join(outputpath, "CM")
     if not os.path.exists(cm_dir):
         os.makedirs(cm_dir)
     
-    # --- Plot with absolute values ---
+    # --- Absolute values plot ---
     plt.figure(figsize=(8, 6))
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title("Confusion Matrix (Absolute Values)")
     plt.colorbar()
     tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
+    plt.xticks(tick_marks, mapped_classes, rotation=45)
+    plt.yticks(tick_marks, mapped_classes)
     
     thresh = cm.max() / 2.
     # Annotate each cell with the absolute value
@@ -171,7 +201,7 @@ def plot_cm(results_df, outputpath):
         for j in range(cm.shape[1]):
             plt.text(j, i, format(cm[i, j], 'd'),
                      horizontalalignment="center",
-                     color="white" if cm[i, j] > thresh else "black")
+                     color="white" if cm[i, j] > thresh else "black", fontsize=8)
     
     plt.ylabel('Actual Label')
     plt.xlabel('Predicted Label')
@@ -179,31 +209,31 @@ def plot_cm(results_df, outputpath):
     plt.savefig(os.path.join(cm_dir, "confusion_matrix_absolute.png"))
     plt.close()
     
-    # --- Normalized plot (per column) ---
-    # Normalize the matrix: divide each column by the total number of predicted class elements
-    cm_normalized = cm.astype('float') / cm.sum(axis=0, where=cm.sum(axis=0) != 0)[np.newaxis, :]
-    cm_normalized = np.nan_to_num(cm_normalized)  # Replace NaN with 0 for cases where the sum is 0
+    # --- Normalized values plot (per row) ---
+    cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    cm_normalized = np.nan_to_num(cm_normalized)  # Replace NaN with 0 for rows with zero sum
     plt.figure(figsize=(8, 6))
     plt.imshow(cm_normalized, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title("Confusion Matrix (Normalized)")
     plt.colorbar()
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
+    plt.xticks(tick_marks, mapped_classes, rotation=60)
+    plt.yticks(tick_marks, mapped_classes)
     
     thresh_norm = cm_normalized.max() / 2.
-    # Annotate each cell with the percentage (%)
+    # Annotate each cell with the percentage
     for i in range(cm_normalized.shape[0]):
         for j in range(cm_normalized.shape[1]):
             percentage = cm_normalized[i, j] * 100
             plt.text(j, i, f"{percentage:.1f}%",
                      horizontalalignment="center",
-                     color="white" if cm_normalized[i, j] > thresh_norm else "black")
+                     color="white" if cm_normalized[i, j] > thresh_norm else "black", fontsize=8)
     
     plt.ylabel('Actual Label')
     plt.xlabel('Predicted Label')
     plt.tight_layout()
     plt.savefig(os.path.join(cm_dir, "confusion_matrix_normalized.png"))
     plt.close()
+    
     print(f"Saved confusion matrices to '{cm_dir}'")
 
 
@@ -311,5 +341,8 @@ elif typeplot == "All":
   labels = plot_config["plot_titles_config_2d"]
   plot_2D_hist(file, variabs, labels, outputpath)
   results_df = pd.read_csv(true_predict_labels)
+  if args.same == "True":
+    variabs_and_config = plot_config["plot_together"]
+    plot_hist_together(file, variabs_and_config, outputpath)
   if labels_file != None:
     plot_cm(results_df, outputpath)

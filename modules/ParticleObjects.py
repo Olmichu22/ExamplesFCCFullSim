@@ -120,10 +120,13 @@ class RecoParticle(Particle):
   
   def ShowInfo(self):
     """ Print the information of the particle and its constituents."""
-    print("RecoParticle ID: %d, Charge: %d, Mass: %f, nConst: %d, Angle: %d" % (self.ID, self.charge, self.p4.M(), self.nConst, self.maxCone))
+    print("RecoParticle ID: %d, Charge: %d, Mass: %f, nConst: %d, Angle: %f" % (self.ID, self.charge, self.p4.M(), self.nConst, self.maxCone))
     for i in range(self.nConst):
       print("  Constituent %d:" % i)
       print(self.const[i])
+  
+  def __str__(self):
+    return "ID: %d, Charge: %d, Mass: %f, nConst: %d, Angle: %f" % (self.ID, self.charge, self.p4.M(), self.nConst, self.maxCone)
   
 
 class GenParticle(Particle):
@@ -215,10 +218,10 @@ class GenParticle(Particle):
     
   def ShowInfo(self):
     """ Print the information of the particle and its constituents."""
-    print("GenParticle ID: %d, Charge: %d, Mass: %f, VisMass: %f, nConst: %d, Angle: %d" % (self.ID, self.visCharge, self.p4.M(), self.visp4.M(), self.nConst, self.maxAngle))
+    print("GenParticle ID: %d, Charge: %d, Mass: %f, VisMass: %f, nConst: %d, Angle: %f" % (self.ID, self.charge, self.p4.M(), self.visp4.M(), self.nConst, self.maxAngle))
     for i in range(self.nConst):
       print("  Constituent %d:" % i)
       print(self.const[i])
   
   def __str__(self):
-    return "ID: %d, Charge: %d, Mass: %f, VisMass: %f, nConst: %d, Angle: %d" % (self.ID, self.visCharge, self.p4.M(), self.visp4.M(), self.nConst, self.maxAngle)
+    return "ID: %d, Charge: %d, Mass: %f, VisMass: %f, nConst: %d, Angle: %f" % (self.ID, self.charge, self.p4.M(), self.visp4.M(), self.nConst, self.maxAngle)

@@ -4,11 +4,13 @@ cuts:
   TauPionPCut: 0.1
   dRMax: 0.4
   MatchedGenMinDR: 1
+  generalPCut: 0.
 general:
   decay:
   - -777
   outfile: effis
   sample: ZTauTau_SMPol_25Sept_MuonFix
+  matchedCM: "True"
   test: 'True'
 output:
   outputfile:

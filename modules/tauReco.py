@@ -8,15 +8,19 @@ from modules.ParticleObjects import GenParticle, RecoParticle
 
 from modules import myutils
 
-def MatchRecoGenTau(genTau, recoTaus, maxDRMatch=1, selectDecay=-777):
+# import logging
+# logger = logging.getLogger("TauRecoLogger")
+
+
+def MatchRecoGenTau(genTau, recoTaus, nTausType, maxDRMatch=1, selectDecay=-777):
    """ Find the reconstructed tau that is closest to the generator level tau using the angle between the momenta.
       Args:
             genTau: generator level tau.
             recoTaus: list of reconstructed taus.
             maxDRMatch: maximum angle between the momenta.
       Returns:
-            findMatch: index of the reconstructed tau that is closest to the generator level tau or -1 if no match is found
-   """
+            Tuple: Tuple with the index of the closest reconstructed tau and the number of taus of the same type.
+      """
    findMatch=-1
    genVisTauP4 = genTau.getvisMomentum()
    nRecoTaus = len(recoTaus)
@@ -40,8 +44,8 @@ def MatchRecoGenTau(genTau, recoTaus, maxDRMatch=1, selectDecay=-777):
             nTausType+=1
 
       # but remove at least the leptonic ones / failed ID
-      if recoTauId<0:
-         continue
+      # if recoTauId<0:
+      #    continue
 
       angleMatch=myutils.dRAngle(recoTauP4, genVisTauP4)
 
@@ -50,7 +54,7 @@ def MatchRecoGenTau(genTau, recoTaus, maxDRMatch=1, selectDecay=-777):
          maxDRMatch=angleMatch
          findMatch=j
          
-   return findMatch
+   return findMatch, nTausType
 
 # Check a generator level tau candidate, find the decay, 
 # and compute visible (meson) variables 
@@ -151,15 +155,17 @@ def visTauGen(candTau):
 # Reversed procedure for reconstructed pfos
 # Starting from a pion, find particles in a cone around it, and 
 # build the tau 
-def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutron=10):
+def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutron=10, genminP = 0.5):
    """ Starting from a pion, find particles in a cone around it, and build the tau.
 
    Args:
-       lead (Particle Object): Pion candidate.
-       allPfs (Particle Collection): All particles in the event.
-       DRCone (int, optional): Radius of the cone. Defaults to 1.
-       minP (int, optional): Minimum photon momentum. Defaults to 0.
-       PNeutron (int, optional): Minimum neutron momentum. Defaults to 10.
+      lead (Particle Object): Pion candidate.
+      allPfs (Particle Collection): All particles in the event.
+      DRCone (int, optional): Radius of the cone. Defaults to 1.
+      minP_photon (int, optional): Minimum photon momentum. Defaults to 0.
+      minP_pion (int, optional): Minimum pion momentum. Defaults to 0.
+      PNeutron (int, optional): Minimum neutron momentum. Defaults to 10.
+      genminP (int, optional): Minimum general level momentum. Defaults to 0.5.
    
    Returns:
       Tuple: Tuple with the 4-momentum of the tau, the tau ID, the charge, the maximum angle between constituents, the number of constituents, and the constituents.
@@ -187,8 +193,8 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
 
 #        print ('...lead',leadP4.P(),leadP4.Theta(),math.cos(leadP4.Theta())) # leadP4.Phi(),lead.getMass())
    # Set to avoid duplicates
-   found_pions_id = set()
-   for key, cand in allPfs.items():
+   # found_pions_id = set()
+   for cand in allPfs:
       if (cand==lead):
          continue 
 
@@ -203,23 +209,22 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
       if (dR>DRCone):  # cut to be tuned
          continue 
       # how low should we go in P?
-      # if (candP4.P()<minP):
-      #    continue 
+      if (candP4.P()<genminP):
+         continue 
 
       # now check ID and clean
       # Ignore events with electrons and muons
       if candPDG==11 or candPDG==13: 
          continue
-      
       # Counting neutrons
-      if (candPDG==2112 and candP4.P()>PNeutron): # Pandora FIXME: pion -> neutron misID 
+      elif (candPDG==2112 and candP4.P()>PNeutron): # Pandora FIXME: pion -> neutron misID 
          countNeutrons+=1
       # Counting pions and kaons
-      if candPDG==211 and candP4.P()>minP_pion:   # ignoring the difference between kaons and pions for now 
+      elif candPDG==211 and candP4.P()>minP_pion:   # ignoring the difference between kaons and pions for now 
          countPions+=1
-         found_pions_id.add(key)
+         # found_pions_id.add(key)
       # Counting photons (should be 2 x pi0s)
-      if candPDG==22 and candP4.P()>minP_photon:  # careful: here counting photons and not pi0s. Account for merged/lost photons.  
+      elif candPDG==22 and candP4.P()>minP_photon:  # careful: here counting photons and not pi0s. Account for merged/lost photons.  
          countPhotons+=1
       else: 
          continue
@@ -253,15 +258,24 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
       elif (countPions==1 and countNeutrons>0): # Future FIXME: Pandora pion->neutron misID issue 
                tauID=15 
 
-      #print (tauP4.P(),math.cos(tauP4.Theta()),chargeTau,countPions,countPhotons,tauID)
 
       # return an object with P4, ID, Charge, AngleMax, nConsts, constIdx 
       # should be a class in the future
-      return (tauP4,tauID,chargeTau,maxConeTau,nConsts,const), found_pions_id
+      # logger.debug(
+      #    f"Tau con carga absoluta 1: "
+      #    f"chargeTau: {chargeTau}, countPhotons: {countPhotons}, countPions: {countPions}, countNeutrons: {countNeutrons}, tauP4.P(): {tauP4.P()}, math.cos(tauP4.Theta()): {math.cos(tauP4.Theta())}, tauID: {tauID}"
+      # )
+      # print (tauP4.P(),math.cos(tauP4.Theta()),chargeTau,countPions,countPhotons,tauID)
+
+      return (tauP4,tauID,chargeTau,maxConeTau,nConsts,const), None
 
    else:
+      # logger.debug(
+      #    f"Tau con carga absoluta distinta de 1: "
+      #    f"chargeTau: {chargeTau}, countPhotons: {countPhotons}, countPions: {countPions}, countNeutrons: {countNeutrons}"
+      # )
       tauP4.SetXYZM(0,0,0,0) # safety, always return an object 
-      return (tauP4,-1,0,0,0,0), found_pions_id
+      return (tauP4,-1,0,0,0,0), None
                  
 
 # loop over all gen taus 
@@ -306,14 +320,16 @@ def findAllGenTaus(mc_particles):
    return genTaus
 
 # function to find all reco taus starting from PFO collection 
-def findAllTaus(pfos, dRMax, minP_photon, minP_pion, PNeutron):
+def findAllTaus(pfos, dRMax, minP_photon, minP_pion, PNeutron, genminP):
    """ Find all tau candidates starting from PFO collection by recognizing the decay products.
 
    Args:
-       pfos (PandoraPFOs): PandoraPFOs collection
-       dRMax (float): Maximum cone radius.
-       minPt (float): Minimum photon momentum. CHECK THIS
-       PNeutron (int): Minimum neutron momentum.
+      pfos (PandoraPFOs): PandoraPFOs collection
+      dRMax (float): Maximum cone radius.
+      minP_photon (float): Minimum photon momentum.
+      minP_pion (float): Minimum pion momentum.
+      PNeutron (float): Minimum neutron momentum.
+      genminP (float): Minimum general level momentum.
 
    Returns:
        taus (dict): Dictionary with the tau candidates containing tuples with the visible 4-momentum, the tau ID, and the charge.
@@ -321,37 +337,44 @@ def findAllTaus(pfos, dRMax, minP_photon, minP_pion, PNeutron):
    taus={}
    nTaus=0
    # Dict to avoid duplicates
-   id_pfos = {i: pfos[i] for i in range(len(pfos))}
+   # id_pfos = {i: pfos[i] for i in range(len(pfos))}
    found_pions_id = set()
-   for key, pf in id_pfos.items():
+   # for key, pf in id_pfos.items():
+   for pf in pfos:
       if (abs(pf.getPDG())!=211): 
          continue 
-      if key in found_pions_id:
-         continue
+      # if key in found_pions_id:
+      #    continue
          
-      recoTau_data, pions_id = buildTauFromPion(pf, id_pfos, dRMax, minP_photon, minP_pion, PNeutron)
+      recoTau_data, pions_id = buildTauFromPion(pf, pfos, dRMax, minP_photon, minP_pion, PNeutron, genminP)
       recoTau = RecoParticle(recoTau_data[0], recoTau_data[1], recoTau_data[2], recoTau_data[3], recoTau_data[4], recoTau_data[5])
+      # logger.debug(
+      #    f"Id del RecoTau {recoTau.getID()}"
+      # )
       if recoTau.getCharge()<0:
          recoTau.setPDG(15)
       else:
          recoTau.setPDG(-15)
       
-      # Add the main pion to pions_id
-      pions_id.add(key)
-      found_pions_id.update(pions_id)
+      # # Add the main pion to pions_id
+      # if pions_id:
+      #    pions_id.add(key)
+      #    found_pions_id.update(pions_id)
+      # else:
+      #    found_pions_id.add(key)
       
       
-      # candTauP4=recoTau[0]
+      candTauP4=recoTau.getMomentum()
       # candTauId=recoTau[1]
       # candTauCharge=recoTau[2]
 
       # # FIXME: this is very ugly, angular separation between taus to avoid duplicates
       # # in these samples most of the events have 1 tau (and 1 prong)
       # # in a real scenario this could be slow and we could veto events 
-      # duplicate=False
-      # for i in range(0,nTaus):
-      #    if (myutils.dRAngle(candTauP4,taus[i][0])<0.05): duplicate=True
-      # if (duplicate==True): continue
+      duplicate=False
+      for i in range(0,nTaus):
+         if (myutils.dRAngle(candTauP4,taus[i].getMomentum())<0.05): duplicate=True
+      if (duplicate==True): continue
 
       taus[nTaus]=recoTau
       nTaus+=1

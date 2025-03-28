@@ -7,6 +7,9 @@ import argparse
 from array import array
 from podio import root_io
 import edm4hep
+import logging
+
+logger_io = logging.getLogger('io')
 
 # I'm sure this exists already 
 def dRAngle(p1,p2):
@@ -34,17 +37,21 @@ def open_root_file(file_path):
 
         # Check if the file is a zombie
         if not root_file or root_file.IsZombie():
+            logger_io.error(f"Error: '{file_path}' is a zombie or could not be opened.")
             raise IOError(f"Error: '{file_path}' is a zombie or could not be opened.")
         
         # Check if file is recoverable (potentially corrupted)
         if root_file.TestBit(ROOT.TFile.kRecovered):
+            logger_io.error(f"Warning: '{file_path}' is corrupted and has been recovered.")
             raise IOError(f"Error: '{file_path}' is corrupted and has been recovered.")
         
         #print(f"'{file_path}' opened successfully.")
+        logger_io.debug("File '%s' opened successfully.", file_path)
         return root_file
 
     except Exception as e:
-        print(f"Error: {e}")
+        logger_io.error("Error opening file '%s': %s", file_path, e)
+        # print(f"Error: {e}")
         return None
 
 # Fuction to sort by tau P
@@ -76,7 +83,7 @@ def load_yaml_config(config_file, default_config):
             print(f"Loaded configuration parameters from '{config_file}'.")
     elif default_config:
         if not os.path.exists(default_config):
-            raise FileNotFoundError(f"Error: '{default_config}' does not exist.")
+            raise FileNotFoundError(f"Error: '{default_config}' does not exist. A valid default configuration file is required.")
         with open(default_config, "r") as file:
             config = yaml.safe_load(file)
             print(f"Loaded default configuration parameters from '{default_config}'.")

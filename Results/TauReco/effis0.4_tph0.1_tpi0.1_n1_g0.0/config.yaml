@@ -4,6 +4,7 @@ cuts:
   TauPhotonPCut: 0.1
   TauPionPCut: 0.1
   dRMax: 0.4
+  generalPCut: 0.0
 general:
   decay:
   - -777
@@ -13,7 +14,7 @@ general:
   test: 'True'
 output:
   outputfile:
-  - effisdecayAll_0.4_tph0.1_tpi0.1_n1.root
+  - effisdecayAll_0.4_tph0.1_tpi0.1_n1_g0.0.root
   outputlabels:
-  - Results/TauReco/effis0.4_tph0.1_tpi0.1_n1/true_predicted_label_decayAll.csv
-  outputpath: Results/TauReco/effis0.4_tph0.1_tpi0.1_n1/
+  - Results/TauReco/effis0.4_tph0.1_tpi0.1_n1_g0.0/true_predicted_label_decayAll.csv
+  outputpath: Results/TauReco/effis0.4_tph0.1_tpi0.1_n1_g0.0/
