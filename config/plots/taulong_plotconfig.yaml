@@ -663,9 +663,14 @@ variabs_2d:
   - histo2DTauDR
   - histo2DTauMass
   - histo2DTauType
+  - hRecoPi0MassOverNPhoton
   # - histo2DTauQ
 
 plot_titles_config_2d:
+  hRecoPi0MassOverNPhoton:
+    x: "Pi0 Mass [GeV]"
+    y: "N Photons"
+    title: "2D Histogram of Pi0 Mass vs N Photons"
   hRecoConstPType:
     x: "Reco Constituent P [GeV]"
     y: "Type"

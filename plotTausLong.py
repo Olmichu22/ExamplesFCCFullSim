@@ -136,23 +136,26 @@ if fileOutName not in config["output"]["outputfile"]:
 if not os.path.exists(outputpath):
     os.makedirs(outputpath)
 
-
 # Once set the output path, we can set the logger
 if args.verbose == 0:
     log_level = logging.WARNING  # Only warnings and errors
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(outputpath + "/" + "exp.log", mode="w"),
+    ]
 elif args.verbose == 1:
     log_level = logging.INFO  # Informational messages
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(outputpath + "/" + "exp.log", mode="w"),
+    ]
 else:
     log_level = logging.DEBUG  # Debug messages for -vv or higher
-
+    handlers=[logging.FileHandler(outputpath + "/" + "exp.log", mode="w")]
 logging.basicConfig(
     level=log_level,
     format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(outputpath + "/" + "app.log", mode="w"),
-    ],
-)
+    handlers=handlers)
 logger_config = logging.getLogger("config")
 logger_io = logging.getLogger("io")
 logger_process = logging.getLogger("processing")
@@ -192,7 +195,7 @@ nfiles = len(os.listdir(dir_path))
 
 nfiles = 1000
 if test == True:
-    nfiles = 20
+    nfiles = 10
 
 logger_io.info("Reading files from %s", dir_path)
 for i in range(1, nfiles + 1):
@@ -278,6 +281,8 @@ hRecoNonMatchedPisP = TH1F("hRecoNonMatchedPisP", "", 500, 0, 50)
 hRecoConstPi0Mass = TH1F("hRecoConstPi0Mass", "", 100, 0, 2)
 hGenConstPi0Mass = TH1F("hGenConstPi0Mass", "", 100, 0, 2)
 hMatchedGenConstPi0Mass = TH1F("hMatchedConstPi0Mass", "", 100, 0, 2)
+h2DPi0MassOverNPhoton = TH2F("hRecoPi0MassOverNPhoton", "", 100, 0, 2, 20, 0, 20)
+
 
 hMatchedGenConstPion1P = TH1F("hMatchedGenConstPion1P", "", 500, 0, 50)
 hMatchedGenConstPion2P = TH1F("hMatchedGenConstPion2P", "", 500, 0, 50)
@@ -416,11 +421,11 @@ for eventid, event in enumerate(reader.get("events")):
         nGenTausType += 1
         foundGen = True
 
-        # # P4 Tau filters
-        if genVisTauP4.P() < 5:
-            continue
-        if abs(math.cos(genVisTauP4.Theta()) > 0.9):
-            continue
+        # # # P4 Tau filters
+        # if genVisTauP4.P() < 5:
+        #     continue
+        # if abs(math.cos(genVisTauP4.Theta()) > 0.9):
+        #     continue
 
         # print ("Gen",genTauP4.P(),genVisTauP4.P(),genVisTauP4.Theta(),genVisTauP4.Phi(),genTauId,genTauQ,genTauDR,genTauNConsts)
 
@@ -656,6 +661,7 @@ for eventid, event in enumerate(reader.get("events")):
 
         if n_pi0s > 0:
             hRecoConstPi0Mass.Fill(photonCumulativeP4.M() / n_pi0s)
+            h2DPi0MassOverNPhoton.Fill(photonCumulativeP4.M() / n_pi0s, nPhotons)
 
         hRecoTauType.Fill(recoTauId)
         hRecoTauPt.Fill(recoTauP4.Pt())
@@ -771,6 +777,7 @@ hGenConstPi0Mass.Write()
 hEffiGenPi0Mass.Write()
 hRecoConstPi0Mass.Write()
 hMatchedGenConstPi0Mass.Write()
+h2DPi0MassOverNPhoton.Write()
 
 hGenConstNonMatchedPi3P.Write()
 hRecoConstNonMatchedPi3P.Write()

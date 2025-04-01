@@ -1,0 +1,20 @@
+cuts:
+  MatchedGenMinDR: 1
+  NeutronCut: 1
+  TauPhotonPCut: 0.1
+  TauPionPCut: 1.0
+  dRMax: 0.4
+  generalPCut: 0.0
+general:
+  decay:
+  - -777
+  matchedCM: 'True'
+  outfile: effis
+  sample: ZTauTau_SMPol_25Sept_MuonFix
+  test: 'True'
+output:
+  outputfile:
+  - effisdecayAll_0.4_tph0.1_tpi1.0_n1_g0.0.root
+  outputlabels:
+  - Results/TauReco/effis0.4_tph0.1_tpi1.0_n1_g0.0/true_predicted_label_decayAll.csv
+  outputpath: Results/TauReco/effis0.4_tph0.1_tpi1.0_n1_g0.0/

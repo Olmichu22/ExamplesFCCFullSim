@@ -155,7 +155,7 @@ def visTauGen(candTau):
 # Reversed procedure for reconstructed pfos
 # Starting from a pion, find particles in a cone around it, and 
 # build the tau 
-def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutron=10, genminP = 0.5):
+def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutron=1, genminP = 0.5):
    """ Starting from a pion, find particles in a cone around it, and build the tau.
 
    Args:

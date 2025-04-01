@@ -1,0 +1,8 @@
+migrations:
+  0->-20: [0,-20]
+  10->-20: [10,-20]
+  10->10: [10,10]
+  0->0: [0,0]
+axis:
+  xlabel: "Neutron P Cut (GeV)"
+  title: "Migrations regarding Neutron P Cut"

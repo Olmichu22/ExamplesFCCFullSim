@@ -10,6 +10,7 @@ import pprint
 import yaml
 import pandas as pd
 import logging
+import copy
 
 from modules import tauReco 
 from modules import myutils 
@@ -65,14 +66,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 outputbasepath = "Results/Experiments/"
-value_to_key = {
-    "NeutronP": "NeutronCut",
-    "PhotonP": "TauPhotonPCut",
-    "PionP": "TauPionPCut",
-    "dRMax": "dRMax",
-    "MGenDR": "MatchedGenMinDR",
-    "generalP": "generalPCut",
-}
+values = ["NeutronCut", "TauPhotonPCut", "TauPionPCut", "dRMax", "MatchedGenMinDR", "generalPCut"]
 
 # Load Config File
 default_config = "config/default/cutexperiment.yaml"
@@ -81,14 +75,14 @@ config = myutils.load_yaml_config(args.config, default_config)
 # Set User Config (if any)
 config["experiment"] = args.value if args.value is not None else config["experiment"]
 
-if config["experiment"] not in value_to_key:
+if config["experiment"] not in values:
     raise Exception(
-        f"Value '{config['experiment']}' not valid. Choose between {list(value_to_key.keys())}"
+        f"Value '{config['experiment']}' not valid. Choose between {values}"
     )
 
 
 for key in config["cuts"]:
-  if key == value_to_key[config["experiment"]]:
+  if key == config["experiment"]:
     if args.range is not None and len(args.range) != 3:
         raise Exception(
             f"Invalid range format. Expected format: min, max, step. Got {len(args.range)} values."
@@ -111,13 +105,14 @@ generalPCut = config["cuts"]["generalPCut"]
 
 exp_str = ""
 for key, value in config["cuts"].items():
-    if key == value_to_key[config["experiment"]]:
+    if key == config["experiment"]:
         exp_str += f"{key}Exp_"
     else:
         exp_str += f"{key}{value}_"
 cut_string = f"_{exp_str[:-1]}"
 
-selectDecay = args.decay if args.decay != None else config["general"]["decay"]
+config["general"]["decay"] = args.decay if args.decay != None else config["general"]["decay"]
+selectDecay = config["general"]["decay"]
 
 decayString = f"decay{selectDecay}" + cut_string
 if selectDecay == -777:
@@ -138,19 +133,23 @@ if not os.path.exists(outputpath):
 # Once set the output path, we can set the logger
 if args.verbose == 0:
     log_level = logging.WARNING  # Only warnings and errors
-elif args.verbose == 1:
-    log_level = logging.INFO  # Informational messages
-else:
-    log_level = logging.DEBUG  # Debug messages for -vv or higher
-
-logging.basicConfig(
-    level=log_level,
-    format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
         logging.FileHandler(outputpath + "/" + "exp.log", mode="w"),
-    ],
-)
+    ]
+elif args.verbose == 1:
+    log_level = logging.INFO  # Informational messages
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(outputpath + "/" + "exp.log", mode="w"),
+    ]
+else:
+    log_level = logging.DEBUG  # Debug messages for -vv or higher
+    handlers=[logging.FileHandler(outputpath + "/" + "exp.log", mode="w")]
+logging.basicConfig(
+    level=log_level,
+    format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
+    handlers=handlers)
 logger_config = logging.getLogger("config")
 logger_io = logging.getLogger("io")
 logger_process = logging.getLogger("processing")
@@ -200,8 +199,7 @@ for i in range(1,nfiles+1):
             continue
         filenames.append(filename)
 
-logger_io.info("Found %d files", len(filenames))
-reader = root_io.Reader(filenames)
+
 
 true_predicted_label_sample = {"GenID":[],"True":[], "Predicted":[], "PhotonPredicted":[]}
 
@@ -213,21 +211,24 @@ pfobjects="PandoraPFOs"
 
 experiment_parameters={}
 for key, value in config["cuts"].items():
-  if key == value_to_key[config["experiment"]]:
+  if key == config["experiment"]:
     experiment_parameters[key] = None
   else:
     experiment_parameters[key] = value
 
-countEvents=0
-for exp, exp_value in enumerate(config["cuts"][value_to_key[config["experiment"]]]):
-    experiment_parameters[value_to_key[config["experiment"]]] = exp_value
+for exp, exp_value in enumerate(config["cuts"][config["experiment"]]):
+    experiment_parameters[config["experiment"]] = exp_value
     logger_process.info("Running experiment with parameters: %s", experiment_parameters)
-    true_predicted_label = true_predicted_label_sample.copy()
+    true_predicted_label = copy.deepcopy(true_predicted_label_sample)
 
+    logger_io.info("Found %d files", len(filenames))
+    reader = root_io.Reader(filenames)
+    countEvents=0
+    
     for eventid, event in enumerate(reader.get("events")):
         logger_process.debug("Processing event %d", eventid)
         if countEvents%1000==0:
-            logger_process.info("Processing event %d of experiment %d out of %d", countEvents, exp, len(config["cuts"][value_to_key[config["experiment"]]]))
+            logger_process.info("Processing event %d of experiment %d out of %d", countEvents, exp+1, len(config["cuts"][config["experiment"]]))
         countEvents+=1
 
         mc_particles = event.get(genparts)
@@ -236,10 +237,11 @@ for exp, exp_value in enumerate(config["cuts"][value_to_key[config["experiment"]
         genTaus=tauReco.findAllGenTaus(mc_particles)
         nGenTaus=len(genTaus)
         logger_process.debug(
-      "Found %d gen taus. Details:\n%s",
-      nGenTaus,
-      "\n".join("GenTau %d: %s" % (i, tau) for i, tau in genTaus.items()),
-    )
+        "Found %d gen taus. Details:\n%s",
+        nGenTaus,
+        "\n".join("GenTau %d: %s" % (i, tau) for i, tau in genTaus.items()),
+        )
+        logger_process.debug("Running tau reconstruction with parameters: %s", experiment_parameters)
         recoTaus = tauReco.findAllTaus(pfos,
                                    experiment_parameters["dRMax"],
                                    experiment_parameters["TauPhotonPCut"],
@@ -252,7 +254,7 @@ for exp, exp_value in enumerate(config["cuts"][value_to_key[config["experiment"]
           "Found %d reconstructed taus. Details:\n%s",
           nRecoTaus,
           "\n".join("RecoTau %d: %s" % (i, tau) for i, tau in recoTaus.items()),
-    )
+            )
 
         nTausType = 0
         for i in range(0, nGenTaus):
