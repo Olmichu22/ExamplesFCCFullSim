@@ -262,7 +262,7 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
 
       elif (countPions==1 and countNeutrons>0): # Future FIXME: Pandora pion->neutron misID issue 
          # tauID=15
-         tauID = -20 # To not interact with the other IDs 
+         tauID = -20-countNeutrons # To not interact with the other IDs 
 
 
       # return an object with P4, ID, Charge, AngleMax, nConsts, constIdx 

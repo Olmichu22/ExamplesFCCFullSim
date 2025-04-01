@@ -103,7 +103,7 @@ else:
     for j in range(len(migrations)):
       decay = migrations[i]
       m = migrations[j]
-      if decay == -20:
+      if decay <= -20:
         continue
       values_to_plot[str(decay) + "->" + str(m)] = []
       values_to_plot[str(decay) + "->" + str(m) + " norm"] = []
@@ -120,7 +120,7 @@ else:
       for m_j in range(len(migrations)):
         m = migrations[m_j]
         mig_value = np.sum((true_label == decay)*(pred_label == m))
-        if decay==-20:
+        if decay<=-20:
           continue
         values_to_plot[str(decay) + "->" + str(m)].append(np.sum(mig_value))
         values_to_plot[str(decay) + "->" + str(m) + " norm"].append(mig_value/np.sum(true_label == decay))

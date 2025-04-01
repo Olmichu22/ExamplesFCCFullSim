@@ -18,30 +18,30 @@ def id_to_key(event_id, photons=False):
   if photons:
     if event_id < 0:
       if event_id == -13:
-        key = f"{tau} → {mu}{2*neutrino}"
+        key = f"{mu}"
       elif event_id == -11:
-        key = f"{tau} → {e}{2*neutrino}"
-      elif event_id == -20:
-        key = f"{n} Cont."
+        key = f"{e}"
+      elif event_id <= -20:
+        key = f"h{-event_id-20}{n}"
       else:
         key = "Unknown"
     elif event_id == 0:
-      key = f"{pi}"
+      key = f"h"
     elif event_id < 10:
-      key = f"{pi}{event_id}{gamma}"
+      key = f"h{event_id}{gamma}"
     elif event_id == 10:
-      key = f"3{pi}"
+      key = f"3h"
     else:
-      key = f"3{pi}{event_id-10}{gamma}"
+      key = f"3h{event_id-10}{gamma}"
 
   else:
     if event_id < 0:
       if event_id == -13:
-        key = f"{tau} → {mu}"
+        key = f"{tau} → {mu}2{neutrino}"
       elif event_id == -11:
-        key = f"{tau} → {e}"
-      elif event_id == -20:
-        key = f"{n} Cont."
+        key = f"{tau} → {e}2{neutrino}"
+      elif event_id <= -20:
+        key = f"{pi}{-event_id-20}{n}"
       else:
         key = "Unknown"
     elif event_id == 0:
