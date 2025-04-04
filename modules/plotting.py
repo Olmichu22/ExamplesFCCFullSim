@@ -22,7 +22,7 @@ def id_to_key(event_id, photons=False):
       elif event_id == -11:
         key = f"{e}"
       elif event_id <= -20:
-        key = f"h{-event_id-20}{n}"
+        key = f"h{n}"
       else:
         key = "Unknown"
     elif event_id == 0:
@@ -41,7 +41,7 @@ def id_to_key(event_id, photons=False):
       elif event_id == -11:
         key = f"{tau} → {e}2{neutrino}"
       elif event_id <= -20:
-        key = f"{pi}{-event_id-20}{n}"
+        key = f"{pi}{n}"
       else:
         key = "Unknown"
     elif event_id == 0:
@@ -54,7 +54,7 @@ def id_to_key(event_id, photons=False):
       key = f"{tau} → {3}{pi}{event_id-10}{pi0}{neutrino}"
   return key
 
-def plot_1D_hist(file, variabs, labels, outputpath):
+def plot_1D_hist(file, variabs, labels, outputpath, normalize):
     """
     Plots individual 1D histograms.
     Each histogram is retrieved from the ROOT file, formatted using the provided labels,
@@ -80,7 +80,10 @@ def plot_1D_hist(file, variabs, labels, outputpath):
             histo.SetYTitle(cfg.get("y", ""))
             histo.SetTitle(cfg.get("title", ""))
         c.Clear()
-        histo.Draw()
+        if normalize:
+          histo.DrawNormalized()
+        else:
+          histo.Draw()
         out_file = os.path.join(out_dir, f"{var}.png")
         c.SaveAs(out_file)
         print(f"Saved histogram '{var}' as '{out_file}'")
@@ -105,7 +108,7 @@ def plot_hist_together(file, together_config, outputpath):
         legend = ROOT.TLegend(0.65, 0.70, 0.90, 0.90)
         legend.SetBorderSize(0)
         first = True
-        
+        normalize = cfg.get("norm", False)
         # For each histogram name in the group configuration
         for i, var in enumerate(cfg["variabs"]):
             histo = file.Get(var)
@@ -113,17 +116,16 @@ def plot_hist_together(file, together_config, outputpath):
                 print(f"Warning: Histogram '{var}' not found in the ROOT file.")
                 continue
             # Set the common X and Y axis titles from the group config
-            histo.SetXTitle(cfg.get("x", ""))
-            histo.SetYTitle(cfg.get("y", ""))
-            # Optionally, set the title of the histogram (or leave it empty)
-            histo.SetTitle(cfg.get("title", ""))
+
             
             # Assign a distinct line color for each histogram (simple scheme)
             if i == 0:
                 histo.SetLineColor(ROOT.kRed)
             elif i == 1:
+                histo.SetLineStyle(2)
                 histo.SetLineColor(ROOT.kBlue)
             elif i == 2:
+                histo.SetLineStyle(3)
                 histo.SetLineColor(ROOT.kGreen+2)
             else:
                 histo.SetLineColor(ROOT.kMagenta)
@@ -131,10 +133,33 @@ def plot_hist_together(file, together_config, outputpath):
             
             # Draw the first histogram normally; then draw others with "same"
             if first:
-                histo.Draw()
-                first = False
+              histo.SetXTitle(cfg.get("x", ""))
+              histo.SetYTitle(cfg.get("y", ""))
+              # Optionally, set the title of the histogram (or leave it empty)
+              histo.SetTitle(cfg.get("title", ""))
+              if normalize:
+                max_val = histo.GetMaximum()
+                print(f"Max value before scaling: {max_val}")
+                if max_val != 0:
+                # Escalamos para que el máximo sea 1.
+                  histo.Scale(1.0 / max_val)
+                histo.GetYaxis().SetRangeUser(0., 1.1)
+
+              histo.Draw("HIST")
+              first = False
             else:
-                histo.Draw("same")
+              if normalize:
+                max_val = histo.GetMaximum()
+                if max_val != 0:
+                # Escalamos para que el máximo sea 1.
+                  histo.Scale(1.0 / max_val)
+                # histo_norm.GetYaxis().SetRangeUser(0, 1)
+                
+
+              histo.Draw("HIST same")
+
+                # Set axis from 0 to 1
+                
             # Add legend entry using the corresponding label from config, if provided
             label = cfg["labels"][i] if i < len(cfg["labels"]) else var
             legend.AddEntry(histo, label, "l")

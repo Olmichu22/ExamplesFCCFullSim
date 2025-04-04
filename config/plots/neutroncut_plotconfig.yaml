@@ -3,6 +3,9 @@ migrations:
   10->-20: [10,-20]
   10->10: [10,10]
   0->0: [0,0]
+  10->0: [10,0]
+  0->10: [0,10]
 axis:
   xlabel: "Neutron P Cut (GeV)"
   title: "Migrations regarding Neutron P Cut"
+metric: "purity"

@@ -268,7 +268,6 @@ for exp, exp_value in enumerate(config["cuts"][config["experiment"]]):
             # pick only a decay mode in particular if you want
             if selectDecay != -777 and selectDecay != genTauId:
                 continue
-
             findMatch, nTausType = tauReco.MatchRecoGenTau(
                 genTaus[i],
                 recoTaus,

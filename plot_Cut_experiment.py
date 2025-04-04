@@ -76,10 +76,15 @@ for exp_value in experiment_values:
       break
 
 if plot_config:
+  metric = plot_config.get("metric", "recall")
   migrations = plot_config["migrations"]
   for key in list(plot_config["migrations"].keys()):
+    els_in_key = key.split("->")
     values_to_plot[key] = []
-    values_to_plot[key + " norm"] = []
+    if els_in_key[0] == els_in_key[1]:
+      values_to_plot[key + " "+metric] = []
+    else:
+      values_to_plot[key + " recall"] = []
   max_absolute_value = 0
   min_absolute_value = 0
   for exp in experiment_values:
@@ -92,7 +97,10 @@ if plot_config:
       m = item[1]
       mig_value = np.sum((true_label == decay)*(pred_label == m))
       values_to_plot[key].append(np.sum(mig_value))
-      values_to_plot[key + " norm"].append(mig_value/np.sum(true_label == decay))
+      if metric == "recall" or decay !=m:
+        values_to_plot[key + " recall"].append(mig_value/np.sum(true_label == decay))
+      elif metric == "purity" and decay == m:
+        values_to_plot[key + " "+metric].append(mig_value/np.sum(pred_label == m))
       if mig_value > max_absolute_value:
         max_absolute_value = mig_value
       if mig_value < min_absolute_value:
@@ -106,7 +114,7 @@ else:
       if decay <= -20:
         continue
       values_to_plot[str(decay) + "->" + str(m)] = []
-      values_to_plot[str(decay) + "->" + str(m) + " norm"] = []
+      values_to_plot[str(decay) + "->" + str(m) + " recall"] = []
 
   max_absolute_value = 0
   min_absolute_value = 0
@@ -123,7 +131,7 @@ else:
         if decay<=-20:
           continue
         values_to_plot[str(decay) + "->" + str(m)].append(np.sum(mig_value))
-        values_to_plot[str(decay) + "->" + str(m) + " norm"].append(mig_value/np.sum(true_label == decay))
+        values_to_plot[str(decay) + "->" + str(m) + " recall"].append(mig_value/np.sum(true_label == decay))
         if mig_value > max_absolute_value:
           max_absolute_value = mig_value
         if mig_value < min_absolute_value:
@@ -145,7 +153,7 @@ for key, values in values_to_plot.items():
 
 # Create a canvas
 canvas_absolute = ROOT.TCanvas("canvas", f'Experiment of {config["experiment"]}', 800, 600)
-canvas_normalized = ROOT.TCanvas("canvas_normalized", f'Experiment of {config["experiment"]}', 800, 600)
+canvas_metric = ROOT.TCanvas("canvas_normalized", f'Experiment of {config["experiment"]}', 800, 600)
 # Define a color palette
 colors = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, ROOT.kOrange, ROOT.kYellow, ROOT.kBlack, ROOT.kViolet]
 
@@ -156,19 +164,19 @@ legend_absolute.SetFillStyle(0)
 legend_absolute.SetHeader("Migrations")
 
 # legend norm
-legend_normalized = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
-legend_normalized.SetBorderSize(0)
-legend_normalized.SetFillStyle(0)
-legend_normalized.SetHeader("Migrations")
+legend_metric = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
+legend_metric.SetBorderSize(0)
+legend_metric.SetFillStyle(0)
+legend_metric.SetHeader("Migrations")
 
 
-normalized_keys = [key for key in values_to_plot.keys() if "norm" in key]
-absolute_keys = [key for key in values_to_plot.keys() if "norm" not in key]
+metric_keys = [key for key in values_to_plot.keys() if ((metric in key) or ("recall" in key))]
+absolute_keys = [key for key in values_to_plot.keys() if ((metric  not in key) and ("recall" not in key))]
 
 
 ncols_legend = 2
 legend_absolute.SetNColumns(ncols_legend)
-legend_normalized.SetNColumns(ncols_legend)
+legend_metric.SetNColumns(ncols_legend)
 
 title = plot_config.get("axis",{}).get("title",f'Evolution of migration by {config["experiment"]}')
 xaxis = plot_config.get("axis",{}).get("xlabel",config["experiment"] + "(GeV)")
@@ -216,8 +224,8 @@ legend_absolute.Draw()
 # Save the canvas as an image
 canvas_absolute.SaveAs(outputpath + f"graphs_plot_{mig_str}.png")
 
-canvas_normalized.cd()
-for i, key in enumerate(normalized_keys):
+canvas_metric.cd()
+for i, key in enumerate(metric_keys):
   color = colors[i % len(colors)]
   graph = graphs[key]
   graph.SetLineColor(color)
@@ -228,18 +236,18 @@ for i, key in enumerate(normalized_keys):
   if i == 0:
     graph.SetTitle(title)
     graph.GetXaxis().SetTitle(xaxis)
-    graph.GetYaxis().SetTitle("Normalized Counts (per True)")
+    graph.GetYaxis().SetTitle("Normalized Counts")
     graph.GetYaxis().SetRangeUser(0, 1.2)
     
     graph.Draw("alp")  # Draw axis, line, and points for the first graph
   else:
     # print("Dibujando segundo")
     graph.Draw("lp")  # Draw line and points for subsequent graphs
-  legend_normalized.AddEntry(graph, key, "lp")
+  legend_metric.AddEntry(graph, key, "lp")
 
 # Draw the legend
-legend_normalized.Draw()
+legend_metric.Draw()
 
 # Save the canvas as an image
-canvas_normalized.SaveAs(outputpath + f"graphs_plot_normalized_{mig_str}.png")
+canvas_metric.SaveAs(outputpath + f"graphs_plot_{metric}_{mig_str}.png")
 

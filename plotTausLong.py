@@ -10,7 +10,7 @@ import pprint
 import yaml
 import pandas as pd
 
-
+from modules import pi0Reco
 from modules import tauReco
 from modules import myutils
 
@@ -141,17 +141,17 @@ if args.verbose == 0:
     log_level = logging.WARNING  # Only warnings and errors
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(outputpath + "/" + "exp.log", mode="w"),
+        logging.FileHandler(outputpath + "/" + "app.log", mode="w"),
     ]
 elif args.verbose == 1:
     log_level = logging.INFO  # Informational messages
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(outputpath + "/" + "exp.log", mode="w"),
+        logging.FileHandler(outputpath + "/" + "app.log", mode="w"),
     ]
 else:
     log_level = logging.DEBUG  # Debug messages for -vv or higher
-    handlers=[logging.FileHandler(outputpath + "/" + "exp.log", mode="w")]
+    handlers=[logging.FileHandler(outputpath + "/" + "app.log", mode="w")]
 logging.basicConfig(
     level=log_level,
     format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
@@ -159,6 +159,7 @@ logging.basicConfig(
 logger_config = logging.getLogger("config")
 logger_io = logging.getLogger("io")
 logger_process = logging.getLogger("processing")
+logger_pi0mass = logging.getLogger("pi0mass")
 
 
 # Continue with the rest of configs
@@ -278,7 +279,13 @@ hRecoConstNonMatchedPi3P = TH1F("hRecoConstNonMatchedPi3P", "", 500, 0, 50)
 hRecoNonMatchedTauType = TH1F("hRecoNonMatchedTauType", "", 21, -1, 20)
 hRecoNonMatchedPisP = TH1F("hRecoNonMatchedPisP", "", 500, 0, 50)
 
-hRecoConstPi0Mass = TH1F("hRecoConstPi0Mass", "", 100, 0, 2)
+hRecoConstPi0Mass = TH1F("hRecoConstPi0Mass", "", 100, 0, 0.4)
+hRecoConstTwoPhotonAngDist = TH1F("hRecoConstTwoPhotonAngDist", "", 100, 0, 2)
+
+hRecoConstPi0MassFromPhotonMasstr = TH1F("hRecoConstPi0MassFromPhotonMasstr", "", 100, 0, 2)
+hRecoConstPi0MassFromPhotonDiststr = TH1F("hRecoConstPi0MassFromPhotonDiststr", "", 100, 0, 2)
+
+
 hGenConstPi0Mass = TH1F("hGenConstPi0Mass", "", 100, 0, 2)
 hMatchedGenConstPi0Mass = TH1F("hMatchedConstPi0Mass", "", 100, 0, 2)
 h2DPi0MassOverNPhoton = TH2F("hRecoPi0MassOverNPhoton", "", 100, 0, 2, 20, 0, 20)
@@ -296,6 +303,26 @@ hGenConstP = TH1F("hGenConstP", "", 500, 0, 50)
 hGenConstPi0P = TH1F("hGenConstPi0P", "", 500, 0, 50)
 hGenConstPionP = TH1F("hGenConstPionP", "", 500, 0, 50)
 hGenConstPhotonP = TH1F("hGenConstPhotonP", "", 500, 0, 50)
+
+# Hist for reconstructed photons in a1 (pi pi0 pi0), rho (pi0 pi0), and pi cases
+# 3 photon cases
+hRecoConstlessPhotonPa1strMass = TH1F("hRecoConstlessPhotonPa1strMass", "", 100, 0, 50)
+hRecoConstlessPhotonPa1strDist = TH1F("hRecoConstlessPhotonPa1strDist", "", 100, 0, 50)
+
+hRecoConstxtraPhotonPrhostrMass = TH1F("hRecoConstxtraPhotonPrhostrMass", "", 100, 0, 50)
+hRecoConstxtraPhotonPrhostrDist = TH1F("hRecoConstxtraPhotonPrhostrDist", "", 100, 0, 50)
+
+# 1 photon cases
+hRecoConstlessPhotonPrho = TH1F("hRecoConstlessPhotonPrho", "", 100, 0, 50)
+hRecoConstxtraPhotonPi = TH1F("hRecoConstxtraPhotonPi", "", 100, 0, 50)
+
+hRecoThreePhotonMatchOnestrMassP = TH1F("hRecoThreePhotonMatchOnestrMassP", "", 100, 0, 50)
+hRecoThreePhotonMatchOnestrDistP = TH1F("hRecoThreePhotonMatchOnestrDistP", "", 100, 0, 50)
+hRecoThreePhotonMatchTwostrMassP = TH1F("hRecoThreePhotonMatchTwostrMassP", "", 100, 0, 50)
+hRecoThreePhotonMatchTwostrDistP = TH1F("hRecoThreePhotonMatchTwostrDistP", "", 100, 0, 50)
+hRecoThreePhotonNoMatchstrMassP = TH1F("hRecoThreePhotonNoMatchstrMassP", "", 100, 0, 50)
+hRecoThreePhotonNoMatchstrDistP = TH1F("hRecoThreePhotonNoMatchstrDistP", "", 100, 0, 50)
+
 
 h2DGenConstPType = TH2F("hGenConstPType", "", 500, 0, 50, 15, 0, 15)
 h2DGenConstPi0PType = TH2F("hGenConstPi0PType", "", 500, 0, 50, 15, 0, 15)
@@ -563,7 +590,7 @@ for eventid, event in enumerate(reader.get("events")):
 
         hMatchedTausPRes.Fill((recoTauP4.P() - genTauP4.P()) / genTauP4.P())
         hMatchedTausPtRes.Fill((recoTauP4.Pt() - genTauP4.Pt()) / genTauP4.Pt())
-        hMatchedTausChargeRes.Fill(abs(recoTauQ) - abs(genTauQ) / abs(genTauQ))
+        # hMatchedTausChargeRes.Fill(abs(recoTauQ) - abs(genTauQ) / abs(genTauQ))
         hMatchedTausMaxAngleRes.Fill((recoTauDR - genTauDR) / genTauDR)
         hMatchedTausNCompRes.Fill((recoTauNConsts - genTauNConsts) / genTauNConsts)
 
@@ -626,6 +653,8 @@ for eventid, event in enumerate(reader.get("events")):
         photonCumulativeP4.SetXYZM(0, 0, 0, 0)
         # RECO:  Look inside the tau, constituents:
         # Filling histograms for the matched tau with reco level information
+        recoTaus_photons = {}
+        n_photons = 0
         for c in range(0, recoTauNConsts):
             const = recoTauConsts[c]
             constP4 = ROOT.TLorentzVector()
@@ -640,11 +669,16 @@ for eventid, event in enumerate(reader.get("events")):
             hRecoConstPOverTauP.Fill(constP4.P() / recoTauP4.P())
 
             # This may be an error as we are confusing photons with neutrons
+
+            logger_pi0mass.debug(f"Evaluating const to get photon with PDGID {const.getPDG()} and charge {const.getCharge()}")
             if const.getCharge() == 0:
                 hRecoConstPhotonP.Fill(constP4.P())
                 h2DRecoConstPhotonPType.Fill(constP4.P(), recoTauId)
                 hRecoConstPhotonPOverTauP.Fill(constP4.P() / recoTauP4.P())
                 photonCumulativeP4 += constP4
+                
+                recoTaus_photons[n_photons] = const
+                n_photons += 1
             else:
                 hRecoConstPionP.Fill(constP4.P())
                 h2DRecoConstPionPType.Fill(constP4.P(), recoTauId)
@@ -658,10 +692,122 @@ for eventid, event in enumerate(reader.get("events")):
                 elif countPionsRun == 2:
                     hRecoConstPion3P.Fill(constP4.P())
                     countPionsRun += 1
-
+    
         if n_pi0s > 0:
-            hRecoConstPi0Mass.Fill(photonCumulativeP4.M() / n_pi0s)
-            h2DPi0MassOverNPhoton.Fill(photonCumulativeP4.M() / n_pi0s, nPhotons)
+            logger_pi0mass.debug(
+                f"Found {n_pi0s} pi0s ({n_photons} photons) in the matched reco with Id {recoTauId} tau with real Id {genTauId}"
+            )
+            if n_photons == 3 and (genTauId == 2 or genTauId == 1):
+                logger_pi0mass.debug(
+                    f"Found 3 photons in the matched reco tau with real Id {genTauId}"
+                )
+                pi0Mass_strmass, noMatchedPhotons = pi0Reco.getPi0Mass(recoTaus_photons, strategy = {"mass":-1})
+                if pi0Mass_strmass:
+                    hRecoConstPi0MassFromPhotonMasstr.Fill(pi0Mass_strmass)
+                
+                if noMatchedPhotons:
+                    for ide, photon in noMatchedPhotons.items(): 
+                        PhotonP4 = ROOT.TLorentzVector()
+                        PhotonP4.SetXYZM(
+                        photon.getMomentum().x,
+                        photon.getMomentum().y,
+                        photon.getMomentum().z,
+                        photon.getMass(),
+                        )
+                        if genTauId == 2:
+                            hRecoConstlessPhotonPa1strMass.Fill(PhotonP4.P())
+                        elif genTauId == 1:
+                            hRecoConstxtraPhotonPrhostrMass.Fill(PhotonP4.P())
+                    matched_keys = [key for key in range(3) if key not in noMatchedPhotons.keys()]
+                    first_matched_P = ROOT.TLorentzVector()
+                    first_matched_P.SetXYZM(
+                        recoTaus_photons[matched_keys[0]].getMomentum().x,
+                        recoTaus_photons[matched_keys[0]].getMomentum().y,
+                        recoTaus_photons[matched_keys[0]].getMomentum().z,
+                        recoTaus_photons[matched_keys[0]].getMass(),
+                    )
+                    second_matched_P = ROOT.TLorentzVector()
+                    second_matched_P.SetXYZM(
+                        recoTaus_photons[matched_keys[1]].getMomentum().x,
+                        recoTaus_photons[matched_keys[1]].getMomentum().y,
+                        recoTaus_photons[matched_keys[1]].getMomentum().z,
+                        recoTaus_photons[matched_keys[1]].getMass(),
+                    )
+                    non_matched_P = PhotonP4
+                    hRecoThreePhotonMatchOnestrMassP.Fill(first_matched_P.P())
+                    hRecoThreePhotonMatchTwostrMassP.Fill(second_matched_P.P())
+                    hRecoThreePhotonNoMatchstrMassP.Fill(non_matched_P.P())
+                
+                pi0Mass_strdist, noMatchedPhoton = pi0Reco.getPi0Mass(recoTaus_photons, strategy = {"distance":-1})
+                if pi0Mass_strdist:
+                    hRecoConstPi0MassFromPhotonDiststr.Fill(pi0Mass_strdist)
+                if noMatchedPhoton:
+                    for ide, photon in noMatchedPhotons.items(): 
+                        PhotonP4 = ROOT.TLorentzVector()
+                        PhotonP4.SetXYZM(
+                        photon.getMomentum().x,
+                        photon.getMomentum().y,
+                        photon.getMomentum().z,
+                        photon.getMass(),
+                        )
+                        if genTauId == 2:
+                            hRecoConstlessPhotonPa1strDist.Fill(PhotonP4.P())
+                        elif genTauId == 1:
+                            hRecoConstxtraPhotonPrhostrDist.Fill(PhotonP4.P())
+                    matched_keys = [key for key in range(3) if key not in noMatchedPhotons.keys()]
+                    first_matched_P = ROOT.TLorentzVector()
+                    first_matched_P.SetXYZM(
+                        recoTaus_photons[matched_keys[0]].getMomentum().x,
+                        recoTaus_photons[matched_keys[0]].getMomentum().y,
+                        recoTaus_photons[matched_keys[0]].getMomentum().z,
+                        recoTaus_photons[matched_keys[0]].getMass(),
+                    )
+                    second_matched_P = ROOT.TLorentzVector()
+                    second_matched_P.SetXYZM(
+                        recoTaus_photons[matched_keys[1]].getMomentum().x,
+                        recoTaus_photons[matched_keys[1]].getMomentum().y,
+                        recoTaus_photons[matched_keys[1]].getMomentum().z,
+                        recoTaus_photons[matched_keys[1]].getMass(),
+                    )
+                    non_matched_P = PhotonP4
+                    hRecoThreePhotonMatchOnestrDistP.Fill(first_matched_P.P())
+                    hRecoThreePhotonMatchTwostrDistP.Fill(second_matched_P.P())
+                    hRecoThreePhotonNoMatchstrDistP.Fill(non_matched_P.P())
+                            
+            elif n_photons == 1 and (genTauId == 0 or genTauId == 1):
+                logger_pi0mass.debug(
+                    f"Found 1 photons in the matched reco tau with real Id {genTauId}"
+                )
+                if genTauId == 0:
+                    hRecoConstxtraPhotonPi.Fill(photonCumulativeP4.P())
+                elif genTauId == 1:
+                    hRecoConstlessPhotonPrho.Fill(photonCumulativeP4.P())
+            
+            elif n_photons == 2 and (genTauId == 1):
+                logger_pi0mass.debug(
+                    f"Found 2 photons in the matched reco tau with real Id {genTauId}"
+                )
+                hRecoConstPi0Mass.Fill(photonCumulativeP4.M())
+                photon1_P4 = ROOT.TLorentzVector()
+                photon1_P4.SetXYZM(
+                    recoTaus_photons[0].getMomentum().x,
+                    recoTaus_photons[0].getMomentum().y,
+                    recoTaus_photons[0].getMomentum().z,
+                    recoTaus_photons[0].getMass(),
+                )
+                photon2_P4 = ROOT.TLorentzVector()
+                photon2_P4.SetXYZM(
+                    recoTaus_photons[1].getMomentum().x,
+                    recoTaus_photons[1].getMomentum().y,
+                    recoTaus_photons[1].getMomentum().z,
+                    recoTaus_photons[1].getMass(),
+                )
+                ang_dist = myutils.dRAngle(
+                    photon1_P4, photon2_P4
+                )
+                hRecoConstTwoPhotonAngDist.Fill(ang_dist)
+            
+
 
         hRecoTauType.Fill(recoTauId)
         hRecoTauPt.Fill(recoTauP4.Pt())
@@ -773,9 +919,26 @@ with open(output_config_file, "w") as file:
 
 outfile = ROOT.TFile(outputpath + fileOutName, "RECREATE")
 
+
+hRecoConstPi0MassFromPhotonMasstr.Write()
+hRecoConstPi0MassFromPhotonDiststr.Write()
+hRecoConstlessPhotonPa1strMass.Write()
+hRecoConstxtraPhotonPrhostrMass.Write()
+hRecoConstlessPhotonPa1strDist.Write()
+hRecoConstxtraPhotonPrhostrDist.Write()
+hRecoConstlessPhotonPrho.Write()
+hRecoConstxtraPhotonPi.Write()
+hRecoConstPi0Mass.Write()
+
+hRecoThreePhotonMatchOnestrDistP.Write()
+hRecoThreePhotonMatchTwostrDistP.Write()
+hRecoThreePhotonNoMatchstrDistP.Write()
+hRecoThreePhotonMatchOnestrMassP.Write()
+hRecoConstTwoPhotonAngDist.Write()
+
+
 hGenConstPi0Mass.Write()
 hEffiGenPi0Mass.Write()
-hRecoConstPi0Mass.Write()
 hMatchedGenConstPi0Mass.Write()
 h2DPi0MassOverNPhoton.Write()
 

@@ -112,7 +112,8 @@ for typeplt in typeplot:
   if typeplt == "1D":
     variabs = plot_config["variabs_hist"]
     labels = plot_config["plot_titles_config_hist"]
-    plot_1D_hist(file, variabs, labels, outputpath)
+    normalize = plot_config.get("norm", False)
+    plot_1D_hist(file, variabs, labels, outputpath, normalize)
     if args.same == "True":
       variabs_and_config = plot_config["plot_together"]
       plot_hist_together(file, variabs_and_config, outputpath)
