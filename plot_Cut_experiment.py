@@ -30,6 +30,14 @@ parser.add_argument(
     type=str,
     help="If True, data is plotted in the same plot",
 )
+parser.add_argument(
+  "-r",
+  "--root",
+  default="False",
+  type=str,
+  help="If True, data is plotted in ROOT. Else, data is plotted in matplotlib",
+)
+parser.add_argument(-"M","--metric", default="recall", type=str, help="Metric to plot. Options: recall, purity")
 
 
 args = parser.parse_args()
@@ -37,6 +45,12 @@ inputBasePath = args.input
 # decay = args.decay
 plot_config_path = args.plotconfig
 migrations = args.migrations
+use_root = True if args.root == "True" else False
+
+if use_root:
+  from modules.plotting import plot_absolute, plot_metric
+else:
+  from modules.PltPlotting import plot_absolute, plot_metric
 
 # default_config = "config/plots/experiment_plotconfig.yaml"
 plot_config = args.plotconfig
@@ -76,7 +90,7 @@ for exp_value in experiment_values:
       break
 
 if plot_config:
-  metric = plot_config.get("metric", "recall")
+  metric = args.metric if args.metric is None else plot_config.get("metric", "recall")
   migrations = plot_config["migrations"]
   for key in list(plot_config["migrations"].keys()):
     els_in_key = key.split("->")
@@ -143,40 +157,28 @@ else:
 # exit()
 # 
 graphs = {}
-for key, values in values_to_plot.items():
-  # print(len(experiment_values))
-  # print(experiment_values)
-  x = array('d', experiment_values)
-  y = array('d', values)
-  graphs[key] = TGraph(len(experiment_values), x, y)
+if use_root:
+  for key, values in values_to_plot.items():
+    # print(len(experiment_values))
+    # print(experiment_values)
+    x = array('d', experiment_values)
+    y = array('d', values)
+    graphs[key] = TGraph(len(experiment_values), x, y)
+else:
+  for key, values in values_to_plot.items():
+    x = experiment_values
+    y = values
+    graphs[key] = {
+      "x": x,
+      "y": y
+    }
 # exit()
 
-# Create a canvas
-canvas_absolute = ROOT.TCanvas("canvas", f'Experiment of {config["experiment"]}', 800, 600)
-canvas_metric = ROOT.TCanvas("canvas_normalized", f'Experiment of {config["experiment"]}', 800, 600)
-# Define a color palette
-colors = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, ROOT.kOrange, ROOT.kYellow, ROOT.kBlack, ROOT.kViolet]
 
-# Create a legend
-legend_absolute = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
-legend_absolute.SetBorderSize(0)
-legend_absolute.SetFillStyle(0)
-legend_absolute.SetHeader("Migrations")
-
-# legend norm
-legend_metric = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
-legend_metric.SetBorderSize(0)
-legend_metric.SetFillStyle(0)
-legend_metric.SetHeader("Migrations")
 
 
 metric_keys = [key for key in values_to_plot.keys() if ((metric in key) or ("recall" in key))]
 absolute_keys = [key for key in values_to_plot.keys() if ((metric  not in key) and ("recall" not in key))]
-
-
-ncols_legend = 2
-legend_absolute.SetNColumns(ncols_legend)
-legend_metric.SetNColumns(ncols_legend)
 
 title = plot_config.get("axis",{}).get("title",f'Evolution of migration by {config["experiment"]}')
 xaxis = plot_config.get("axis",{}).get("xlabel",config["experiment"] + "(GeV)")
@@ -196,58 +198,23 @@ for i in range(len(migrations)):
   mig_str += str(migrations[i]) +"_"
 mig_str = mig_str[:-1]
 
-canvas_absolute.cd()
+if use_root:
+  # Create a canvas
+  canvas_absolute = ROOT.TCanvas("canvas", f'Experiment of {config["experiment"]}', 800, 600)
+  canvas_metric = ROOT.TCanvas("canvas_normalized", f'Experiment of {config["experiment"]}', 800, 600)
+  colors = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, ROOT.kOrange, ROOT.kYellow, ROOT.kBlack, ROOT.kViolet]
 
 
-for i, key in enumerate(absolute_keys):
-  color = colors[i % len(colors)]
-  graph = graphs[key]
-  graph.SetLineColor(color)
-  graph.SetMarkerColor(color)
-  graph.SetMarkerStyle(20)
-  graph.SetLineWidth(2)
-
-  if i == 0:
-    
-    graph.SetTitle(title)
-    graph.GetXaxis().SetTitle(xaxis)
-    graph.GetYaxis().SetTitle("Counts")
-    graph.GetYaxis().SetRangeUser(0.9*min_absolute_value, 1.1*max_absolute_value)
-    graph.Draw("alp")  # Draw axis, line, and points for the first graph
-  else:
-    graph.Draw("lp")  # Draw line and points for subsequent graphs
-  legend_absolute.AddEntry(graph, key, "lp")
-
-# Draw the legend
-legend_absolute.Draw()
-
-# Save the canvas as an image
-canvas_absolute.SaveAs(outputpath + f"graphs_plot_{mig_str}.png")
-
-canvas_metric.cd()
-for i, key in enumerate(metric_keys):
-  color = colors[i % len(colors)]
-  graph = graphs[key]
-  graph.SetLineColor(color)
-  graph.SetMarkerColor(color)
-  graph.SetMarkerStyle(20)
-  graph.SetLineWidth(2)
+  plot_absolute(canvas_absolute, graphs, absolute_keys, colors, xaxis,
+                            min_absolute_value, max_absolute_value,
+                            title, outputpath, mig_str)
   
-  if i == 0:
-    graph.SetTitle(title)
-    graph.GetXaxis().SetTitle(xaxis)
-    graph.GetYaxis().SetTitle("Normalized Counts")
-    graph.GetYaxis().SetRangeUser(0, 1.2)
-    
-    graph.Draw("alp")  # Draw axis, line, and points for the first graph
-  else:
-    # print("Dibujando segundo")
-    graph.Draw("lp")  # Draw line and points for subsequent graphs
-  legend_metric.AddEntry(graph, key, "lp")
-
-# Draw the legend
-legend_metric.Draw()
-
-# Save the canvas as an image
-canvas_metric.SaveAs(outputpath + f"graphs_plot_{metric}_{mig_str}.png")
-
+  plot_metric(canvas_metric, graphs, metric_keys, colors, xaxis,
+                       title, outputpath, metric, mig_str)
+else:
+  colors = ["purple", "orange", "blue", "red", "gray"]
+  plot_absolute(graphs, absolute_keys, colors, xaxis,
+                              min_absolute_value, max_absolute_value,
+                              title, outputpath, mig_str)
+  plot_metric(graphs, metric_keys, colors, xaxis,
+                           title, outputpath, metric, mig_str)

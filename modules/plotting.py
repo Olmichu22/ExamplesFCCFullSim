@@ -303,3 +303,110 @@ def plot_cm(results_df, outputpath, plotphotons=False):
     plt.close()
     
     print(f"Saved confusion matrices to '{cm_dir}'")
+
+
+import ROOT
+
+def plot_absolute(canvas, graphs, absolute_keys, colors, xaxis,
+                           min_absolute_value, max_absolute_value,
+                           title, outputpath, mig_str):
+    """
+    Grafica los datos absolutos utilizando PyROOT.
+    
+    Parámetros:
+      canvas            : objeto TCanvas donde se dibuja el gráfico.
+      graphs            : diccionario con objetos TGraph.
+      absolute_keys     : lista de claves (strings) para los gráficos.
+      colors            : lista con los códigos de color (por ejemplo, [1,2,3,...]).
+      xaxis             : etiqueta para el eje X.
+      min_absolute_value: valor mínimo para definir el rango del eje Y.
+      max_absolute_value: valor máximo para definir el rango del eje Y.
+      title             : título a dibujar en la parte superior.
+      outputpath        : ruta para guardar la imagen.
+      mig_str           : sufijo para el nombre del archivo.
+    """
+    canvas.cd()
+    # Dibujar cada gráfico
+    for i, key in enumerate(absolute_keys):
+        color = colors[i % len(colors)]
+        graph = graphs[key]
+        
+        graph.SetTitle(key)
+        graph.SetLineColor(color)
+        graph.SetMarkerColor(color)
+        graph.SetMarkerStyle(20)
+        graph.SetLineWidth(2)
+        
+        if i == 0:
+            graph.GetXaxis().SetTitle(xaxis)
+            graph.GetYaxis().SetTitle("Counts")
+            graph.GetYaxis().SetRangeUser(0.9 * min_absolute_value, 1.1 * max_absolute_value)
+            graph.Draw("alp")  # Dibuja ejes, línea y puntos
+        else:
+            graph.Draw("lp")   # Dibuja línea y puntos sin reconfigurar ejes
+
+    canvas.BuildLegend()
+    canvas.Update()
+
+    # Agrega un recuadro de texto (TPaveText) centrado en la parte superior
+    t = ROOT.TPaveText(0.2, 0.95, 0.8, 0.99, "NDC")
+    t.SetTextAlign(22)  # Centrado horizontal y vertical
+    t.SetTextSize(0.04)
+    t.SetFillStyle(0)   # Fondo transparente
+    t.SetBorderSize(0)  # Sin borde
+    t.AddText(title)
+    t.Draw()
+
+    # Guarda el canvas como imagen
+    canvas.SaveAs(outputpath + f"graphs_plot_{mig_str}.png")
+
+
+def plot_metric(canvas, graphs, metric_keys, colors, xaxis,
+                       title, outputpath, metric, mig_str):
+    """
+    Grafica los datos métricos utilizando PyROOT.
+    
+    Parámetros:
+      canvas       : objeto TCanvas para el gráfico.
+      graphs       : diccionario con objetos TGraph.
+      metric_keys  : lista de claves (strings) para iterar los gráficos.
+      colors       : lista con los códigos de color.
+      xaxis        : etiqueta del eje X.
+      title        : título del recuadro de texto.
+      outputpath   : ruta de salida para la imagen.
+      metric       : cadena identificadora para la gráfica (parte del nombre del archivo).
+      mig_str      : sufijo adicional para el nombre del archivo.
+    """
+    canvas.cd()
+    for i, key in enumerate(metric_keys):
+        color = colors[i % len(colors)]
+        graph = graphs[key]
+        
+        graph.SetLineColor(color)
+        graph.SetMarkerColor(color)
+        graph.SetMarkerStyle(20)
+        graph.SetLineWidth(2)
+        graph.SetTitle(key)
+        graph.SetName(key)
+        
+        if i == 0:
+            graph.GetXaxis().SetTitle(xaxis)
+            graph.GetYaxis().SetTitle("Normalized Counts")
+            graph.GetYaxis().SetRangeUser(0, 1.2)
+            graph.Draw("alp")
+        else:
+            graph.Draw("lp")
+    
+    canvas.BuildLegend()
+    canvas.Update()
+    
+    t = ROOT.TPaveText(0.2, 0.95, 0.8, 0.99, "NDC")
+    t.SetTextAlign(22)
+    t.SetTextSize(0.04)
+    t.SetFillStyle(0)
+    t.SetBorderSize(0)
+    t.AddText(title)
+    t.Draw()
+
+    canvas.Update()
+    canvas.SaveAs(outputpath + f"graphs_plot_{metric}_{mig_str}.png")
