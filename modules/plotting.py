@@ -5,53 +5,114 @@ from sklearn.metrics import confusion_matrix
 import pandas as pd
 import os
 
-def id_to_key(event_id, photons=False):
-  pi0 = "π⁰"
-  pi = "π"
-  mu = "μ"
-  e = "e"
-  n = "n"
-  neutrino = "ν"
-  tau = "τ"
-  gamma = "γ"
+PI0 = "π⁰"
+PI = "π"
+MU = "μ"
+E = "e"
+N = "n"
+NEUTRINO = "ν"
+TAU = "τ"
+GAMMA = "γ"
+
+RPI0 = "\\pi ^{0}"
+RPI = "\\pi"
+RMU = "\\mu"
+RE = "e"
+RN = "n"
+RNEUTRINO = "\\nu"
+RTAU = "\\tau"
+RGAMMA = "\\gamma"
+RRHO = "\\rho"  
+RA1 = "\a_{1}"
+
+def id_to_key_root(event_id, photons=False):
+
   
   if photons:
     if event_id < 0:
       if event_id == -13:
-        key = f"{mu}"
+        key = f"{RMU}"
       elif event_id == -11:
-        key = f"{e}"
+        key = f"{RE}"
       elif event_id <= -20:
-        key = f"h{n}"
+        key = f"h{RN}"
       else:
         key = "Unknown"
     elif event_id == 0:
       key = f"h"
     elif event_id < 10:
-      key = f"h{event_id}{gamma}"
+      key = f"h{event_id}{RGAMMA}"
     elif event_id == 10:
       key = f"3h"
     else:
-      key = f"3h{event_id-10}{gamma}"
+      key = f"3h{event_id-10}{RGAMMA}"
 
   else:
     if event_id < 0:
       if event_id == -13:
-        key = f"{tau} → {mu}2{neutrino}"
+        key = f"{RTAU} \\rightarrow {RMU}2{RNEUTRINO}"
       elif event_id == -11:
-        key = f"{tau} → {e}2{neutrino}"
+        key = f"{RTAU} \\rightarrow {RE}2{RNEUTRINO}"
       elif event_id <= -20:
-        key = f"{pi}{n}"
+        key = f"{RPI}{RN}"
       else:
         key = "Unknown"
     elif event_id == 0:
-      key = f"{tau} → {pi}{neutrino}"
+      key = f"{RTAU} \\rightarrow {RPI}{RNEUTRINO}"
     elif event_id < 10:
-      key = f"{tau} → {pi}{event_id}{pi0}{neutrino}"
+      if event_id == 1:
+        key = f"{RRHO} \\rightarrow {RPI}{event_id}{RPI0}{RNEUTRINO}"
+      elif event_id == 2:
+        key = f"{RA1} \\rightarrow {RPI}{event_id}{RPI0}{RNEUTRINO}"
+      else :
+        key = f"{RTAU} \\rightarrow {RPI}{event_id}{RPI0}{RNEUTRINO}"
     elif event_id == 10:
-      key = f"{tau} → 3{pi}{neutrino}"
+      key = f"{RA1} \\rightarrow 3{RPI}{RNEUTRINO}"
     else:
-      key = f"{tau} → {3}{pi}{event_id-10}{pi0}{neutrino}"
+      key = f"{RA1} \\rightarrow {3}{RPI}{event_id-10}{RPI0}{RNEUTRINO}"
+  return key
+
+
+def id_to_key(event_id, photons=False):
+
+  
+  if photons:
+    if event_id < 0:
+      if event_id == -13:
+        key = f"{MU}"
+      elif event_id == -11:
+        key = f"{E}"
+      elif event_id <= -20:
+        key = f"h{N}"
+      else:
+        key = "Unknown"
+    elif event_id == 0:
+      key = f"h"
+    elif event_id < 10:
+      key = f"h{event_id}{GAMMA}"
+    elif event_id == 10:
+      key = f"3h"
+    else:
+      key = f"3h{event_id-10}{GAMMA}"
+
+  else:
+    if event_id < 0:
+      if event_id == -13:
+        key = f"{TAU} → {MU}2{NEUTRINO}"
+      elif event_id == -11:
+        key = f"{TAU} → {E}2{NEUTRINO}"
+      elif event_id <= -20:
+        key = f"{PI}{N}"
+      else:
+        key = "Unknown"
+    elif event_id == 0:
+      key = f"{TAU} → {PI}{NEUTRINO}"
+    elif event_id < 10:
+      key = f"{TAU} → {PI}{event_id}{PI0}{NEUTRINO}"
+    elif event_id == 10:
+      key = f"{TAU} → 3{PI}{NEUTRINO}"
+    else:
+      key = f"{TAU} → {3}{PI}{event_id-10}{PI0}{NEUTRINO}"
   return key
 
 def plot_1D_hist(file, variabs, labels, outputpath, normalize):
@@ -66,7 +127,7 @@ def plot_1D_hist(file, variabs, labels, outputpath, normalize):
         os.makedirs(out_dir)
     
     # Create a canvas for drawing
-    c = ROOT.TCanvas("c_1D", "1D Histograms", 800, 600)
+    c = ROOT.TCanvas("c_1D", "1D Histograms", 900, 700)
     # Loop over each variable
     for var in variabs:
         histo = file.Get(var)
@@ -78,7 +139,18 @@ def plot_1D_hist(file, variabs, labels, outputpath, normalize):
             cfg = labels[var]
             histo.SetXTitle(cfg.get("x", ""))
             histo.SetYTitle(cfg.get("y", ""))
-            histo.SetTitle(cfg.get("title", ""))
+            histo.GetYaxis().SetMaxDigits(2)
+            title = cfg.get("title", "")
+            if title:
+              print(title)
+              if "Decay" in title and "(" in title:
+                # Buscamos decay y el id entre ()
+                title_text = title.split("Decay")[0].split("(")[0]
+                decay = title.split("(")[1].split(")")[0]
+                decay_id = decay.split(" ")[1]
+                decay_str = id_to_key_root(int(decay_id))
+                title = "\\text{" + title_text + "}(" + decay_str+")"
+            histo.SetTitle(title)
         c.Clear()
         if normalize:
           histo.DrawNormalized()
@@ -104,11 +176,26 @@ def plot_hist_together(file, together_config, outputpath):
     
     # Iterate over each group in the together configuration
     for group, cfg in together_config.items():
-        c = ROOT.TCanvas(f"c_together_{group}", group, 800, 600)
-        legend = ROOT.TLegend(0.65, 0.70, 0.90, 0.90)
-        legend.SetBorderSize(0)
+        c = ROOT.TCanvas(f"c_together_{group}", group, 900, 700)
+        position = cfg.get("position", None)
+        if position:
+          legend = ROOT.TLegend(position[0], position[1], position[2], position[3])
+        else:
+          legend = ROOT.TLegend(0.65, 0.70, 0.88, 0.88)
+        legend.SetTextSize(0.03)
+        legend.SetBorderSize(1)
+        legend.SetFillStyle(0)
         first = True
         normalize = cfg.get("norm", False)
+        global_max_value = 0
+        for histo_name in cfg["variabs"]:
+          histo = file.Get(histo_name)
+          if not histo:
+            continue
+          max_histo = histo.GetMaximum()
+          if max_histo > global_max_value:
+            global_max_value = max_histo
+        
         # For each histogram name in the group configuration
         for i, var in enumerate(cfg["variabs"]):
             histo = file.Get(var)
@@ -129,6 +216,8 @@ def plot_hist_together(file, together_config, outputpath):
                 histo.SetLineColor(ROOT.kGreen+2)
             else:
                 histo.SetLineColor(ROOT.kMagenta)
+                histo.SetLineStyle(4)
+                
             histo.SetLineWidth(2)
             
             # Draw the first histogram normally; then draw others with "same"
@@ -136,20 +225,30 @@ def plot_hist_together(file, together_config, outputpath):
               histo.SetXTitle(cfg.get("x", ""))
               histo.SetYTitle(cfg.get("y", ""))
               # Optionally, set the title of the histogram (or leave it empty)
-              histo.SetTitle(cfg.get("title", ""))
+              title = cfg.get("title", "")
+              if title:
+                if "Decay" in title and "(" in title:
+                  # Buscamos decay y el id entre ()
+                  title_text = title.split("Decay")[0].split("(")[0]
+                  decay = title.split("(")[1].split(")")[0]
+                  decay_id = decay.split(" ")[1]
+                  decay_str = id_to_key_root(int(decay_id))
+                  title = "\\text{" + title_text + "}(" + decay_str+")"
+              histo.SetTitle(title)
+              max_val = histo.GetMaximum()
               if normalize:
-                max_val = histo.GetMaximum()
                 print(f"Max value before scaling: {max_val}")
                 if max_val != 0:
                 # Escalamos para que el máximo sea 1.
                   histo.Scale(1.0 / max_val)
                 histo.GetYaxis().SetRangeUser(0., 1.1)
-
+              else:
+                histo.GetYaxis().SetRangeUser(0, 1.1 * global_max_value)
               histo.Draw("HIST")
               first = False
             else:
+              max_val = histo.GetMaximum()
               if normalize:
-                max_val = histo.GetMaximum()
                 if max_val != 0:
                 # Escalamos para que el máximo sea 1.
                   histo.Scale(1.0 / max_val)
@@ -182,7 +281,7 @@ def plot_2D_hist(file, variabs, labels, outputpath):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     
-    c = ROOT.TCanvas("c_2D", "2D Histograms", 800, 600)
+    c = ROOT.TCanvas("c_2D", "2D Histograms", 900, 700)
     for var in variabs:
         histo = file.Get(var)
         if not histo:
@@ -305,7 +404,7 @@ def plot_cm(results_df, outputpath, plotphotons=False):
     print(f"Saved confusion matrices to '{cm_dir}'")
 
 
-import ROOT
+
 
 def plot_absolute(canvas, graphs, absolute_keys, colors, xaxis,
                            min_absolute_value, max_absolute_value,

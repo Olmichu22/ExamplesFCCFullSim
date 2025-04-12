@@ -164,6 +164,8 @@ plot_together:
     x: "Photon P [GeV/c]"
     y: "Events"
     norm: True
+    position: [0.45, 0.28, 0.75, 0.38]
+
 
   OnePhotonPZoom:
     variabs:
@@ -176,6 +178,7 @@ plot_together:
     x: "1 Photon P [GeV/c]"
     y: "Events"
     norm: True
+    position: [0.7, 0.3, 0.9, 0.5]
   
   RecoTwoPhotonPiRho:
     variabs:
@@ -190,6 +193,7 @@ plot_together:
     x: "Component P [GeV/c]"
     y: "Events"
     norm: True
+
   GenTwoPhotonPiRho:
     variabs:
       - hGenRhoTwoPhotonDecayP
@@ -230,6 +234,104 @@ plot_together:
     y: "Events"
     norm: True
   
+  OnePhotonRecognition:
+    variabs:
+      - hGenRhoOnePhotonDecayPhotonP
+      - hGenRhoOnePhotonDecayPhotonSumP
+      - hRecoRhoOnePhotonDecayPhotonP
+    labels:
+      - Gen Photons P
+      - Gen Photons Sum P
+      - Reco Photon P
+    title: "Histogram of Gen and Reco Photons P (photon loss case)"
+    x: "Photon P [GeV/c]"
+    y: "Events"
+    norm: True
+
+
+  RecoPResolution:
+    variabs:
+      - histoTauPRes0
+      - histoTauPRes1
+      - histoTauPRes2
+      - histoTauPRes10
+    labels:
+      - (\tau \rightarrow \pi\gamma)
+      - (\rho \rightarrow \pi \pi ^0\gamma)
+      - (a_1 \rightarrow \pi 2\pi ^0\gamma)
+      - (a_1 \rightarrow 3\pi \gamma)
+    title: "Histogram of Tau P Resolution"
+    x: "(P_{Reco}-P_{Gen})/P_{Gen}"
+    y: "Events"
+    norm: True
+  
+  RecoMatchedPResolution:
+    variabs:
+      - histoMatchedTauPRes0
+      - histoMatchedTauPRes1
+      - histoMatchedTauPRes2
+      - histoMatchedTauPRes3
+    labels:
+      - (\tau \rightarrow \pi\gamma)
+      - (\rho \rightarrow \pi \pi ^0\gamma)
+      - (a_1 \rightarrow \pi 2\pi ^0\gamma)
+      - (a_1 \rightarrow 3\pi \gamma)
+    title: "Histogram of Matched Tau P Resolution"
+    x: "(P_{Reco}-P_{Gen})/P_{Gen}"
+    y: "Events"
+    norm: True
+
+  RecoMatchedThetaResolution:
+    variabs:
+      - histoMatchedTauThetaRes0
+      - histoMatchedTauThetaRes1
+      - histoMatchedTauThetaRes2
+      - histoMatchedTauThetaRes3
+    labels:
+      - (\tau \rightarrow \pi\gamma)
+      - (\rho \rightarrow \pi \pi ^0\gamma)
+      - (a_1 \rightarrow \pi 2\pi ^0\gamma)
+      - (a_1 \rightarrow 3\pi \gamma)
+    title: "Histogram of Matched Tau Theta Resolution"
+    x: "(\\theta_{Reco}-\\theta_{Gen})/\\theta_{Gen}" 
+    y: "Events"
+    norm: True
+  
+  RecoThetaResolution:
+    variabs:
+      - histoTauThetaRes0
+      - histoTauThetaRes1
+      - histoTauThetaRes2
+      - histoTauThetaRes10
+    labels:
+      - (\tau \rightarrow \pi\gamma)
+      - (\rho \rightarrow \pi \pi ^0\gamma)
+      - (a_1 \rightarrow \pi 2\pi ^0\gamma)
+      - (a_1 \rightarrow 3\pi \gamma)
+    title: "Histogram of Tau Theta Resolution"
+    x: "(\\theta_{Reco}-\\theta_{Gen})/\\theta_{Gen}"
+    y: "Events"
+    norm: True
+  
+  EffiTheta:
+    variabs:
+      - hEffiGenTauTheta0
+      - hEffiGenTauTheta1
+      - hEffiGenTauTheta2
+      - hEffiGenTauTheta10
+    labels:
+      - (\tau \rightarrow \pi\gamma)
+      - (\rho \rightarrow \pi \pi ^0\gamma)
+      - (a_1 \rightarrow \pi 2\pi ^0\gamma)
+      - (a_1 \rightarrow 3\pi \gamma)
+    title: "Efficiency of Tau Theta"
+    x: "Theta [rad]"
+    y: "Efficiency"
+    norm: True
+    position: [0.45, 0.2, 0.75, 0.4]
+
+
+  
   ThetaEffi0:
     variabs:
       - histoGenTauTheta0
@@ -242,6 +344,8 @@ plot_together:
     title: "Histogram of Tau Theta (Decay 0)"
     x: "Theta [rad]"
     y: "Events"
+    position: [0.45, 0.3, 0.75, 0.4]
+
   
   ThetaEffi1:
     variabs:
@@ -255,6 +359,9 @@ plot_together:
     title: "Histogram of Tau Theta (Decay 1)"
     x: "Theta [rad]"
     y: "Events"
+    position: [0.45, 0.3, 0.75, 0.4]
+
+
   ThetaEffi2:
     variabs:
       - histoGenTauTheta2
@@ -267,6 +374,9 @@ plot_together:
     title: "Histogram of Tau Theta (Decay 2)"
     x: "Theta [rad]"
     y: "Events"
+    position: [0.45, 0.3, 0.75, 0.4]
+
+
   ThetaEffi10:
     variabs:
       - histoGenTauTheta10
@@ -279,6 +389,8 @@ plot_together:
     title: "Histogram of Tau Theta (Decay 10)"
     x: "Theta [rad]"
     y: "Events"
+    position: [0.45, 0.3, 0.75, 0.4]
+
   PEffi0:
     variabs:
       - histoGenTauVisP0
@@ -291,6 +403,7 @@ plot_together:
     title: "Histogram of Tau P (Decay 0)"
     x: "P [GeV/c]"
     y: "Events"
+    position: [0.35, 0.35, 0.65, 0.54]
   PEffi1:
     variabs:
       - histoGenTauVisP1
@@ -303,6 +416,7 @@ plot_together:
     title: "Histogram of Tau P (Decay 1)"
     x: "P [GeV/c]"
     y: "Events"
+    position: [0.35, 0.35, 0.65, 0.54]
   PEffi2:
     variabs:
       - histoGenTauVisP2
@@ -315,6 +429,7 @@ plot_together:
     title: "Histogram of Tau P (Decay 2)"
     x: "P [GeV/c]"
     y: "Events"
+    position: [0.52, 0.35, 0.75, 0.54]
   PEffi10:
     variabs:
       - histoGenTauVisP10
@@ -327,6 +442,8 @@ plot_together:
     title: "Histogram of Tau P (Decay 10)"
     x: "P [GeV/c]"
     y: "Events"
+    position: [0.13, 0.35, 0.38, 0.55]
+
 
 plot_titles_config_hist:
   hRecoConstPi0Mass:
@@ -497,36 +614,36 @@ plot_titles_config_hist:
     x: "Theta [rad]"
     y: "Events"
   histoTauThetaRes0:
-    title: "Tau Theta Res (Decay 0)"
-    x: "Theta (Reco)-Theta(Gen)/Theta(Gen)"
+    title: "Tau Theta Resolution (Decay 0)"
+    x: "(\\theta_{Reco}-\\theta_{Gen})/\\theta_{Gen}"
     y: "Events"
   histoTauThetaRes1:
-    title: "Tau Theta Res (Decay 1)"
-    x: "Theta (Reco)-Theta(Gen)/Theta(Gen)"
+    title: "Tau Theta Resolution (Decay 1)"
+    x: "(\\theta_{Reco}-\\theta_{Gen})/\\theta_{Gen}"
     y: "Events"
   histoTauThetaRes2:
-    title: "Tau Theta Res (Decay 2)"
-    x: "Theta (Reco)-Theta(Gen)/Theta(Gen)"
+    title: "Tau Theta Resolution (Decay 2)"
+    x: "(\\theta_{Reco}-\\theta_{Gen})/\\theta_{Gen}"
     y: "Events"
   histoTauThetaRes10:
-    title: "Tau Theta Res (Decay 10)"
-    x: "Theta (Reco)-Theta(Gen)/Theta(Gen)"
+    title: "Tau Theta Resolution (Decay 10)"
+    x: "(\\theta_{Reco}-\\theta_{Gen})/\\theta_{Gen}"
     y: "Events"
   histoMatchedTauThetaRes0:
-    title: "Matched Tau Theta Res (Decay 0)"
-    x: "Theta (Reco)-Theta(Gen)/Theta(Gen)"
+    title: "Matched Tau Theta Resolution (Decay 0)"
+    x: "(\\theta_{Reco}-\\theta_{Gen})/\\theta_{Gen}"
     y: "Events"
   histoMatchedTauThetaRes1:
-    title: "Matched Tau Theta Res (Decay 1)"
-    x: "Theta (Reco)-Theta(Gen)/Theta(Gen)"
+    title: "Matched Tau Theta Resolution (Decay 1)"
+    x: "(\\theta_{Reco}-\\theta_{Gen})/\\theta_{Gen}"
     y: "Events"
   histoMatchedTauThetaRes2:
-    title: "Matched Tau Theta Res (Decay 2)"
-    x: "Theta (Reco)-Theta(Gen)/Theta(Gen)"
+    title: "Matched Tau Theta Resolution (Decay 2)"
+    x: "(\\theta_{Reco}-\\theta_{Gen})/\\theta_{Gen}"
     y: "Events"
   histoMatchedTauThetaRes10:
-    title: "Matched Tau Theta Res (Decay 10)"
-    x: "Theta (Reco)-Theta(Gen)/Theta(Gen)"
+    title: "Matched Tau Theta Resolution (Decay 10)"
+    x: "(\\theta_{Reco}-\\theta_{Gen})/\\theta_{Gen}"
     y: "Events"
   histoGenTauP0:
     title: "Gen Tau P (Decay 0)"
@@ -609,83 +726,83 @@ plot_titles_config_hist:
     x: "P [GeV/c]"
     y: "Events"
   histoTauPRes0:
-    title: "Tau P Res (Decay 0)"
-    x: "P(Reco)-P(Gen)/P(Gen)"
+    title: "Tau P Resolution (Decay 0)"
+    x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
   histoTauPRes1:
-    title: "Tau P Res (Decay 1)"
-    x: "P(Reco)-P(Gen)/P(Gen)"
+    title: "Tau P Resolution (Decay 1)"
+    x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
   histoTauPRes2:
-    title: "Tau P Res (Decay 2)"
-    x: "P(Reco)-P(Gen)/P(Gen)"
+    title: "Tau P Resolution (Decay 2)"
+    x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
   histoTauPRes10:
-    title: "Tau P Res (Decay 10)"
-    x: "P(Reco)-P(Gen)/P(Gen)"
+    title: "Tau P Resolution (Decay 10)"
+    x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
   histoMatchedTauPRes0:
-    title: "Matched Tau P Res (Decay 0)"
-    x: "P(Reco)-P(Gen)/P(Gen)"
+    title: "Matched Tau P Resolution (Decay 0)"
+    x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
   histoMatchedTauPRes1:
-    title: "Matched Tau P Res (Decay 1)"
-    x: "P(Reco)-P(Gen)/P(Gen)"
+    title: "Matched Tau P Resolution (Decay 1)"
+    x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
   histoMatchedTauPRes2:
-    title: "Matched Tau P Res (Decay 2)"
-    x: "P(Reco)-P(Gen)/P(Gen)"
+    title: "Matched Tau P Resolution (Decay 2)"
+    x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
   histoMatchedTauPRes10:
-    title: "Matched Tau P Res (Decay 10)"
-    x: "P(Reco)-P(Gen)/P(Gen)"
+    title: "Matched Tau P Resolution (Decay 10)"
+    x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
   hEffiGenTauTheta0:
-    title: "Effi Gen Tau Theta (Decay 0)"
+    title: "Efficiency Gen Tau Theta (Decay 0)"
     x: "Theta [rad]"
     y: "Efficiency"
   hEffiGenTauTheta1:
-    title: "Effi Gen Tau Theta (Decay 1)"
+    title: "Efficiency Gen Tau Theta (Decay 1)"
     x: "Theta [rad]"
     y: "Efficiency"
   hEffiGenTauTheta2:
-    title: "Effi Gen Tau Theta (Decay 2)"
+    title: "Efficiency Gen Tau Theta (Decay 2)"
     x: "Theta [rad]"
     y: "Efficiency"
   hEffiGenTauTheta10:
-    title: "Effi Gen Tau Theta (Decay 10)"
+    title: "Efficiency Gen Tau Theta (Decay 10)"
     x: "Theta [rad]"
     y: "Efficiency"
   hEffiGenTauP0:
-    title: "Effi Gen Tau P (Decay 0)"
+    title: "Efficiency Gen Tau P (Decay 0)"
     x: "P [GeV/c]"
     y: "Efficiency"
   hEffiGenTauP1:
-    title: "Effi Gen Tau P (Decay 1)"
+    title: "Efficiency Gen Tau P (Decay 1)"
     x: "P [GeV/c]"
     y: "Efficiency"
   hEffiGenTauP2:
-    title: "Effi Gen Tau P (Decay 2)"
+    title: "Efficiency Gen Tau P (Decay 2)"
     x: "P [GeV/c]"
     y: "Efficiency"
   hEffiGenTauP10:
-    title: "Effi Gen Tau P (Decay 10)"
+    title: "Efficiency Gen Tau P (Decay 10)"
     x: "P [GeV/c]"
     y: "Efficiency"
   hEffiGenTauVisP0:
-    title: "Effi Gen Tau Vis P (Decay 0)"
+    title: "Efficiency Gen Tau Vis P (Decay 0)"
     x: "P [GeV/c]"
     y: "Efficiency"
   hEffiGenTauVisP1:
-    title: "Effi Gen Tau Vis P (Decay 1)"
+    title: "Efficiency Gen Tau Vis P (Decay 1)"
     x: "P [GeV/c]"
     y: "Efficiency"
   hEffiGenTauVisP2:
-    title: "Effi Gen Tau Vis P (Decay 2)"
+    title: "Efficiency Gen Tau Vis P (Decay 2)"
     x: "P [GeV/c]"
     y: "Efficiency"
   hEffiGenTauVisP10:
-    title: "Effi Gen Tau Vis P (Decay 10)"
+    title: "Efficiency Gen Tau Vis P (Decay 10)"
     x: "P [GeV/c]"
     y: "Efficiency"
 
