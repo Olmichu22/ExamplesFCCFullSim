@@ -1,11 +1,11 @@
 experiment: TauPhotonPCut
 cuts:
   NeutronCut:
-    - 1
+    - 3
   TauPhotonPCut:
     - 0.1
   TauPionPCut:
-    - 0.1
+    - 0.
   dRMax:
     - 0.4
   MatchedGenMinDR:

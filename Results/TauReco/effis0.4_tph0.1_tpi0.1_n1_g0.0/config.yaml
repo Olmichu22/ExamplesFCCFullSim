@@ -11,10 +11,9 @@ general:
   matchedCM: 'True'
   outfile: effis
   sample: ZTauTau_SMPol_25Sept_MuonFix
-  test: 'False'
+  test: 'True'
 output:
   outputfile:
   - effisdecayAll_0.4_tph0.1_tpi0.1_n1_g0.0.root
-  outputlabels:
-  - Results/TauReco/effis0.4_tph0.1_tpi0.1_n1_g0.0/true_predicted_label_decayAll.csv
+  outputlabels: null
   outputpath: Results/TauReco/effis0.4_tph0.1_tpi0.1_n1_g0.0/

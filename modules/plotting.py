@@ -23,11 +23,9 @@ RNEUTRINO = "\\nu"
 RTAU = "\\tau"
 RGAMMA = "\\gamma"
 RRHO = "\\rho"  
-RA1 = "\a_{1}"
+RA1 = "a_{1}"
 
 def id_to_key_root(event_id, photons=False):
-
-  
   if photons:
     if event_id < 0:
       if event_id == -13:
@@ -61,7 +59,7 @@ def id_to_key_root(event_id, photons=False):
       key = f"{RTAU} \\rightarrow {RPI}{RNEUTRINO}"
     elif event_id < 10:
       if event_id == 1:
-        key = f"{RRHO} \\rightarrow {RPI}{event_id}{RPI0}{RNEUTRINO}"
+        key = f"{RRHO} \\rightarrow {RPI}{RPI0}{RNEUTRINO}"
       elif event_id == 2:
         key = f"{RA1} \\rightarrow {RPI}{event_id}{RPI0}{RNEUTRINO}"
       else :
@@ -74,8 +72,6 @@ def id_to_key_root(event_id, photons=False):
 
 
 def id_to_key(event_id, photons=False):
-
-  
   if photons:
     if event_id < 0:
       if event_id == -13:
@@ -88,6 +84,8 @@ def id_to_key(event_id, photons=False):
         key = "Unknown"
     elif event_id == 0:
       key = f"h"
+    elif event_id == 1:
+      key = f"h{GAMMA}"
     elif event_id < 10:
       key = f"h{event_id}{GAMMA}"
     elif event_id == 10:
@@ -161,6 +159,171 @@ def plot_1D_hist(file, variabs, labels, outputpath, normalize):
         print(f"Saved histogram '{var}' as '{out_file}'")
     c.Close()
 
+
+def plot_hist_zoom(file, zoom_config, outputpath):
+    """
+    Plots groups of 1D histograms together on a single canvas.
+    For each group defined in the plot_together configuration, all histograms are drawn
+    on the same canvas with different colors and a legend.
+    The resulting canvas is saved in a "together" subfolder inside the "1D" folder.
+    """
+    # Create output folder for together plots under 1D/together
+    out_dir = os.path.join(outputpath, "1D", "zoom")
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    
+    # Iterate over each group in the together configuration
+    for group, cfg in zoom_config.items():
+        c = ROOT.TCanvas(f"c_zoom_{group}", group, 900, 700)
+        position = cfg.get("position", None)
+        if position:
+          legend = ROOT.TLegend(position[0], position[1], position[2], position[3])
+        else:
+          legend = ROOT.TLegend(0.65, 0.70, 0.88, 0.88)
+        legend.SetTextSize(0.03)
+        legend.SetBorderSize(1)
+        legend.SetFillStyle(0)
+        first = True
+        normalize = cfg.get("norm", False)
+        global_max_value = 0
+        for histo_name in cfg["main"]:
+          histo = file.Get(histo_name)
+          if not histo:
+            continue
+          max_histo = histo.GetMaximum()
+          if max_histo > global_max_value:
+            global_max_value = max_histo
+        
+        main = cfg.get("main", None)
+        # For each histogram name in the group configuration
+        for i, var in enumerate(main):
+            histo = file.Get(var)
+            if not histo:
+                print(f"Warning: Histogram '{var}' not found in the ROOT file.")
+                continue
+            # Set the common X and Y axis titles from the group config
+
+            
+            # Assign a distinct line color for each histogram (simple scheme)
+            if i == 0:
+                histo.SetLineColor(ROOT.kRed)
+            elif i == 1:
+                histo.SetLineStyle(2)
+                histo.SetLineColor(ROOT.kBlue)
+            elif i == 2:
+                histo.SetLineStyle(3)
+                histo.SetLineColor(ROOT.kGreen+2)
+            else:
+                histo.SetLineColor(ROOT.kMagenta)
+                histo.SetLineStyle(4)
+                
+            histo.SetLineWidth(2)
+            
+            # Draw the first histogram normally; then draw others with "same"
+            if first:
+              histo.SetXTitle(cfg.get("x", ""))
+              histo.SetYTitle(cfg.get("y", ""))
+              # Optionally, set the title of the histogram (or leave it empty)
+              title = cfg.get("title", "")
+              if title:
+                if "Decay" in title and "(" in title:
+                  # Buscamos decay y el id entre ()
+                  title_text = title.split("Decay")[0].split("(")[0]
+                  decay = title.split("(")[1].split(")")[0]
+                  decay_id = decay.split(" ")[1]
+                  decay_str = id_to_key_root(int(decay_id))
+                  title = "\\text{" + title_text + "}(" + decay_str+")"
+              histo.SetTitle(title)
+              max_val = histo.GetMaximum()
+              if normalize:
+                print(f"Max value before scaling: {max_val}")
+                if max_val != 0:
+                # Escalamos para que el máximo sea 1.
+                  histo.Scale(1.0 / max_val)
+                histo.GetYaxis().SetRangeUser(0., 1.1)
+              else:
+                histo.GetYaxis().SetRangeUser(0, 1.1 * global_max_value)
+              histo.Draw("HIST")
+              first = False
+            else:
+              max_val = histo.GetMaximum()
+              if normalize:
+                if max_val != 0:
+                # Escalamos para que el máximo sea 1.
+                  histo.Scale(1.0 / max_val)
+                # histo_norm.GetYaxis().SetRangeUser(0, 1)
+                
+
+              histo.Draw("HIST same")
+
+                # Set axis from 0 to 1
+                
+            # Add legend entry using the corresponding label from config, if provided
+            label = cfg["labels"][i] if i < len(cfg["labels"]) else var
+            legend.AddEntry(histo, label, "l")
+        
+        legend.Draw()
+        first = True
+      
+        zoom_pos = cfg.get("zoom_position", [0.5, 0.6, 0.9, 0.9])
+        zoom = ROOT.TPad("zoom", "zoom", zoom_pos[0], zoom_pos[1], zoom_pos[2], zoom_pos[3])
+        zoom.Draw()
+        zoom.cd()
+        zoom_plots = cfg.get("zoom", None)
+        for i, var in enumerate(zoom_plots):
+            histo = file.Get(var)
+            if not histo:
+                print(f"Warning: Histogram '{var}' not found in the ROOT file.")
+                continue
+            # Set the common X and Y axis titles from the group config
+
+            
+            # Assign a distinct line color for each histogram (simple scheme)
+            if i == 0:
+                histo.SetLineColor(ROOT.kRed)
+            elif i == 1:
+                histo.SetLineStyle(2)
+                histo.SetLineColor(ROOT.kBlue)
+            elif i == 2:
+                histo.SetLineStyle(3)
+                histo.SetLineColor(ROOT.kGreen+2)
+            else:
+                histo.SetLineColor(ROOT.kMagenta)
+                histo.SetLineStyle(4)
+                
+            histo.SetLineWidth(2)
+            
+            # Draw the first histogram normally; then draw others with "same"
+            if first:
+              max_val = histo.GetMaximum()
+              if normalize:
+                print(f"Max value before scaling: {max_val}")
+                if max_val != 0:
+                # Escalamos para que el máximo sea 1.
+                  histo.Scale(1.0 / max_val)
+                histo.GetYaxis().SetRangeUser(0., 1.1)
+              else:
+                histo.GetYaxis().SetRangeUser(0, 1.1 * global_max_value)
+              histo.SetTitle("")
+              histo.Draw("HIST")
+              first = False
+            else:
+              max_val = histo.GetMaximum()
+              if normalize:
+                if max_val != 0:
+                # Escalamos para que el máximo sea 1.
+                  histo.Scale(1.0 / max_val)
+                # histo_norm.GetYaxis().SetRangeUser(0, 1)
+                
+
+              histo.Draw("HIST same")
+          
+        
+        
+        out_file = os.path.join(out_dir, f"{group}.png")
+        c.SaveAs(out_file)
+        print(f"Saved group '{group}' as '{out_file}'")
+        c.Close()
 
 def plot_hist_together(file, together_config, outputpath):
     """
@@ -299,7 +462,7 @@ def plot_2D_hist(file, variabs, labels, outputpath):
         print(f"Saved 2D histogram '{var}' as '{out_file}'")
     c.Close()
 
-def plot_cm(results_df, outputpath, plotphotons=False):
+def plot_cm(results_df, outputpath, plotphotons=False, plot_config={}):
     """
     Generates and saves two confusion matrix plots:
       1. With absolute values.
@@ -329,11 +492,28 @@ def plot_cm(results_df, outputpath, plotphotons=False):
         mapped_classes_true = [id_to_key(cls, photons=False) for cls in classes_true]
         # print(classes_pred[:10])
         mapped_classes_pred = [id_to_key(cls, photons=True) for cls in classes_pred]
+        if "decays" in plot_config:
+          # Select only the decays in the config file
+          decays = plot_config["decays"]
+          photondecays = plot_config["photonDecays"]
+          cm = cm_df.loc[decays, photondecays].copy()
+          classes_true = cm.index.values
+          classes_pred = cm.columns.values
+          cm = cm.values
+          mapped_classes_true = [id_to_key(cls, photons=False) for cls in classes_true]
+          mapped_classes_pred = [id_to_key(cls, photons=True) for cls in classes_pred]
         # print(mapped_classes_pred[:10])
     else:
         # Use sklearn's confusion_matrix for a square matrix
         classes = np.unique(np.concatenate((y_true.values, y_pred.values)))
         cm = confusion_matrix(y_true, y_pred, labels=classes)
+        if "decays" in plot_config:
+          # Select only the decays in the config file
+          decays = plot_config["decays"]
+          cm_df = pd.DataFrame(cm, index=classes, columns=classes)
+          cm = cm_df.loc[decays, decays].copy()
+          cm = cm.values
+          classes = decays
         mapped_classes_true = [id_to_key(cls, photons=False) for cls in classes]
         mapped_classes_pred = mapped_classes_true  # Same for both axes
     
@@ -343,10 +523,16 @@ def plot_cm(results_df, outputpath, plotphotons=False):
         os.makedirs(cm_dir)
     
     # --- Absolute values plot ---
-    plt.figure(figsize=(12, 8))
+    if "decays" in plot_config:
+      plt.figure(figsize=(8, 6))
+      fontsize = 14
+    else:
+      plt.figure(figsize=(12, 8))
+      fontsize = 8
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title("Confusion Matrix (Absolute Values)")
-    plt.colorbar()
+    if plot_config.get("colorbar", True):
+      plt.colorbar()
     if plotphotons:
         xtick_marks = np.arange(len(mapped_classes_pred))
         ytick_marks = np.arange(len(mapped_classes_true))
@@ -363,7 +549,7 @@ def plot_cm(results_df, outputpath, plotphotons=False):
         for j in range(cm.shape[1]):
             plt.text(j, i, format(cm[i, j], 'd'),
                      horizontalalignment="center",
-                     color="white" if cm[i, j] > thresh else "black", fontsize=8)
+                     color="white" if cm[i, j] > thresh else "black", fontsize=fontsize)
     
     plt.ylabel('Actual Label')
     plt.xlabel('Predicted Label')
@@ -371,13 +557,37 @@ def plot_cm(results_df, outputpath, plotphotons=False):
     plt.savefig(os.path.join(cm_dir, "confusion_matrix_absolute" + suffix + ".png"))
     plt.close()
     
-    # --- Normalized values plot (per actual label) ---
-    cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    # --- Normalized values plot (per actual label) ---    
+    cm_normalized = cm_df.to_numpy().astype('float') / cm_df.to_numpy().sum(axis=1)[:, np.newaxis]
     cm_normalized = np.nan_to_num(cm_normalized)  # Replace NaN with 0 for rows with zero sum
-    plt.figure(figsize=(12, 8))
+    cm_normalized = pd.DataFrame(cm_normalized, index=cm_df.index, columns=cm_df.columns)
+    if "decays" in plot_config:
+      # Select only the decays in the config file
+      if plotphotons:
+        cm_normalized = cm_normalized.loc[decays, photondecays].copy()
+        classes_true = cm_normalized.index.values
+        classes_pred = cm_normalized.columns.values
+        cm_normalized = cm_normalized.values
+
+        mapped_classes_true = [id_to_key(cls, photons=False) for cls in classes_true]
+        mapped_classes_pred = [id_to_key(cls, photons=True) for cls in classes_pred]
+      else:
+        cm_normalized = cm_normalized.loc[decays, decays].copy()
+        classes_true = cm_normalized.index.values
+        classes_pred = cm_normalized.columns.values
+        cm_normalized = cm_normalized.values
+
+        mapped_classes_true = [id_to_key(cls, photons=False) for cls in classes_true]
+        mapped_classes_pred = [id_to_key(cls, photons=False) for cls in classes_pred]
+      plt.figure(figsize=(8, 6))
+      fontsize = 14
+    else:
+      plt.figure(figsize=(12, 8))
+      fontsize = 8
     plt.imshow(cm_normalized, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title("Confusion Matrix (Normalized)")
-    plt.colorbar()
+    if plot_config.get("colorbar", True):
+      plt.colorbar()
     if plotphotons:
         plt.xticks(np.arange(len(mapped_classes_pred)), mapped_classes_pred, rotation=45)
         plt.yticks(np.arange(len(mapped_classes_true)), mapped_classes_true)
@@ -393,7 +603,7 @@ def plot_cm(results_df, outputpath, plotphotons=False):
             percentage = cm_normalized[i, j] * 100
             plt.text(j, i, f"{percentage:.1f}%",
                      horizontalalignment="center",
-                     color="white" if cm_normalized[i, j] > thresh_norm else "black", fontsize=8)
+                     color="white" if cm_normalized[i, j] > thresh_norm else "black", fontsize=fontsize)
     
     plt.ylabel('Actual Label')
     plt.xlabel('Predicted Label')

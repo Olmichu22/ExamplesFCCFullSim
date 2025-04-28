@@ -354,11 +354,11 @@ hNGenTaus = TH1F("histoNGenTaus", "", 6, 0, 6)
 hNTausType = TH1F("histoNTausType", "", 6, 0, 6)
 hNGenTausType = TH1F("histoNGenTausType", "", 6, 0, 6)
 
-hMatchedTausPRes = TH1F("histoMatchedTausPRes", "", 50, -10, 10)
-hMatchedTausPtRes = TH1F("histoMatchedTausPt", "", 50, -10, 10)
-hMatchedTausChargeRes = TH1F("histoMatchedTausChargeRes", "", 50, -10, 10)
-hMatchedTausMaxAngleRes = TH1F("histoMatchedTausMaxAngleRes", "", 50, -10, 10)
-hMatchedTausNCompRes = TH1F("histoMatchedTausNCompRes", "", 50, -10, 10)
+hMatchedTausPRes = TH1F("histoMatchedTausPRes", "", 500, -1, 1)
+hMatchedTausPtRes = TH1F("histoMatchedTausPtRes", "", 500, -1, 1)
+hMatchedTausChargeRes = TH1F("histoMatchedTausChargeRes", "", 500, -1, 1)
+hMatchedTausMaxAngleRes = TH1F("histoMatchedTausMaxAngleRes", "", 500, -1, 1)
+hMatchedTausNCompRes = TH1F("histoMatchedTausNCompRes", "", 500, -1, 1)
 
 true_predicted_label = {"GenID": [], "True": [], "Predicted": [], "PhotonPredicted": []}
 unmatched_true_label = {}
@@ -380,15 +380,15 @@ hRecoTauTheta1 = TH1F("histoRecoTauTheta1", "", 100, 0, 3.15)
 hRecoTauTheta2 = TH1F("histoRecoTauTheta2", "", 100, 0, 3.15)
 hRecoTauTheta10 = TH1F("histoRecoTauTheta10", "", 100, 0, 3.15)
 
-hTauThetaRes0 = TH1F("histoTauThetaRes0", "", 100, -2, 2)
-hTauThetaRes1 = TH1F("histoTauThetaRes1", "", 100, -2, 2)
-hTauThetaRes2 = TH1F("histoTauThetaRes2", "", 100, -2, 2)
-hTauThetaRes10 = TH1F("histoTauThetaRes10", "", 100, -2, 2)
+hTauThetaRes0 = TH1F("histoTauThetaRes0", "", 500, -1, 1)
+hTauThetaRes1 = TH1F("histoTauThetaRes1", "", 500, -1, 1)
+hTauThetaRes2 = TH1F("histoTauThetaRes2", "", 500, -1, 1)
+hTauThetaRes10 = TH1F("histoTauThetaRes10", "", 500, -1, 1)
 
-hMatchedTauThetaRes0 = TH1F("histoMatchedTauThetaRes0", "", 100, -2, 2)
-hMatchedTauThetaRes1 = TH1F("histoMatchedTauThetaRes1", "", 100, -2, 2)
-hMatchedTauThetaRes2 = TH1F("histoMatchedTauThetaRes2", "", 100, -2, 2)
-hMatchedTauThetaRes10 = TH1F("histoMatchedTauThetaRes10", "", 100, -2, 2)
+hMatchedTauThetaRes0 = TH1F("histoMatchedTauThetaRes0", "", 500, -1, 1)
+hMatchedTauThetaRes1 = TH1F("histoMatchedTauThetaRes1", "", 500, -1, 1)
+hMatchedTauThetaRes2 = TH1F("histoMatchedTauThetaRes2", "", 500, -1, 1)
+hMatchedTauThetaRes10 = TH1F("histoMatchedTauThetaRes10", "", 500, -1, 1)
 
 # P (Momentum)
 hGenTauP0 = TH1F("histoGenTauP0", "", 100, 0, 50)
@@ -414,15 +414,15 @@ hRecoTauP2 = TH1F("histoRecoTauP2", "", 100, 0, 50)
 hRecoTauP10 = TH1F("histoRecoTauP10", "", 100, 0, 50)
 
 # Resolution P
-hTauPRes0 = TH1F("histoTauPRes0", "", 100, -2, 2)
-hTauPRes1 = TH1F("histoTauPRes1", "", 100, -2, 2)
-hTauPRes2 = TH1F("histoTauPRes2", "", 100, -2, 2)
-hTauPRes10 = TH1F("histoTauPRes10", "", 100, -2, 2)
+hTauPRes0 = TH1F("histoTauPRes0", "", 500, -1, 1)
+hTauPRes1 = TH1F("histoTauPRes1", "", 500, -1, 1)
+hTauPRes2 = TH1F("histoTauPRes2", "", 500, -1, 1)
+hTauPRes10 = TH1F("histoTauPRes10", "", 500, -1, 1)
 
-hMatchedTauPRes0 = TH1F("histoMatchedTauPRes0", "", 100, -2, 2)
-hMatchedTauPRes1 = TH1F("histoMatchedTauPRes1", "", 100, -2, 2)
-hMatchedTauPRes2 = TH1F("histoMatchedTauPRes2", "", 100, -2, 2)
-hMatchedTauPRes10 = TH1F("histoMatchedTauPRes10", "", 100, -2, 2)
+hMatchedTauPRes0 = TH1F("histoMatchedTauPRes0", "", 500, -1, 1)
+hMatchedTauPRes1 = TH1F("histoMatchedTauPRes1", "", 500, -1, 1)
+hMatchedTauPRes2 = TH1F("histoMatchedTauPRes2", "", 500, -1, 1)
+hMatchedTauPRes10 = TH1F("histoMatchedTauPRes10", "", 500, -1, 1)
 
 
 

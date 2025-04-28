@@ -149,13 +149,27 @@ elif args.verbose == 1:
         logging.StreamHandler(sys.stdout),
         logging.FileHandler(outputpath + "/" + "app.log", mode="w"),
     ]
-else:
+elif args.verbose == 2:
     log_level = logging.DEBUG  # Debug messages for -vv or higher
-    handlers=[logging.FileHandler(outputpath + "/" + "app.log", mode="w")]
+    # Crear handlers por separado para configurarlos individualmente
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setLevel(logging.INFO)  # Terminal solo muestra INFO o superior
+    file_handler = logging.FileHandler(outputpath + "/" + "app.log", mode="w")
+    file_handler.setLevel(logging.DEBUG)   # Archivo guarda TODO (DEBUG y superior)
+    handlers=[stream_handler, file_handler]
+elif args.verbose > 2:
+    log_level = logging.DEBUG  # Debug messages for -vv or higher
+    handlers=[
+        logging.FileHandler(outputpath + "/" + "app.log", mode="w"),
+    ]
+    
+
+
 logging.basicConfig(
     level=log_level,
     format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
     handlers=handlers)
+
 logger_config = logging.getLogger("config")
 logger_io = logging.getLogger("io")
 logger_process = logging.getLogger("processing")
@@ -196,7 +210,7 @@ nfiles = len(os.listdir(dir_path))
 
 nfiles = 1000
 if test == True:
-    nfiles = 1
+    nfiles = 5
 
 logger_io.info("Reading files from %s", dir_path)
 for i in range(1, nfiles + 1):
@@ -222,16 +236,11 @@ logger_io.info("Read %d files", len(filenames))
 genparts = "MCParticles"
 pfobjects = "PandoraPFOs"
 # pfobjects ="TightSelectedPandoraPFOs"
-
-gen_tree = TTree("gen_tree", f"Tree {cut_string}_Sample_{sample}")
-matched_tree = TTree("matched_tree", f"Reco Tree {cut_string}_Sample_{sample}")
-gen_const_tree = TTree("gen_const_tree", f"Const Tree {cut_string}_Sample_{sample}")
-reco_const_tree = TTree("reco_const_tree", f"Reco Const Tree {cut_string}_Sample_{sample}")
-matched_gen_const_tree = TTree("matched_gen_const_tree", f"Matched Const Tree {cut_string}_Sample_{sample}")
-
-photon_tree = TTree("photon_tree", f"Photon Tree {cut_string}_Sample_{sample}")
+outfile = ROOT.TFile(outputpath + "Trees_"+fileOutName, "RECREATE")
+Tau_tree = TTree("Tau_tree", f"Tree {cut_string}_Sample_{sample}")
 
 # Defining many histogram
+GenEventId = np.array([0], dtype=int)
 hGenTauPt = np.array([0])
 hGenVisTauPt = np.array([0])
 hGenTauP = np.array([0])
@@ -243,220 +252,182 @@ hGenTauEta = np.array([0])
 hGenTauTheta = np.array([0])
 hGenTauDR = np.array([0])
 
-gen_tree.Branch("hGenTauPt", hGenTauPt, "hGenTauPt/F")
-gen_tree.Branch("hGenVisTauPt", hGenVisTauPt, "hGenVisTauPt/F")
-gen_tree.Branch("hGenTauP", hGenTauP, "hGenTauP/F")
-gen_tree.Branch("hGenVisTauP", hGenVisTauP, "hGenVisTauP/F")
-gen_tree.Branch("hGenTauType", hGenTauType, "hGenTauType/I")
-gen_tree.Branch("hGenVisTauMass", hGenVisTauMass, "hGenVisTauMass/F")
-gen_tree.Branch("hGenTauQ", hGenTauQ, "hGenTauQ/F")
-gen_tree.Branch("hGenTauEta", hGenTauEta, "hGenTauEta/F")
-gen_tree.Branch("hGenTauTheta", hGenTauTheta, "hGenTauTheta/F")
-gen_tree.Branch("hGenTauDR", hGenTauDR, "hGenTauDR/F")
+Tau_tree.Branch("GenEventId", GenEventId, "GenEventId/I")
+Tau_tree.Branch("hGenTauPt", hGenTauPt, "hGenTauPt/F")
+Tau_tree.Branch("hGenVisTauPt", hGenVisTauPt, "hGenVisTauPt/F")
+Tau_tree.Branch("hGenTauP", hGenTauP, "hGenTauP/F")
+Tau_tree.Branch("hGenVisTauP", hGenVisTauP, "hGenVisTauP/F")
+Tau_tree.Branch("hGenTauType", hGenTauType, "hGenTauType/I")
+Tau_tree.Branch("hGenVisTauMass", hGenVisTauMass, "hGenVisTauMass/F")
+Tau_tree.Branch("hGenTauQ", hGenTauQ, "hGenTauQ/F")
+Tau_tree.Branch("hGenTauEta", hGenTauEta, "hGenTauEta/F")
+Tau_tree.Branch("hGenTauTheta", hGenTauTheta, "hGenTauTheta/F")
+Tau_tree.Branch("hGenTauDR", hGenTauDR, "hGenTauDR/F")
+
+IsMatched = np.array([0], dtype =int)
+hMatchedGenTauPt = ROOT.std.vector('float')()
+hMatchedGenVisTauPt = ROOT.std.vector('float')()
+hMatchedGenTauP = ROOT.std.vector('float')()
+hMatchedGenVisTauP = ROOT.std.vector('float')()
+Tau_tree.Branch("IsMatched", IsMatched, "IsMatched/I")
+Tau_tree.Branch("hMatchedGenTauPt", hMatchedGenTauPt)
+Tau_tree.Branch("hMatchedGenVisTauPt", hMatchedGenVisTauPt)
+Tau_tree.Branch("hMatchedGenTauP", hMatchedGenTauP)
+Tau_tree.Branch("hMatchedGenVisTauP", hMatchedGenVisTauP)
+
+hMatchedGenTauType = np.array([-1], dtype =int)
+hMatchedGenVisTauMass = ROOT.std.vector('float')()
+hMatchedGenTauQ = ROOT.std.vector('float')()
+hMatchedGenTauEta = ROOT.std.vector('float')()
+hMatchedGenTauTheta = ROOT.std.vector('float')()
+hMatchedGenTauDR = ROOT.std.vector('float')()
+Tau_tree.Branch("hMatchedGenTauType", hMatchedGenTauType, "hMatchedGenTauType/I")
+Tau_tree.Branch("hMatchedGenVisTauMass", hMatchedGenVisTauMass)
+Tau_tree.Branch("hMatchedGenTauQ", hMatchedGenTauQ)
+Tau_tree.Branch("hMatchedGenTauEta", hMatchedGenTauEta)
+Tau_tree.Branch("hMatchedGenTauTheta", hMatchedGenTauTheta)
+Tau_tree.Branch("hMatchedGenTauDR", hMatchedGenTauDR)
 
 
-hMatchedGenTauPt = np.array([0])
-hMatchedGenVisTauPt = np.array([0])
-hMatchedGenTauP = np.array([0])
-hMatchedGenVisTauP = np.array([0])
-matched_tree.Branch("hMatchedGenTauPt", hMatchedGenTauPt, "hMatchedGenTauPt/F")
-matched_tree.Branch("hMatchedGenVisTauPt", hMatchedGenVisTauPt, "hMatchedGenVisTauPt/F")
-matched_tree.Branch("hMatchedGenTauP", hMatchedGenTauP, "hMatchedGenTauP/F")
-matched_tree.Branch("hMatchedGenVisTauP", hMatchedGenVisTauP, "hMatchedGenVisTauP/F")
+hRecoTauPt = ROOT.std.vector('float')()
+hRecoTauP = ROOT.std.vector('float')()
+Tau_tree.Branch("hRecoTauPt", hRecoTauPt)
+Tau_tree.Branch("hRecoTauP", hRecoTauP)
+
+hRecoTauMass = ROOT.std.vector('float')()
+hRecoTauType = np.array([-1], dtype =int)
+hRecoTauDM = np.array([-1], dtype =int)
+hRecoTauQ = ROOT.std.vector('float')()
+hRecoTauEta = ROOT.std.vector('float')()
+hRecoTauTheta = ROOT.std.vector('float')()
+hRecoTauDR = ROOT.std.vector('float')()
+Tau_tree.Branch("hRecoTauMass", hRecoTauMass)
+Tau_tree.Branch("hRecoTauType", hRecoTauType, "hRecoTauType/I")
+Tau_tree.Branch("hRecoTauDM", hRecoTauDM, "hRecoTauDM/I")
+Tau_tree.Branch("hRecoTauQ", hRecoTauQ)
+Tau_tree.Branch("hRecoTauEta", hRecoTauEta)
+Tau_tree.Branch("hRecoTauTheta", hRecoTauTheta)
+Tau_tree.Branch("hRecoTauDR", hRecoTauDR)
+
+nRecoPhotons = np.array([0], dtype =int)
+hRecoConstPhotonP = ROOT.std.vector('float')()
+nRecoPions = np.array([0], dtype =int)
+hRecoConstPionP = ROOT.std.vector('float')()
+Tau_tree.Branch("nRecoPhotons", nRecoPhotons, "nRecoPhotons/I")
+Tau_tree.Branch("nRecoPions", nRecoPions, "nRecoPions/I")
+Tau_tree.Branch("hRecoConstPhotonP", hRecoConstPhotonP)
+Tau_tree.Branch("hRecoConstPionP", hRecoConstPionP)
+
+nRecoPions0 = np.array([0], dtype =int)
+hRecoConstPi0Mass = ROOT.std.vector('float')()
+hRecoConstTwoPhotonAngDist = ROOT.std.vector('float')()
+Tau_tree.Branch("nRecoPions0", nRecoPions0, "nRecoPions0/I")
+Tau_tree.Branch("hRecoConstPi0Mass", hRecoConstPi0Mass)
+Tau_tree.Branch("hRecoConstTwoPhotonAngDist", hRecoConstTwoPhotonAngDist)
 
 
-hMatchedGenTauType = np.array([0], dtype =int)
-hMatchedGenVisTauMass = np.array([0])
-hMatchedGenTauQ = np.array([0])
-hMatchedGenTauEta = np.array([0])
-hMatchedGenTauTheta = np.array([0])
-hMatchedGenTauDR = np.array([0])
-matched_tree.Branch("hMatchedGenTauType", hMatchedGenTauType, "hMatchedGenTauType/I")
-matched_tree.Branch("hMatchedGenVisTauMass", hMatchedGenVisTauMass, "hMatchedGenVisTauMass/F")
-matched_tree.Branch("hMatchedGenTauQ", hMatchedGenTauQ, "hMatchedGenTauQ/F")
-matched_tree.Branch("hMatchedGenTauEta", hMatchedGenTauEta, "hMatchedGenTauEta/F")
-matched_tree.Branch("hMatchedGenTauTheta", hMatchedGenTauTheta, "hMatchedGenTauTheta/F")
-matched_tree.Branch("hMatchedGenTauDR", hMatchedGenTauDR, "hMatchedGenTauDR/F")
+hRecoConstPi0MassFromPhotonMasstr = ROOT.std.vector('float')()
+hRecoConstPi0MassFromPhotonDiststr = ROOT.std.vector('float')()
+Tau_tree.Branch("hRecoConstPi0MassFromPhotonMasstr", hRecoConstPi0MassFromPhotonMasstr, "hRecoConstPi0MassFromPhotonMasstr/F")
+Tau_tree.Branch("hRecoConstPi0MassFromPhotonDiststr", hRecoConstPi0MassFromPhotonDiststr, "hRecoConstPi0MassFromPhotonDiststr/F")
 
+nGenPions0 = np.array([0], dtype =int)
+hGenConstPi0Mass = ROOT.std.vector('float')()
+Tau_tree.Branch("nGenPions0", nGenPions0, "nGenPions0/I")
+Tau_tree.Branch("hGenConstPi0Mass", hGenConstPi0Mass)
 
-hRecoTauPt = np.array([0])
-hRecoTauP = np.array([0])
-matched_tree.Branch("hRecoTauPt", hRecoTauPt, "hRecoTauPt/F")
-matched_tree.Branch("hRecoTauP", hRecoTauP, "hRecoTauP/F")
-
-hRecoTauMass = np.array([0])
-hRecoTauType = np.array([0], dtype =int)
-hRecoTauQ = np.array([0])
-hRecoTauEta = np.array([0])
-hRecoTauTheta = np.array([0])
-hRecoTauDR = np.array([0])
-matched_tree.Branch("hRecoTauMass", hRecoTauMass, "hRecoTauMass/F")
-matched_tree.Branch("hRecoTauType", hRecoTauType, "hRecoTauType/I")
-matched_tree.Branch("hRecoTauQ", hRecoTauQ, "hRecoTauQ/F")
-matched_tree.Branch("hRecoTauEta", hRecoTauEta, "hRecoTauEta/F")
-matched_tree.Branch("hRecoTauTheta", hRecoTauTheta, "hRecoTauTheta/F")
-matched_tree.Branch("hRecoTauDR", hRecoTauDR, "hRecoTauDR/F")
-
-
-hRecoConstP = np.array([0])
-hRecoConstPhotonP = np.array([0])
-hRecoConstPionP = np.array([0])
-reco_const_tree.Branch("hRecoConstP", hRecoConstP, "hRecoConstP/F")
-reco_const_tree.Branch("hRecoConstPhotonP", hRecoConstPhotonP, "hRecoConstPhotonP/F")
-reco_const_tree.Branch("hRecoConstPionP", hRecoConstPionP, "hRecoConstPionP/F")
-
-
-
-hRecoConstPOverTauP = np.array([0]) 
-hRecoConstPhotonPOverTauP = np.array([0])
-hRecoConstPionPOverTauP = np.array([0])
-reco_const_tree.Branch("hRecoConstPOverTauP", hRecoConstPOverTauP, "hRecoConstPOverTauP/F")
-reco_const_tree.Branch("hRecoConstPhotonPOverTauP", hRecoConstPhotonPOverTauP, "hRecoConstPhotonPOverTauP/F")
-reco_const_tree.Branch("hRecoConstPionPOverTauP", hRecoConstPionPOverTauP, "hRecoConstPionPOverTauP/F")
-
-
-hRecoConstPion1P = np.array([0])
-hRecoConstPion2P = np.array([0])
-hRecoConstPion3P = np.array([0])
-reco_const_tree.Branch("hRecoConstPion1P", hRecoConstPion1P, "hRecoConstPion1P/F")
-reco_const_tree.Branch("hRecoConstPion2P", hRecoConstPion2P, "hRecoConstPion2P/F")
-reco_const_tree.Branch("hRecoConstPion3P", hRecoConstPion3P, "hRecoConstPion3P/F")
-
-
-hRecoConstPi0Mass = np.array([0])
-hRecoConstTwoPhotonAngDist = np.array([0])
-photon_tree.Branch("hRecoConstPi0Mass", hRecoConstPi0Mass, "hRecoConstPi0Mass/F")
-photon_tree.Branch("hRecoConstTwoPhotonAngDist", hRecoConstTwoPhotonAngDist, "hRecoConstTwoPhotonAngDist/F")
-
-hRecoConstPi0MassFromPhotonMasstr = np.array([0])
-hRecoConstPi0MassFromPhotonDiststr = np.array([0])
-photon_tree.Branch("hRecoConstPi0MassFromPhotonMasstr", hRecoConstPi0MassFromPhotonMasstr, "hRecoConstPi0MassFromPhotonMasstr/F")
-photon_tree.Branch("hRecoConstPi0MassFromPhotonDiststr", hRecoConstPi0MassFromPhotonDiststr, "hRecoConstPi0MassFromPhotonDiststr/F")
-
-hGenConstPi0Mass = np.array([0])
-hMatchedGenConstPi0Mass = np.array([0])
-gen_const_tree.Branch("hGenConstPi0Mass", hGenConstPi0Mass, "hGenConstPi0Mass/F")
-matched_tree.Branch("hMatchedGenConstPi0Mass", hMatchedGenConstPi0Mass, "hMatchedGenConstPi0Mass/F")
-
-hMatchedGenConstPion1P = np.array([0])
-hMatchedGenConstPion2P = np.array([0])
-hMatchedGenConstPion3P = np.array([0])
-matched_gen_const_tree.Branch("hMatchedGenConstPion1P", hMatchedGenConstPion1P, "hMatchedGenConstPion1P/F")
-matched_gen_const_tree.Branch("hMatchedGenConstPion2P", hMatchedGenConstPion2P, "hMatchedGenConstPion2P/F")
-matched_gen_const_tree.Branch("hMatchedGenConstPion3P", hMatchedGenConstPion3P, "hMatchedGenConstPion3P/F")
-
-
-hGenConstPion1P = np.array([0])
-hGenConstPion2P = np.array([0])
-hGenConstPion3P = np.array([0])
-gen_const_tree.Branch("hGenConstPion1P", hGenConstPion1P, "hGenConstPion1P/F")
-gen_const_tree.Branch("hGenConstPion2P", hGenConstPion2P, "hGenConstPion2P/F")
-gen_const_tree.Branch("hGenConstPion3P", hGenConstPion3P, "hGenConstPion3P/F")
-
-hGenConstP = np.array([0])
-hGenConstPi0P = np.array([0])
-hGenConstPionP = np.array([0])
+nGenPions = np.array([0], dtype =int)
+hGenConstPi0P = ROOT.std.vector('float')()
+hGenConstPionP = ROOT.std.vector('float')()
 # hGenConstPhotonP = np.array([0])
-gen_const_tree.Branch("hGenConstP", hGenConstP, "hGenConstP/F")
-gen_const_tree.Branch("hGenConstPi0P", hGenConstPi0P, "hGenConstPi0P/F")
-gen_const_tree.Branch("hGenConstPionP", hGenConstPionP, "hGenConstPionP/F")
+Tau_tree.Branch("nGenPions", nGenPions, "nGenPions/I")
+Tau_tree.Branch("hGenConstPi0P", hGenConstPi0P)
+Tau_tree.Branch("hGenConstPionP", hGenConstPionP)
 # gen_const_tree.Branch("hGenConstPhotonP", hGenConstPhotonP, "hGenConstPhotonP/F")
 
 # Hist for reconstructed photons in a1 (pi pi0 pi0), rho (pi0 pi0), and pi cases
 # 3 photon cases
-hRecoConstlessPhotonPa1strMass = np.array([0])
-hRecoConstlessPhotonPa1strDist = np.array([0])
-photon_tree.Branch("hRecoConstlessPhotonPa1strMass", hRecoConstlessPhotonPa1strMass, "hRecoConstlessPhotonPa1strMass/F")
-photon_tree.Branch("hRecoConstlessPhotonPa1strDist", hRecoConstlessPhotonPa1strDist, "hRecoConstlessPhotonPa1strDist/F")
+hRecoConstlessPhotonPa1strMass = ROOT.std.vector('float')()
+hRecoConstlessPhotonPa1strDist = ROOT.std.vector('float')()
+Tau_tree.Branch("hRecoConstlessPhotonPa1strMass", hRecoConstlessPhotonPa1strMass)
+Tau_tree.Branch("hRecoConstlessPhotonPa1strDist", hRecoConstlessPhotonPa1strDist)
 
-hRecoConstxtraPhotonPrhostrMass = np.array([0])
-hRecoConstxtraPhotonPrhostrDist = np.array([0])
-photon_tree.Branch("hRecoConstxtraPhotonPrhostrMass", hRecoConstxtraPhotonPrhostrMass, "hRecoConstxtraPhotonPrhostrMass/F")
-photon_tree.Branch("hRecoConstxtraPhotonPrhostrDist", hRecoConstxtraPhotonPrhostrDist, "hRecoConstxtraPhotonPrhostrDist/F")
+hRecoConstxtraPhotonPrhostrMass = ROOT.std.vector('float')()
+hRecoConstxtraPhotonPrhostrDist = ROOT.std.vector('float')()
+Tau_tree.Branch("hRecoConstxtraPhotonPrhostrMass", hRecoConstxtraPhotonPrhostrMass)
+Tau_tree.Branch("hRecoConstxtraPhotonPrhostrDist", hRecoConstxtraPhotonPrhostrDist)
 
 # 1 photon cases
-hRecoConstlessPhotonPrho = np.array([0])
-hRecoConstxtraPhotonPi = np.array([0])
-photon_tree.Branch("hRecoConstlessPhotonPrho", hRecoConstlessPhotonPrho, "hRecoConstlessPhotonPrho/F")
-photon_tree.Branch("hRecoConstxtraPhotonPi", hRecoConstxtraPhotonPi, "hRecoConstxtraPhotonPi/F")
+hRecoConstlessPhotonPrho = ROOT.std.vector('float')()
+hRecoConstxtraPhotonPi = ROOT.std.vector('float')()
+Tau_tree.Branch("hRecoConstlessPhotonPrho", hRecoConstlessPhotonPrho)
+Tau_tree.Branch("hRecoConstxtraPhotonPi", hRecoConstxtraPhotonPi)
 
-hRecoThreePhotonMatchOnestrMassP = np.array([0])
-hRecoThreePhotonMatchOnestrDistP = np.array([0])
-hRecoThreePhotonMatchTwostrMassP = np.array([0])
-hRecoThreePhotonMatchTwostrDistP = np.array([0])
-hRecoThreePhotonNoMatchstrMassP = np.array([0])
-hRecoThreePhotonNoMatchstrDistP = np.array([0])
-photon_tree.Branch("hRecoThreePhotonMatchOnestrMassP", hRecoThreePhotonMatchOnestrMassP, "hRecoThreePhotonMatchOnestrMassP/F")
-photon_tree.Branch("hRecoThreePhotonMatchOnestrDistP", hRecoThreePhotonMatchOnestrDistP, "hRecoThreePhotonMatchOnestrDistP/F")
-photon_tree.Branch("hRecoThreePhotonMatchTwostrMassP", hRecoThreePhotonMatchTwostrMassP, "hRecoThreePhotonMatchTwostrMassP/F")
-photon_tree.Branch("hRecoThreePhotonMatchTwostrDistP", hRecoThreePhotonMatchTwostrDistP, "hRecoThreePhotonMatchTwostrDistP/F")
-photon_tree.Branch("hRecoThreePhotonNoMatchstrMassP", hRecoThreePhotonNoMatchstrMassP, "hRecoThreePhotonNoMatchstrMassP/F")
-photon_tree.Branch("hRecoThreePhotonNoMatchstrDistP", hRecoThreePhotonNoMatchstrDistP, "hRecoThreePhotonNoMatchstrDistP/F")
+hRecoThreePhotonMatchOnestrMassP = ROOT.std.vector('float')()
+hRecoThreePhotonMatchOnestrDistP = ROOT.std.vector('float')()
+hRecoThreePhotonMatchTwostrMassP = ROOT.std.vector('float')()
+hRecoThreePhotonMatchTwostrDistP = ROOT.std.vector('float')()
+hRecoThreePhotonNoMatchstrMassP = ROOT.std.vector('float')()
+hRecoThreePhotonNoMatchstrDistP = ROOT.std.vector('float')()
+Tau_tree.Branch("hRecoThreePhotonMatchOnestrMassP", hRecoThreePhotonMatchOnestrMassP)
+Tau_tree.Branch("hRecoThreePhotonMatchOnestrDistP", hRecoThreePhotonMatchOnestrDistP)
+Tau_tree.Branch("hRecoThreePhotonMatchTwostrMassP", hRecoThreePhotonMatchTwostrMassP)
+Tau_tree.Branch("hRecoThreePhotonMatchTwostrDistP", hRecoThreePhotonMatchTwostrDistP)
+Tau_tree.Branch("hRecoThreePhotonNoMatchstrMassP", hRecoThreePhotonNoMatchstrMassP)
+Tau_tree.Branch("hRecoThreePhotonNoMatchstrDistP", hRecoThreePhotonNoMatchstrDistP)
 
+nMatchedGenPions = np.array([0], dtype =int)
+nMatchedGenPions0 = np.array([0], dtype =int)
+hMatchedGenConstPionP = ROOT.std.vector('float')()
+hMatchedGenConstPi0Mass = ROOT.std.vector('float')()
+Tau_tree.Branch("hMatchedGenConstPi0Mass", hMatchedGenConstPi0Mass)
+Tau_tree.Branch("nMatchedGenPions0", nMatchedGenPions0, "nMatchedGenPions0/I")
+Tau_tree.Branch("hMatchedGenConstPionP", hMatchedGenConstPionP)
+Tau_tree.Branch("nMatchedGenPions", nMatchedGenPions, "nMatchedGenPions/I")
 
-
-
-hGenConstPOverTauP = np.array([0])
-hGenConstPi0POverTauP = np.array([0])
-hGenConstPionPOverTauP = np.array([0])
-# hGenConstPhotonPOverTauP = np.array([0])
-gen_const_tree.Branch("hGenConstPOverTauP", hGenConstPOverTauP, "hGenConstPOverTauP/F")
-gen_const_tree.Branch("hGenConstPi0POverTauP", hGenConstPi0POverTauP, "hGenConstPi0POverTauP/F")
-gen_const_tree.Branch("hGenConstPionPOverTauP", hGenConstPionPOverTauP, "hGenConstPionPOverTauP/F")
-# gen_const_tree.Branch("hGenConstPhotonPOverTauP", hGenConstPhotonPOverTauP, "hGenConstPhotonPOverTauP/F")
-
-
-hMatchedGenConstP = np.array([0])
-hMatchedGenConstPi0P = np.array([0])
-hMatchedGenConstPionP = np.array([0])
-hMatchedGenConstPOverTauP = np.array([0])
-hMatchedGenConstPi0POverTauP = np.array([0])
-hMatchedGenConstPionPOverTauP = np.array([0])
-matched_gen_const_tree.Branch("hMatchedGenConstP", hMatchedGenConstP, "hMatchedGenConstP/F")
-matched_gen_const_tree.Branch("hMatchedGenConstPi0P", hMatchedGenConstPi0P, "hMatchedGenConstPi0P/F")
-matched_gen_const_tree.Branch("hMatchedGenConstPionP", hMatchedGenConstPionP, "hMatchedGenConstPionP/F")
-matched_gen_const_tree.Branch("hMatchedGenConstPOverTauP", hMatchedGenConstPOverTauP, "hMatchedGenConstPOverTauP/F")
-matched_gen_const_tree.Branch("hMatchedGenConstPi0POverTauP", hMatchedGenConstPi0POverTauP, "hMatchedGenConstPi0POverTauP/F")
-matched_tree.Branch("hMatchedGenConstPionPOverTauP", hMatchedGenConstPionPOverTauP, "hMatchedGenConstPionPOverTauP/F")
 
 hGenTauNConsts = np.array([0], dtype =int)
-gen_tree.Branch("hGenTauNConsts", hGenTauNConsts, "hGenTauNConsts/I")
+Tau_tree.Branch("hGenTauNConsts", hGenTauNConsts, "hGenTauNConsts/I")
 
-hResTauPt = np.array([0])
-hResTauP = np.array([0])
-hResTauMass = np.array([0])
-matched_tree.Branch("hResTauPt", hResTauPt, "hResTauPt/F")
-matched_tree.Branch("hResTauP", hResTauP, "hResTauP/F")
-matched_tree.Branch("hResTauMass", hResTauMass, "hResTauMass/F")
-
-
-# hNTaus = np.array([0])
-# hNGenTaus = np.array([0])
-# hNTausType = np.array([0], dtype =int)
-# hNGenTausType = np.array([0], dtype =int)
-
-
-hMatchedTausPRes = np.array([0])
-hMatchedTausPtRes = np.array([0])
-hMatchedTausChargeRes = np.array([0])
-hMatchedTausMaxAngleRes = np.array([0])
-hMatchedTausNCompRes = np.array([0])
-matched_tree.Branch("hMatchedTausPRes", hMatchedTausPRes, "hMatchedTausPRes/F")
-matched_tree.Branch("hMatchedTausPtRes", hMatchedTausPtRes, "hMatchedTausPtRes/F")
-matched_tree.Branch("hMatchedTausChargeRes", hMatchedTausChargeRes, "hMatchedTausChargeRes/F")
-matched_tree.Branch("hMatchedTausMaxAngleRes", hMatchedTausMaxAngleRes, "hMatchedTausMaxAngleRes/F")
-matched_tree.Branch("hMatchedTausNCompRes", hMatchedTausNCompRes, "hMatchedTausNCompRes/F")
-
-# for branch in gen_const_tree.GetListOfBranches():
-#     branch.SetBasketSize(16000)  # Reducir a la mitad
-# for branch in reco_const_tree.GetListOfBranches():
-#     branch.SetBasketSize(16000)  # Reducir a la mitad
-# for branch in photon_tree.GetListOfBranches():
-#     branch.SetBasketSize(16000)  # Reducir a la mitad
-# for branch in matched_tree.GetListOfBranches():
-#     branch.SetBasketSize(16000)  # Reducir a la mitad
-# for branch in gen_tree.GetListOfBranches():
-#     branch.SetBasketSize(16000)  # Reducir a la mitad
+vectors = [
+    hMatchedGenTauPt,
+    hMatchedGenVisTauPt,
+    hMatchedGenTauP,
+    hMatchedGenVisTauP,
+    hMatchedGenVisTauMass,
+    hMatchedGenTauQ,
+    hMatchedGenTauEta,
+    hMatchedGenTauTheta,
+    hMatchedGenTauDR,
+    hRecoTauPt,
+    hRecoTauP,
+    hRecoTauMass,
+    hRecoTauQ,
+    hRecoTauEta,
+    hRecoTauTheta,
+    hRecoTauDR,
+    hRecoConstPhotonP,
+    hRecoConstPionP,
+    hRecoConstPi0Mass,
+    hRecoConstTwoPhotonAngDist,
+    hRecoConstPi0MassFromPhotonMasstr,
+    hRecoConstPi0MassFromPhotonDiststr,
+    hGenConstPi0Mass,
+    hMatchedGenConstPi0Mass,
+    hGenConstPi0P,
+    hGenConstPionP,
+    hRecoConstlessPhotonPa1strMass,
+    hRecoConstlessPhotonPa1strDist,
+    hRecoConstlessPhotonPrho,
+    hRecoConstxtraPhotonPi,
+    hRecoThreePhotonMatchOnestrMassP,
+    hRecoThreePhotonMatchOnestrDistP,
+    hRecoThreePhotonMatchTwostrMassP,
+    hRecoThreePhotonMatchTwostrDistP,
+    hRecoThreePhotonNoMatchstrMassP,
+    hRecoThreePhotonNoMatchstrDistP,
+    hMatchedGenConstPionP,
+]
 
 true_predicted_label = {"GenID": [], "True": [], "Predicted": [], "PhotonPredicted": []}
 unmatched_true_label = {}
@@ -498,6 +469,19 @@ for eventid, event in enumerate(reader.get("events")):
     nGenTausHad = 0
 
     for i in range(0, nGenTaus):
+        for v in vectors:
+            v.clear()
+        nGenPions0[0] = 0
+        nGenPions[0] = 0
+        nRecoPhotons[0] = 0
+        nRecoPions[0] = 0
+        nMatchedGenPions0[0] = 0
+        nMatchedGenPions[0] = 0
+        nRecoPions0[0] = 0
+        hRecoTauType[0] = -1
+        hRecoTauDM[0] = -1
+        hMatchedGenTauType[0] = -1
+            
         genVisTauP4 = genTaus[
             i
         ].getvisMomentum()  # to do: find a clearer dictionary for this
@@ -535,6 +519,7 @@ for eventid, event in enumerate(reader.get("events")):
         # print ("Gen",genTauP4.P(),genVisTauP4.P(),genVisTauP4.Theta(),genVisTauP4.Phi(),genTauId,genTauQ,genTauDR,genTauNConsts)
 
         # Fill histograms
+        GenEventId[0] = eventid  # Event ID
         hGenTauPt[0] =  genTauP4.Pt()  # Transverse momentum
         hGenVisTauPt[0] =genVisTauP4.Pt()  # Visible transverse momentum
         hGenTauP[0] = genTauP4.P()  # Momentum
@@ -549,7 +534,6 @@ for eventid, event in enumerate(reader.get("events")):
         hGenTauDR[0] = genTauDR  # Angle of Tau Constituents
         hGenTauNConsts[0] = genTauNConsts  # Number of Tau Constituents
 
-        gen_tree.Fill()
         
         countPionsRun = 0
 
@@ -566,23 +550,14 @@ for eventid, event in enumerate(reader.get("events")):
                 const.getMomentum().z,
                 const.getMass(),
             )
-            hGenConstPi0P[0] = -1
-            hGenConstPi0Mass[0] = -1
-            hGenConstPionP[0] = -1
-            hGenConstPionPOverTauP[0] = -1
-            hGenConstPion1P[0] = -1
-            hGenConstPion2P[0] = -1
-            hGenConstPion3P[0] = -1
-            
-            # Fill histograms
-            hGenConstP[0]=constP4.P()  # Constituent momentum
             
 
             # Filling values for Pi0s
             # PDG ID for Pi0s == 111
             if const.getPDG() == 111:
-                hGenConstPi0P[0] = constP4.P()
-                hGenConstPi0Mass[0] = constP4.M()
+                nGenPions0[0] += 1
+                hGenConstPi0P.push_back(constP4.P())
+                hGenConstPi0Mass.push_back(constP4.M())
 
                 
                 # No saved values
@@ -603,21 +578,8 @@ for eventid, event in enumerate(reader.get("events")):
 
             # Filling values for Pions (charged)
             elif abs(const.getPDG()) == 211:  # PDG ID for charged pions
-                hGenConstPionP[0] = constP4.P()
-                hGenConstPionPOverTauP[0] = constP4.P() / genVisTauP4.P()
-
-                # Counting the number of pions (three options)
-                if countPionsRun == 0:
-                    hGenConstPion1P[0] = constP4.P()
-                    countPionsRun += 1
-                elif countPionsRun == 1:
-                    hGenConstPion2P[0] = constP4.P()
-                    countPionsRun += 1
-                elif countPionsRun == 2:
-                    hGenConstPion3P[0] = constP4.P()
-                    countPionsRun += 1
-        # Fill gen constituents tree
-        gen_const_tree.Fill()
+                nGenPions[0] += 1
+                hGenConstPionP.push_back(constP4.P())
         
             
         # Compare with reconstructed taus using angle matching
@@ -636,8 +598,12 @@ for eventid, event in enumerate(reader.get("events")):
                 # true_predicted_label["Predicted"].append(-1)
                 true_predicted_label["Predicted"].append(-2)
                 true_predicted_label["PhotonPredicted"].append(-2)
+            # Fill the tree with the unmatched gen tau
+            IsMatched[0] = 0
+            Tau_tree.Fill()
             continue
-
+        
+        IsMatched[0] = 1
         logger_process.debug("Found matched tau. Details:\n%s", recoTaus[findMatch])
         if matched_cm:
             true_predicted_label["GenID"].append(str(eventid) + str(i))
@@ -667,16 +633,6 @@ for eventid, event in enumerate(reader.get("events")):
         true_predicted_label["Predicted"].append(recoDM)
         true_predicted_label["PhotonPredicted"].append(recoTauId)
 
-        hMatchedTausPRes[0] = (recoTauP4.P() - genTauP4.P()) / genTauP4.P()
-        hMatchedTausPtRes[0] = (recoTauP4.Pt() - genTauP4.Pt()) / genTauP4.Pt()
-        hMatchedTausChargeRes[0] = abs(recoTauQ) - abs(genTauQ) / (abs(genTauQ)+1e-6)
-        hMatchedTausMaxAngleRes[0] = (recoTauDR - genTauDR) / genTauDR
-        hMatchedTausNCompRes[0] = (recoTauNConsts - genTauNConsts) / genTauNConsts
-
-
-        #          print ("Reco?",recoTauP4.P(),recoTauId,recoTauQ,recoTauDR,recoTauNConsts)
-
-        # Now that we have a matched (gen,reco) pair, more checks for efficiency and resolution
 
         countPionsRun = 0
         # print ("Matched GEN!")
@@ -693,24 +649,11 @@ for eventid, event in enumerate(reader.get("events")):
                 const.getMass(),
             )
 
-            hMatchedGenConstP[0] = constP4.P()
-            hMatchedGenConstPOverTauP[0] = constP4.P()
-            
-            hMatchedGenConstPi0P[0] = -1
-            hMatchedGenConstPi0Mass[0] = -1
-            hMatchedGenConstPi0POverTauP[0] = -1
-            
-            hMatchedGenConstPionPOverTauP[0] = -1
-            hMatchedGenConstPionP[0] = -1
-            hMatchedGenConstPion1P[0] = -1
-            hMatchedGenConstPion2P[0] = -1
-            hMatchedGenConstPion3P[0] = -1
 
 
             if const.getPDG() == 111:
-                hMatchedGenConstPi0P[0] = constP4.P()
-                hMatchedGenConstPi0Mass[0] = constP4.M()
-                hMatchedGenConstPi0POverTauP[0] = constP4.P() / genVisTauP4.P()
+                nMatchedGenPions0[0] += 1
+                hMatchedGenConstPi0Mass.push_back(constP4.M())
 
                 # daughtersPi0 = const.getDaughters()
                 # for dauPhoton in daughtersPi0:
@@ -726,17 +669,9 @@ for eventid, event in enumerate(reader.get("events")):
 
 
             elif abs(const.getPDG()) == 211:
-                hMatchedGenConstPionP[0] =constP4.P()
-                hMatchedGenConstPionPOverTauP[0] = constP4.P() / genVisTauP4.P()
-                if countPionsRun == 0:
-                    hMatchedGenConstPion1P[0] = constP4.P()
-                    countPionsRun += 1
-                elif countPionsRun == 1:
-                    hMatchedGenConstPion2P[0] = constP4.P()
-                    countPionsRun += 1
-                elif countPionsRun == 2:
-                    hMatchedGenConstPion3P[0] = constP4.P()
-                    countPionsRun += 1
+                nMatchedGenPions[0] += 1
+                hMatchedGenConstPionP.push_back(constP4.P())
+               
 
         countPionsRun = 0
         # Init empyu TLorentzVector for the photon momentum
@@ -755,58 +690,22 @@ for eventid, event in enumerate(reader.get("events")):
                 const.getMomentum().z,
                 const.getMass(),
             )
-            hRecoConstP[0] = constP4.P()
-            hRecoConstPOverTauP[0] = constP4.P() / recoTauP4.P()
-            hRecoConstPhotonP[0] = -1
-            hRecoConstPhotonPOverTauP[0] = -1
-            hRecoConstPionP[0] = -1
-            hRecoConstPionPOverTauP[0] = -1
-            hRecoConstPion1P[0] = -1
-            hRecoConstPion2P[0] = -1
-            hRecoConstPion3P[0] = -1
 
             # This may be an error as we are confusing photons with neutrons
 
             logger_pi0mass.debug(f"Evaluating const to get photon with PDGID {const.getPDG()} and charge {const.getCharge()}")
             if const.getCharge() == 0:
-                hRecoConstPhotonP[0] = constP4.P()
-                hRecoConstPhotonPOverTauP[0] = constP4.P() / recoTauP4.P()
+                nRecoPhotons[0] += 1
+                hRecoConstPhotonP.push_back(constP4.P())
                 photonCumulativeP4 += constP4
                 
                 recoTaus_photons[n_photons] = const
                 n_photons += 1
             else:
-                hRecoConstPionP[0] = constP4.P()
-                hRecoConstPionPOverTauP[0] = constP4.P() / recoTauP4.P()
-                if countPionsRun == 0:
-                    hRecoConstPion1P[0] = constP4.P()
-                    countPionsRun += 1
-                elif countPionsRun == 1:
-                    hRecoConstPion2P[0] = constP4.P()
-                    countPionsRun += 1
-                elif countPionsRun == 2:
-                    hRecoConstPion3P[0] = constP4.P()
-                    countPionsRun += 1
-        # Fill reco constituents tree
-        reco_const_tree.Fill()
-        
-        
-        hRecoConstPi0MassFromPhotonMasstr[0] = -1
-        hRecoConstlessPhotonPa1strMass[0] = -1
-        hRecoConstxtraPhotonPrhostrMass[0] = -1
-        hRecoThreePhotonMatchOnestrMassP[0] = -1
-        hRecoThreePhotonMatchTwostrMassP[0] = -1
-        hRecoThreePhotonNoMatchstrMassP[0] = -1
-        hRecoConstPi0MassFromPhotonDiststr[0] = -1
-        hRecoConstlessPhotonPa1strDist[0] = -1
-        hRecoConstxtraPhotonPrhostrDist[0] = -1
-        hRecoThreePhotonMatchOnestrDistP[0] = -1
-        hRecoThreePhotonMatchTwostrDistP[0] = -1
-        hRecoThreePhotonNoMatchstrDistP[0] = -1
-        hRecoConstxtraPhotonPi[0] = -1
-        hRecoConstlessPhotonPrho[0] = -1
-        hRecoConstPi0Mass[0] = -1
-        hRecoConstTwoPhotonAngDist[0] = -1
+                nRecoPions[0] += 1
+                hRecoConstPionP.push_back(constP4.P())
+                
+
         if n_pi0s > 0:
             logger_pi0mass.debug(
                 f"Found {n_pi0s} pi0s ({n_photons} photons) in the matched reco with Id {recoTauId} tau with real Id {genTauId}"
@@ -817,7 +716,7 @@ for eventid, event in enumerate(reader.get("events")):
                 )
                 pi0Mass_strmass, noMatchedPhotons = pi0Reco.getPi0Mass(recoTaus_photons, strategy = {"mass":-1})
                 if pi0Mass_strmass:
-                    hRecoConstPi0MassFromPhotonMasstr[0] = pi0Mass_strmass
+                    hRecoConstPi0MassFromPhotonMasstr.push_back(pi0Mass_strmass)
                 
                 if noMatchedPhotons:
                     for ide, photon in noMatchedPhotons.items(): 
@@ -829,9 +728,9 @@ for eventid, event in enumerate(reader.get("events")):
                         photon.getMass(),
                         )
                         if genTauId == 2:
-                            hRecoConstlessPhotonPa1strMass[0] =PhotonP4.P()
+                            hRecoConstlessPhotonPa1strMass.push_back(PhotonP4.P())
                         elif genTauId == 1:
-                            hRecoConstxtraPhotonPrhostrMass[0] = PhotonP4.P()
+                            hRecoConstxtraPhotonPrhostrMass.push_back(PhotonP4.P())
                     matched_keys = [key for key in range(3) if key not in noMatchedPhotons.keys()]
                     first_matched_P = ROOT.TLorentzVector()
                     first_matched_P.SetXYZM(
@@ -848,14 +747,14 @@ for eventid, event in enumerate(reader.get("events")):
                         recoTaus_photons[matched_keys[1]].getMass(),
                     )
                     non_matched_P = PhotonP4
-                    hRecoThreePhotonMatchOnestrMassP[0] = first_matched_P.P()
-                    hRecoThreePhotonMatchTwostrMassP[0] = second_matched_P.P()
-                    hRecoThreePhotonNoMatchstrMassP[0] = non_matched_P.P()
+                    hRecoThreePhotonMatchOnestrMassP.push_back(first_matched_P.P())
+                    hRecoThreePhotonMatchTwostrMassP.push_back(second_matched_P.P())
+                    hRecoThreePhotonNoMatchstrMassP.push_back(non_matched_P.P())
 
                 
                 pi0Mass_strdist, noMatchedPhoton = pi0Reco.getPi0Mass(recoTaus_photons, strategy = {"distance":-1})
                 if pi0Mass_strdist:
-                    hRecoConstPi0MassFromPhotonDiststr[0] = pi0Mass_strdist
+                    hRecoConstPi0MassFromPhotonDiststr.push_back(pi0Mass_strdist)
                 if noMatchedPhoton:
                     for ide, photon in noMatchedPhotons.items(): 
                         PhotonP4 = ROOT.TLorentzVector()
@@ -866,9 +765,9 @@ for eventid, event in enumerate(reader.get("events")):
                         photon.getMass(),
                         )
                         if genTauId == 2:
-                            hRecoConstlessPhotonPa1strDist[0] = PhotonP4.P()
+                            hRecoConstlessPhotonPa1strDist.push_back(PhotonP4.P())
                         elif genTauId == 1:
-                            hRecoConstxtraPhotonPrhostrDist[0] = PhotonP4.P()
+                            hRecoConstxtraPhotonPrhostrDist.push_back(PhotonP4.P())
                     matched_keys = [key for key in range(3) if key not in noMatchedPhotons.keys()]
                     first_matched_P = ROOT.TLorentzVector()
                     first_matched_P.SetXYZM(
@@ -885,9 +784,9 @@ for eventid, event in enumerate(reader.get("events")):
                         recoTaus_photons[matched_keys[1]].getMass(),
                     )
                     non_matched_P = PhotonP4
-                    hRecoThreePhotonMatchOnestrDistP[0] = first_matched_P.P()
-                    hRecoThreePhotonMatchTwostrDistP[0] = second_matched_P.P()
-                    hRecoThreePhotonNoMatchstrDistP[0] = non_matched_P.P()
+                    hRecoThreePhotonMatchOnestrDistP.push_back(first_matched_P.P())
+                    hRecoThreePhotonMatchTwostrDistP.push_back(second_matched_P.P())
+                    hRecoThreePhotonNoMatchstrDistP.push_back(non_matched_P.P())
 
                             
             elif n_photons == 1 and (genTauId == 0 or genTauId == 1):
@@ -895,15 +794,15 @@ for eventid, event in enumerate(reader.get("events")):
                     f"Found 1 photons in the matched reco tau with real Id {genTauId}"
                 )
                 if genTauId == 0:
-                    hRecoConstxtraPhotonPi[0] = photonCumulativeP4.P()
+                    hRecoConstxtraPhotonPi.push_back(photonCumulativeP4.P())
                 elif genTauId == 1:
-                    hRecoConstlessPhotonPrho[0] = photonCumulativeP4.P()
+                    hRecoConstlessPhotonPrho.push_back(photonCumulativeP4.P())
             
             elif n_photons == 2 and (genTauId == 1):
                 logger_pi0mass.debug(
                     f"Found 2 photons in the matched reco tau with real Id {genTauId}"
                 )
-                hRecoConstPi0Mass[0] = photonCumulativeP4.M()
+                hRecoConstPi0Mass.push_back(photonCumulativeP4.M())
                 photon1_P4 = ROOT.TLorentzVector()
                 photon1_P4.SetXYZM(
                     recoTaus_photons[0].getMomentum().x,
@@ -921,34 +820,32 @@ for eventid, event in enumerate(reader.get("events")):
                 ang_dist = myutils.dRAngle(
                     photon1_P4, photon2_P4
                 )
-                hRecoConstTwoPhotonAngDist[0] = ang_dist
+                hRecoConstTwoPhotonAngDist.push_back(ang_dist)
         # Fill photon constituents tree    
-        photon_tree.Fill()
+
 
         hRecoTauType[0] = recoTauId
-        hRecoTauPt[0] = recoTauP4.Pt()
-        hRecoTauP[0] = recoTauP4.P()
-        hRecoTauMass[0] = recoTauP4.M()
-        hRecoTauQ[0] = recoTauQ
-        hRecoTauEta[0] = recoTauP4.Eta()
-        hRecoTauTheta[0] = recoTauP4.Theta()
+        hRecoTauDM[0] = recoDM
+        
+        hRecoTauPt.push_back(recoTauP4.Pt())
+        hRecoTauP.push_back(recoTauP4.P())
+        hRecoTauMass.push_back(recoTauP4.M())
+        hRecoTauQ.push_back(recoTauQ)
+        hRecoTauEta.push_back(recoTauP4.Eta())
+        hRecoTauTheta.push_back(recoTauP4.Theta())
 
-        hRecoTauDR[0] = recoTauDR
-        hMatchedGenTauPt[0] = genTauP4.Pt()
-        hMatchedGenTauP[0] = genTauP4.P()
+        hRecoTauDR.push_back(recoTauDR)
+        hMatchedGenTauPt.push_back(genTauP4.Pt())
+        hMatchedGenTauP.push_back(genTauP4.P())
         hMatchedGenTauType[0] = genTauId
-        hMatchedGenTauQ[0] = genTauQ
-        hMatchedGenTauEta[0] = genTauP4.Eta()
-        hMatchedGenTauTheta[0] = genTauP4.Theta()
+        hMatchedGenTauQ.push_back(genTauQ)
+        hMatchedGenTauEta.push_back(genTauP4.Eta())
+        hMatchedGenTauTheta.push_back(genTauP4.Theta())
 
-        hMatchedGenTauDR[0] = genTauDR
+        hMatchedGenTauDR.push_back(genTauDR)
 
-        # Resolution plots:
-        hResTauPt = np.append(hResTauPt, [(recoTauP4.Pt() - genVisTauP4.Pt()) / (genVisTauP4.Pt()+1e-6)])
-        hResTauMass = np.append(hResTauMass, [(recoTauP4.M() - genVisTauP4.M()) / (genVisTauP4.M()+1e-6)])
-        hResTauP = np.append(hResTauP, [(recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-6)])
-
-        matched_tree.Fill()
+        # Fill the Tree
+        Tau_tree.Fill()
         
 
     # # print ("Taus???",nGenTaus,nTaus)
@@ -956,7 +853,6 @@ for eventid, event in enumerate(reader.get("events")):
     # hNTausType = np.append(hNTausType, [nTausType])
     # hNGenTausType = np.append(hNGenTausType, [nGenTausType])
     # hNGenTaus = np.append(hNGenTaus, [nGenTausHad])
-
 
 
 # Do efficiencies (divide matched gen by all gen)
@@ -992,35 +888,17 @@ with open(output_config_file, "w") as file:
     yaml.dump(config, file)
     logger_io.info("Configuration file saved to %s", output_config_file)
 
-outfile = ROOT.TFile(outputpath + "Trees_"+fileOutName, "RECREATE")
-outfile.cd()
+
 
 # Abrir el archivo de salida
 # outfile = TFile("output.root", "RECREATE")
 # Guardamos los árboles en el archivo de salida
-print("N Entries Gen Tree", gen_tree.GetEntries())
-print("Variables in Gen Tree", gen_tree.Print())
-print("N Entries Reco Tree", reco_const_tree.GetEntries())
-print("Variables in Reco Tree", reco_const_tree.Print())
-print("N Entries Photon Tree", photon_tree.GetEntries())
-print("Variables in Photon Tree", photon_tree.Print())
-print("N Entries Matched Tree", matched_tree.GetEntries())
-print("Variables in Matched Tree", matched_tree.Print())
-print("N Entries Gen Const Tree", gen_const_tree.GetEntries())
-print("Variables in Gen Const Tree", gen_const_tree.Print())
 
 
-gen_tree.SetDirectory(outfile)
-reco_const_tree.SetDirectory(outfile)
-photon_tree.SetDirectory(outfile)
-matched_tree.SetDirectory(outfile)
-gen_const_tree.SetDirectory(outfile)
-gen_tree.Write("gen_tree")
-reco_const_tree.Write("reco_const_tree")
-photon_tree.Write("photon_tree")
-matched_tree.Write("matched_tree")
-gen_const_tree.Write("gen_const_tree")
 
+Tau_tree.SetDirectory(outfile)
+
+Tau_tree.Write()
 
 logger_io.info("Output file %s", outputpath + fileOutName)
 logger_io.info("End of job")

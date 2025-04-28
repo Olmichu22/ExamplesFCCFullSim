@@ -176,7 +176,7 @@ plot_together:
       - 1 Photon P - pi
     title: "Histogram of 1 Photon P - Zoom"
     x: "1 Photon P [GeV/c]"
-    y: "Events"
+    y: "Events (normalized)"
     norm: True
     position: [0.7, 0.3, 0.9, 0.5]
   
@@ -247,6 +247,7 @@ plot_together:
     x: "Photon P [GeV/c]"
     y: "Events"
     norm: True
+    position: [0.6, 0.3, 0.9, 0.5]
 
 
   RecoPResolution:
@@ -327,11 +328,8 @@ plot_together:
     title: "Efficiency of Tau Theta"
     x: "Theta [rad]"
     y: "Efficiency"
-    norm: True
     position: [0.45, 0.2, 0.75, 0.4]
 
-
-  
   ThetaEffi0:
     variabs:
       - histoGenTauTheta0
@@ -346,20 +344,32 @@ plot_together:
     y: "Events"
     position: [0.45, 0.3, 0.75, 0.4]
 
-  
+  ThetaEffi01:
+    variabs:
+      - hEffiGenTauTheta0
+      - hEffiGenTauTheta1
+    labels:
+      - \pi \text{ decay } \theta \text{ efficiency}
+      - \rho \text{ decay } \theta \text{ efficiency}
+    title: "Efficiency of Tau Theta"
+    x: \theta \text{ [rad]}
+    y: "Efficiency"
+    position: [0.45, 0.3, 0.75, 0.4]
+
+
   ThetaEffi1:
     variabs:
       - histoGenTauTheta1
       - histoRecoTauTheta1
       - histoMatchedGenTauTheta1
     labels:
-      - Gen Tau Theta
-      - Reco Tau Theta
-      - Matched Gen Tau Theta
-    title: "Histogram of Tau Theta (Decay 1)"
-    x: "Theta [rad]"
+      - \text{Gen Tau }\theta
+      - \text{Reco Tau }\theta
+      - \text{Matched Gen Tau }\theta
+    title: Histogram of Tau Efficency (Decay 1)
+    x: \theta \text{ [rad]}
     y: "Events"
-    position: [0.45, 0.3, 0.75, 0.4]
+    position: [0.45, 0.3, 0.77, 0.4]
 
 
   ThetaEffi2:
@@ -376,6 +386,17 @@ plot_together:
     y: "Events"
     position: [0.45, 0.3, 0.75, 0.4]
 
+  RhoDecayRes:
+    variabs:
+      - histoTauThetaRes1
+      - histoTauPRes1
+    labels:
+      - \theta \text{ resolution}
+      - P resolution
+    title: \text{Histogram of }\rho \text{ Decay Resolution}
+    x: Resolution
+    y: Normalized Events
+    norm: true
 
   ThetaEffi10:
     variabs:
@@ -404,6 +425,7 @@ plot_together:
     x: "P [GeV/c]"
     y: "Events"
     position: [0.35, 0.35, 0.65, 0.54]
+    
   PEffi1:
     variabs:
       - histoGenTauVisP1
@@ -443,6 +465,26 @@ plot_together:
     x: "P [GeV/c]"
     y: "Events"
     position: [0.13, 0.35, 0.38, 0.55]
+
+Zoom:
+  OnePhotonPZoom:
+    main:
+      - hRecoConstlessPhotonPrho
+      - hRecoConstxtraPhotonPi
+    zoom:
+      - hRecoConstlessPhotonPrhoZoom
+      - hRecoConstxtraPhotonPiZoom
+    labels:
+      - 1 Photon P - rho
+      - 1 Photon P - pi
+    title: "Histogram of 1 Photon P"
+    x: "Photon P [GeV/c]"
+    y: "Events (Normalized)"
+    norm: True
+    position: [0.4, 0.3, 0.7, 0.45]
+    zoom_position: [0.45, 0.55 , 0.9, 0.9]
+    zoom_title: "Zoom"
+
 
 
 plot_titles_config_hist:
@@ -830,3 +872,8 @@ plot_titles_config_2d:
     x: "Pi P [GeV/c]"
     y: "Photon Sum P [GeV/c]"
 
+
+cm_config:
+  decays: [0, 1, 2]
+  photonDecays : [0, 1, 2, 3, 4]
+  colorbar: false

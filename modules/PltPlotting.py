@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import pandas as pd
 import os
+import textwrap
 
 import matplotlib.pyplot as plt
 PI0 = "π⁰"
@@ -14,25 +15,46 @@ N = "n"
 NEUTRINO = "ν"
 TAU = "τ"
 GAMMA = "γ"
+RHO = "ρ"
+A1 = r"$a_1$"
 
-def recodify_key(key):
-  if key < 0:
-    if key == -13:
-      new_key = f"{MU}"
-    elif key == -11:
-      new_key = f"{E}"
-    elif key <= -20:
-      new_key = f"h{N}"
+def recodify_key(key, photon=False):
+  if photon:
+    if key < 0:
+      if key == -13:
+        new_key = f"{MU}"
+      elif key == -11:
+        new_key = f"{E}"
+      elif key <= -20:
+        new_key = f"h{N}"
+      else:
+        new_key = "Unknown"
+    elif key == 0:
+      new_key = f"h"
+    elif key < 10:
+      new_key = f"h{2*key}{GAMMA}"
+    elif key == 10:
+      new_key = f"3h"
     else:
-      new_key = "Unknown"
-  elif key == 0:
-    new_key = f"h"
-  elif key < 10:
-    new_key = f"h{key}{GAMMA}"
-  elif key == 10:
-    new_key = f"3h"
+      new_key = f"3h{2*(key-10)}{GAMMA}"
   else:
-    new_key = f"3h{key-10}{GAMMA}"
+    if key < 0:
+      if key == -13:
+        new_key = f"{TAU} \\rightarrow {MU}2{NEUTRINO}"
+      elif key == -11:
+        new_key = f"{TAU} \\rightarrow {E}2{NEUTRINO}"
+      elif key <= -20:
+        new_key = f"{PI}{N}"
+      else:
+        new_key = "Unknown"
+    elif key == 0:
+      new_key = f"{PI}"
+    elif key < 10:
+        new_key = f"{PI}{key}{PI0}"
+    elif key == 10:
+      new_key = f"3{PI}"
+    else:
+      new_key = f"{3}{PI}{key-10}{PI0}"
   return new_key
 
 def plot_absolute(graphs, absolute_keys, colors, xaxis,
@@ -74,7 +96,7 @@ def plot_absolute(graphs, absolute_keys, colors, xaxis,
 
         id_0, id_1 = key.split("->")
         id_0_rec = recodify_key(int(id_0))
-        id_1_rec = recodify_key(int(id_1))
+        id_1_rec = recodify_key(int(id_1), photon=True)
         label = f"{id_0_rec} -> {id_1_rec}"
         color = colors[i % len(colors)]
 
@@ -100,7 +122,8 @@ def plot_absolute(graphs, absolute_keys, colors, xaxis,
 
     ax.legend(ncol=2, loc='upper left', bbox_to_anchor=(0.6, 1.15))
     # ax.legend(ncol=2, loc="best")
-    ax.set_title(title, fontsize=12, loc='left', pad=20)
+    wrapped_title = "\n".join(textwrap.wrap(title, width=20))
+    ax.set_title(wrapped_title, fontsize=11, loc='left', pad=20, fontweight='bold',)
 
     fig.tight_layout()
     fig.savefig(outputpath + f"graphs_plot_{mig_str}.png", bbox_inches='tight')
@@ -144,7 +167,7 @@ def plot_metric(graphs, metric_keys, colors, xaxis,
         id_0_rec = recodify_key(int(id_0))
         if metric in id_1 or "recall" in id_1:
             id_1 = id_1.split(" ")[0]
-        id_1_rec = recodify_key(int(id_1))
+        id_1_rec = recodify_key(int(id_1), photon=True)
         key = f"{id_0_rec} -> {id_1_rec}"
         ax.plot(
             x,
@@ -167,7 +190,9 @@ def plot_metric(graphs, metric_keys, colors, xaxis,
     # fig.subplots_adjust(top=5)  # Ajusta el margen superior para dar espacio a la leyenda
     ax.legend(ncol=2, loc='upper left', bbox_to_anchor=(0.6, 1.15))
     # ax.legend(ncol=2, loc="best")
-    ax.set_title(title + f"\n({metric.capitalize()})", fontsize=12, loc='left', pad=20)
+    title = title + f"\n({metric.capitalize()})"
+    wrapped_title = "\n".join(textwrap.wrap(title, width=30))
+    ax.set_title(wrapped_title, fontweight='bold',fontsize=11, loc='left', pad=20)
 
     fig.tight_layout()
     fig.savefig(outputpath + f"graphs_plot_{metric}_{mig_str}.png", bbox_inches='tight')

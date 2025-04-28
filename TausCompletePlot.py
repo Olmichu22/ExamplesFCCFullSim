@@ -4,7 +4,7 @@ import yaml
 import pandas as pd
 import os
 import warnings
-from modules.plotting import plot_1D_hist, plot_2D_hist, plot_hist_together, plot_cm
+from modules.plotting import plot_1D_hist, plot_2D_hist, plot_hist_together, plot_cm, plot_hist_zoom
 
 parser = argparse.ArgumentParser(description="Configure the plot",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -117,13 +117,18 @@ for typeplt in typeplot:
     if args.same == "True":
       variabs_and_config = plot_config["plot_together"]
       plot_hist_together(file, variabs_and_config, outputpath)
+    zoom_config = plot_config.get("Zoom", None)
+    if zoom_config:
+      plot_hist_zoom(file, zoom_config, outputpath)
   elif typeplt == "2D":
     variabs = plot_config["variabs_2d"]
     labels = plot_config["plot_titles_config_2d"]
     plot_2D_hist(file, variabs, labels, outputpath)
   elif typeplt == "CM" and labels_file != None:
     results_df = pd.read_csv(true_predict_labels)
-    plot_cm(results_df, outputpath)
+    plot_cm_configs = plot_config.get("cm_config",{})
+    plot_cm(results_df, outputpath, plot_config=plot_cm_configs)
   elif typeplt == "CMP" and labels_file != None:
     results_df = pd.read_csv(true_predict_labels)
-    plot_cm(results_df, outputpath, plotphotons=True)
+    plot_cm_configs = plot_config.get("cm_config",{})
+    plot_cm(results_df, outputpath, plotphotons=True, plot_config=plot_cm_configs)

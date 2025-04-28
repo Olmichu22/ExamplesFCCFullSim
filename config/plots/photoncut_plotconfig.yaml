@@ -9,6 +9,6 @@ migrations:
   2->0: [2,0]
   2->1: [2,1]
 axis:
-  xlabel: "Photon P Cut (GeV(c))"
+  xlabel: "Photon P Cut (GeV/c)"
   title: "Migrations regarding Photons P Cut"
 metric: "recall"

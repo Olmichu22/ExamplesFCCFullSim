@@ -37,7 +37,7 @@ parser.add_argument(
   type=str,
   help="If True, data is plotted in ROOT. Else, data is plotted in matplotlib",
 )
-parser.add_argument(-"M","--metric", default="recall", type=str, help="Metric to plot. Options: recall, purity")
+parser.add_argument("-M","--metric", type=str, help="Metric to plot. Options: recall, purity")
 
 
 args = parser.parse_args()
@@ -90,7 +90,7 @@ for exp_value in experiment_values:
       break
 
 if plot_config:
-  metric = args.metric if args.metric is None else plot_config.get("metric", "recall")
+  metric = args.metric if args.metric is not None else plot_config.get("metric", "recall")
   migrations = plot_config["migrations"]
   for key in list(plot_config["migrations"].keys()):
     els_in_key = key.split("->")
