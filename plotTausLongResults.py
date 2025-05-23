@@ -227,7 +227,7 @@ for i in range(1, nfiles + 1):
 reader = root_io.Reader(filenames)
 
 logger_io.info("Read %d files", len(filenames))
-
+logger_io.info("First %s files.", filenames[:10]) 
 # Configs and reading finished
 # ----------------------------------------------------------------------
 
@@ -424,8 +424,11 @@ hMatchedTauPRes1 = TH1F("histoMatchedTauPRes1", "", 500, -1, 1)
 hMatchedTauPRes2 = TH1F("histoMatchedTauPRes2", "", 500, -1, 1)
 hMatchedTauPRes10 = TH1F("histoMatchedTauPRes10", "", 500, -1, 1)
 
-
-
+result_labels = {}
+result_labels["tau1"] = []
+result_labels["tau2"] = []
+result_labels["id-tau1"] = []
+result_labels["id-tau2"] = []
 
 for eventid, event in enumerate(reader.get("events")):
     logger_process.debug("Processing event %d", eventid)
@@ -461,7 +464,13 @@ for eventid, event in enumerate(reader.get("events")):
     nGenTausType = 0
     nTausType = 0
     nGenTausHad = 0
-
+    
+    if nGenTaus == 0:
+        result_labels["tau1"].append(-999)
+        result_labels["tau2"].append(-999)
+        result_labels["id-tau1"].append(-999)
+        result_labels["id-tau2"].append(-999)
+    
     for i in range(0, nGenTaus):
         genVisTauP4 = genTaus[
             i
@@ -475,6 +484,11 @@ for eventid, event in enumerate(reader.get("events")):
         genTauNConsts = genTaus[i].getnConst()
         genTauConsts = genTaus[i].getDaughters()
 
+        if nGenTaus > 2 and i <=1:
+            result_labels[f"tau{i+1}"].append(-999)
+        elif nGenTaus <= 2:
+            result_labels[f"tau{i+1}"].append(genTauId)
+        
         # remove leptonic decays
         if genTauId >= 0:
             nGenTausHad += 1
@@ -547,6 +561,12 @@ for eventid, event in enumerate(reader.get("events")):
         # If you have not found it, continue: this is a efficiency loss
         if findMatch == -1:
             logger_process.debug("No match found for gen tau %s", genTaus[i])
+
+            if nGenTaus > 2 and i <=1:
+                result_labels[f"id-tau{i+1}"].append(-999)
+            elif nGenTaus <= 2:
+                result_labels[f"id-tau{i+1}"].append(-2)
+            
             if not matched_cm:
                 # true_predicted_label["Predicted"].append(-1)
                 true_predicted_label["Predicted"].append(-2)
@@ -578,7 +598,13 @@ for eventid, event in enumerate(reader.get("events")):
             nPhotons = recoTauId - 10
             n_pi0s = math.ceil(nPhotons / 2)
             recoDM = 10 + n_pi0s
+        
+        if nGenTaus > 2 and i <=1:
+            result_labels[f"id-tau{i+1}"].append(-999)
+        elif nGenTaus <= 2:
+            result_labels[f"id-tau{i+1}"].append(recoDM)
 
+        
         true_predicted_label["Predicted"].append(recoDM)
         true_predicted_label["PhotonPredicted"].append(recoTauId)
 
@@ -1090,6 +1116,9 @@ decaystr = "decayAll" if selectDecay == -777 else "decay{}".format(selectDecay)
 true_predicted_label_output_file = outputpath + f"true_predicted_label_{decaystr}.csv"
 true_predicted_label_df = pd.DataFrame(true_predicted_label)
 true_predicted_label_df.to_csv(true_predicted_label_output_file, index=False)
+
+result_labels = pd.DataFrame(result_labels)
+result_labels.to_csv(outputpath + "result_labels_pfo.csv", index=False)
 
 # Check if config["output"]["outputlabels"] is a list
 if type(config["output"]["outputlabels"]) is not list:

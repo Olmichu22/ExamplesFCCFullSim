@@ -32,7 +32,7 @@ def findAllElectrons(pfos, minPt):
     electronpdg = pf.getPDG()
     electroncharge = pf.getCharge()
     
-    electron = RecoParticle(p4 = electronP4, ID = -1, charge = electroncharge, PDGID=electronpdg)      
+    electron = RecoParticle(p4 = electronP4, ID = -11, charge = electroncharge, PDGID=electronpdg)      
 
     electrons[nElectrons]=electron
     nElectrons+=1

@@ -15,6 +15,5 @@ general:
 output:
   outputfile:
   - effisdecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
-  outputlabels:
-  - Results/TauReco/effis0.4_tph0.35_tpi0_n3_g0.0/true_predicted_label_decayAll.csv
-  outputpath: Results/TauReco/effis0.4_tph0.35_tpi0_n3_g0.0/
+  outputlabels: null
+  outputpath: Results/TauPredictions/effis0.4_tph0.35_tpi0_n3_g0.0/

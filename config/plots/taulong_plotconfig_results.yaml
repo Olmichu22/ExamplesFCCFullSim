@@ -874,6 +874,6 @@ plot_titles_config_2d:
 
 
 cm_config:
-  decays: [0, 1, 2]
-  photonDecays : [0, 1, 2, 3, 4]
+  decays: [0, 1, 2, 10, 11]
+  photonDecays : [0, 1, 2, 3, 4, 10, 11]
   colorbar: false

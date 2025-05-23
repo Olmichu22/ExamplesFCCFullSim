@@ -8,9 +8,34 @@ from array import array
 from podio import root_io
 import edm4hep
 import logging
+import numpy as np
 
 logger_io = logging.getLogger('io')
-
+def associate_reco_with_gen_taus(gen_taus, reco_tau):
+    """Asocia cada hemisferio con el tau correspondiente usando la dirección del tau."""
+    
+    # Obtener dirección de cada tau
+    tau_directions = []
+    for key, tau in gen_taus.items():
+        px = tau.getMomentum().X()
+        py = tau.getMomentum().Y()
+        pz = tau.getMomentum().Z()
+        tau_directions.append((px, py, pz))
+    
+    reco_tau_direction = [reco_tau.getMomentum().X(),
+                          reco_tau.getMomentum().Y(),
+                          reco_tau.getMomentum().Z()]
+    
+    # Calcular cosenos de ángulos entre direcciones
+    cos_r_tau1 = np.dot(reco_tau_direction, tau_directions[0]) / (np.linalg.norm(reco_tau_direction) * np.linalg.norm(tau_directions[0]))
+    cos_r_tau2 = np.dot(reco_tau_direction, tau_directions[1]) / (np.linalg.norm(reco_tau_direction) * np.linalg.norm(tau_directions[1]))
+    
+    # El hemisferio 1 corresponde al tau 1 si el coseno es mayor
+    if cos_r_tau1 > cos_r_tau2:
+        return list(gen_taus.keys())[0], cos_r_tau1
+    else:
+        return list(gen_taus.keys())[1], cos_r_tau2
+    
 # I'm sure this exists already 
 def dRAngle(p1,p2):
     """ Calculate the angle between two particles in the eta-phi plane
@@ -18,10 +43,11 @@ def dRAngle(p1,p2):
     p1 (TLorentzVector): 4-momentum vector of the first particle
     p2 (TLorentzVector): 4-momentum vector of the second particle
     Returns:
-    float: angle between the two particles in the eta-phi plane
+    float: angle between the two particles in the theta-phi plane
     """
     dphi=p1.Phi()-p2.Phi()
     if (dphi>math.pi) : dphi=2*math.pi-dphi
+    if (dphi<-math.pi) : dphi=2*math.pi+dphi
     dtheta=p1.Theta()-p2.Theta()
     dR=math.sqrt(dtheta*dtheta+dphi*dphi)
     return dR

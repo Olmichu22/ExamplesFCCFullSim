@@ -32,7 +32,7 @@ def findAllMuons(pfos, minPt):
     muonpdg = pf.getPDG()
     muoncharge = pf.getCharge()
     
-    muon = RecoParticle(p4 = muonP4, ID = -1, charge = muoncharge, PDGID=muonpdg)      
+    muon = RecoParticle(p4 = muonP4, ID = -13, charge = muoncharge, PDGID=muonpdg)      
 
     muons[nMuons]=muon
     nMuons+=1

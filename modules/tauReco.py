@@ -8,9 +8,11 @@ from modules.ParticleObjects import GenParticle, RecoParticle
 
 from modules import myutils
 
-# import logging
-# logger = logging.getLogger("TauRecoLogger")
-
+import logging
+try:
+   logger = logging.getLogger("processing")
+except:
+   logger = None
 
 def MatchRecoGenTau(genTau, recoTaus, nTausType, maxDRMatch=1, selectDecay=-777):
    """ Find the reconstructed tau that is closest to the generator level tau using the angle between the momenta.
@@ -24,6 +26,7 @@ def MatchRecoGenTau(genTau, recoTaus, nTausType, maxDRMatch=1, selectDecay=-777)
    findMatch=-1
    genVisTauP4 = genTau.getvisMomentum()
    nRecoTaus = len(recoTaus)
+   
    for j in range(0,nRecoTaus):
       recoTauP4=recoTaus[j].getMomentum()
       recoTauId=recoTaus[j].getID()
@@ -53,6 +56,10 @@ def MatchRecoGenTau(genTau, recoTaus, nTausType, maxDRMatch=1, selectDecay=-777)
       if angleMatch<maxDRMatch:
          maxDRMatch=angleMatch
          findMatch=j
+      # if logger:
+      #    logger.debug(
+      #       f"genTau: {genVisTauP4.P()}, recoTau: {recoTauP4.P()} id {recoDM} idx {j}, angleMatch: {angleMatch}, maxDRMatch: {maxDRMatch}, match: {findMatch}"
+      #    )
          
    return findMatch, nTausType
 

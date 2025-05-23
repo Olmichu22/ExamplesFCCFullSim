@@ -8,9 +8,9 @@ from modules.plotting import plot_1D_hist, plot_2D_hist, plot_hist_together, plo
 
 parser = argparse.ArgumentParser(description="Configure the plot",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("-i", "--input", default="Results/TauReco/effis0.4_tph0.1_tpi0.1_n1", help="Input path where data to process is stored")
+parser.add_argument("-i", "--input", default="Results/TauReco/effis0.4_tph0.35_tpi0_n3_g0.0", help="Input path where data to process is stored")
 parser.add_argument("-d","--decay", default=-777, type=str) #,"decay0","decay1","decay10"]
-parser.add_argument("-p","--plotconfig",default="config/plots/taulong_plotconfig.yaml", type=str)
+parser.add_argument("-p","--plotconfig",default="config/plots/taulong_plotconfig_results.yaml", type=str)
 parser.add_argument(
     "-t", "--typeplot", 
     nargs="+",  # Permite múltiples valores separados por espacios

@@ -9,12 +9,12 @@ general:
   decay:
   - -777
   matchedCM: 'True'
-  outfile: effis
+  outfile: test_GaTR_model
   sample: ZTauTau_SMPol_25Sept_MuonFix
   test: 'True'
 output:
   outputfile:
-  - effisdecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+  - test_GaTR_modeldecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
   outputlabels:
-  - Results/TauReco/effis0.4_tph0.35_tpi0_n3_g0.0/true_predicted_label_decayAll.csv
-  outputpath: Results/TauReco/effis0.4_tph0.35_tpi0_n3_g0.0/
+  - Results/TauReco/test_GaTR_model0.4_tph0.35_tpi0_n3_g0.0/true_predicted_label_decayAll.csv
+  outputpath: Results/TauReco/test_GaTR_model0.4_tph0.35_tpi0_n3_g0.0/
