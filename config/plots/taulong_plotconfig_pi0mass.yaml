@@ -15,9 +15,9 @@ plot_together:
       - hRecoConstPi0MassFromPhotonMasstr
       - hRecoConstPi0MassFromPhotonDiststr
     labels:
-      - Pi0 Mass (2 photons)
-      - Pi0 Mass (3 photons, Mass Strategy)
-      - Pi0 Mass (3 photons, Dist Strategy)
+      - 2 photons.
+      - 3 ph., Mass Str.
+      - 3 ph., Dist Str.
     title: "Histogram of Pi0 Mass"
     x: "Pi0 Mass [GeV]"
     y: "Events"

@@ -24,18 +24,32 @@ def getPi0Mass(photons, strategy):
     # Only two photons, return mass
     P1 = ROOT.TLorentzVector()
     P2 = ROOT.TLorentzVector()
-    P1.SetXYZM(
-                photons[0].getMomentum().x,
-                photons[0].getMomentum().y,
-                photons[0].getMomentum().z,
+    try:
+      P1.SetXYZM(
+                  photons[0].getMomentum().x,
+                  photons[0].getMomentum().y,
+                  photons[0].getMomentum().z,
+                  photons[0].getMass(),
+              )
+      P2.SetXYZM(
+                  photons[1].getMomentum().x,
+                  photons[1].getMomentum().y,
+                  photons[1].getMomentum().z,
+                  photons[1].getMass(),
+              )
+    except AttributeError:
+      P1.SetXYZM(
+                photons[0].getMomentum().X(),
+                photons[0].getMomentum().Y(),
+                photons[0].getMomentum().Z(),
                 photons[0].getMass(),
-            )
-    P2.SetXYZM(
-                photons[1].getMomentum().x,
-                photons[1].getMomentum().y,
-                photons[1].getMomentum().z,
+              )
+      P2.SetXYZM(
+                photons[1].getMomentum().X(),
+                photons[1].getMomentum().Y(),
+                photons[1].getMomentum().Z(),
                 photons[1].getMass(),
-            )
+              )
     return cumulatedPhotonsMass(P1, P2), None
   
   # Posible pairs combinations
@@ -44,12 +58,20 @@ def getPi0Mass(photons, strategy):
   photon_momentums = {}
   for i in photons.keys():
     P = ROOT.TLorentzVector()
-    P.SetXYZM(
-                photons[i].getMomentum().x,
-                photons[i].getMomentum().y,
-                photons[i].getMomentum().z,
+    try:
+      P.SetXYZM(
+                  photons[i].getMomentum().x,
+                  photons[i].getMomentum().y,
+                  photons[i].getMomentum().z,
+                  photons[i].getMass(),
+              )
+    except AttributeError:
+      P.SetXYZM(
+                photons[i].getMomentum().X(),
+                photons[i].getMomentum().Y(),
+                photons[i].getMomentum().Z(),
                 photons[i].getMass(),
-            )
+              )
     photon_momentums[i] = P
   logger.debug(f"Trying to find best pair of photons with strategy {strategy} {list(strategy.keys())[0]}")
   # Two strategies: mass and distance

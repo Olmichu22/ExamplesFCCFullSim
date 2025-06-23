@@ -80,6 +80,7 @@ def visTauGen(candTau):
    countOther=0
 
    genTauP4=ROOT.TLorentzVector()
+   
    genTauP4.SetXYZM(candTau.getMomentum().x,candTau.getMomentum().y,candTau.getMomentum().z,candTau.getMass())
 
    # visible 4-momentum
@@ -186,7 +187,10 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
 
    # Initialize the 4-momentum of the tau with the pion 4-momentum
    leadP4=ROOT.TLorentzVector()
-   leadP4.SetXYZM(lead.getMomentum().x,lead.getMomentum().y,lead.getMomentum().z,lead.getMass())
+   try:
+      leadP4.SetXYZM(lead.getMomentum().x,lead.getMomentum().y,lead.getMomentum().z,lead.getMass())
+   except AttributeError:
+      leadP4.SetXYZM(lead.getMomentum().X(),lead.getMomentum().Y(),lead.getMomentum().Z(),lead.getMass())
    tauP4=ROOT.TLorentzVector()
    tauP4=leadP4
 
@@ -206,7 +210,11 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
          continue 
 
       candP4=ROOT.TLorentzVector()
-      candP4.SetXYZM(cand.getMomentum().x,cand.getMomentum().y,cand.getMomentum().z,cand.getMass())
+      try:
+         candP4.SetXYZM(cand.getMomentum().x,cand.getMomentum().y,cand.getMomentum().z,cand.getMass())
+      except AttributeError:
+         candP4.SetXYZM(cand.getMomentum().X(),cand.getMomentum().Y(),cand.getMomentum().Z(),cand.getMass())
+
       candPDG=abs(cand.getPDG())
 
 #             print ('...cand',candP4.P(),candP4.Theta(),candP4.Phi(),cand.getMass())

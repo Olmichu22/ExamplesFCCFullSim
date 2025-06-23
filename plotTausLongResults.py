@@ -9,6 +9,9 @@ from pathlib import Path
 import pprint
 import yaml
 import pandas as pd
+import pickle
+from modules import ParticleObjects
+from modules.ParticleObjects import RecoParticle
 
 from modules import pi0Reco
 from modules import tauReco
@@ -44,7 +47,6 @@ parser.add_argument(
 parser.add_argument(
     "-t",
     "--test",
-    default="True",
     type=str,
     help="Run in test mode with limited number of files",
 )
@@ -57,6 +59,12 @@ parser.add_argument(
     action="count",
     default=0,
     help="Increase verbosity level: -v for INFO, -vv for DEBUG",
+)
+
+parser.add_argument(
+    "--gatr-result",
+    type=str,
+    help="Path to GATR result for the analysis.",
 )
 
 args = parser.parse_args()
@@ -119,8 +127,10 @@ if selectDecay == -777:
     decayString = "decayAll" + cut_string
 fileOutName = outfile + decayString + ".root"
 
-outputpath = outputbasepath + outfile + cut_string[1:] + "/"
 
+outputpath = outputbasepath + outfile + cut_string[1:] + "/"
+if args.gatr_result is not None:
+    outputpath = "GATr_" + outputpath
 
 config["output"]["outputpath"] = outputpath
 # Check if config["output"]["outputfile"] is a list
@@ -201,6 +211,25 @@ logger_config.info("Configuration:\n%s", pprint.pformat(config, indent=4))
 
 
 # get all the files
+
+# GATr reading config (if provided)
+
+gatr_results_path = args.gatr_result
+
+if gatr_results_path is not None:
+    if not os.path.exists(gatr_results_path):
+        logger_io.error("GATr results path %s does not exist.", gatr_results_path)
+        sys.exit(1)
+    else:
+        logger_io.info("Using GATr results from %s", gatr_results_path)
+
+    with open(gatr_results_path, "rb") as f:
+        gatr_results = pickle.load(f)
+        logger_io.info("GATr results loaded successfully.")
+
+    print(gatr_results)
+
+# Simulation files
 path = "/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
 file = "out_reco_edm4hep_edm4hep"
 filenames = []
@@ -211,6 +240,10 @@ nfiles = len(os.listdir(dir_path))
 nfiles = 1000
 if test == True:
     nfiles = 2
+
+if gatr_results_path is not None:
+    print(len(gatr_results))
+    nfiles = len(gatr_results)//1000
 
 logger_io.info("Reading files from %s", dir_path)
 for i in range(1, nfiles + 1):
@@ -228,6 +261,7 @@ reader = root_io.Reader(filenames)
 
 logger_io.info("Read %d files", len(filenames))
 logger_io.info("First %s files.", filenames[:10]) 
+
 # Configs and reading finished
 # ----------------------------------------------------------------------
 
@@ -275,15 +309,15 @@ hRecoTauDR = TH1F("histoRecoTauDR", "Angle of Tau Constituents", 100, 0, 1)
 
 
 
-hRecoConstPi0Mass = TH1F("hRecoConstPi0Mass", "", 100, 0, 0.4)
+hRecoConstPi0Mass = TH1F("hRecoConstPi0Mass", "", 100, 0, 0.5)
 hRecoConstTwoPhotonAngDist = TH1F("hRecoConstTwoPhotonAngDist", "", 100, 0, 2)
 
-hRecoConstPi0MassFromPhotonMasstr = TH1F("hRecoConstPi0MassFromPhotonMasstr", "", 100, 0, 2)
-hRecoConstPi0MassFromPhotonDiststr = TH1F("hRecoConstPi0MassFromPhotonDiststr", "", 100, 0, 2)
+hRecoConstPi0MassFromPhotonMasstr = TH1F("hRecoConstPi0MassFromPhotonMasstr", "", 100, 0, 0.5)
+hRecoConstPi0MassFromPhotonDiststr = TH1F("hRecoConstPi0MassFromPhotonDiststr", "", 100, 0, 0.5)
 
 
-hGenConstPi0Mass = TH1F("hGenConstPi0Mass", "", 100, 0, 2)
-hMatchedGenConstPi0Mass = TH1F("hMatchedConstPi0Mass", "", 100, 0, 2)
+hGenConstPi0Mass = TH1F("hGenConstPi0Mass", "", 100, 0, 0.5)
+hMatchedGenConstPi0Mass = TH1F("hMatchedConstPi0Mass", "", 100, 0, 0.5)
 h2DPi0MassOverNPhoton = TH2F("hRecoPi0MassOverNPhoton", "", 100, 0, 2, 20, 0, 20)
 
 # Hist for reconstructed photons in a1 (pi pi0 pi0), rho (pi0 pi0), and pi cases
@@ -431,6 +465,9 @@ result_labels["id-tau1"] = []
 result_labels["id-tau2"] = []
 
 for eventid, event in enumerate(reader.get("events")):
+    if gatr_results_path is not None and eventid > len(gatr_results) - 1:
+        logger_process.info("Reached the end of GATr results, stopping processing.")
+        break
     logger_process.debug("Processing event %d", eventid)
     if countEvents % 1000 == 0:
         logger_process.info("Processing event %d", countEvents)
@@ -447,10 +484,15 @@ for eventid, event in enumerate(reader.get("events")):
         nGenTaus,
         "\n".join("GenTau %d: %s" % (i, tau) for i, tau in genTaus.items()),
     )
-
-    recoTaus = tauReco.findAllTaus(
-        pfos, dRMax, minPTauPhoton, minPTauPion, PNeutron, generalPCut
-    )
+    if gatr_results_path is not None:
+        recoTaus = tauReco.findAllTaus(
+            gatr_results[f"event_{eventid}"], dRMax, minPTauPhoton, minPTauPion, PNeutron, generalPCut
+        )
+    else:
+        recoTaus = tauReco.findAllTaus(
+            pfos, dRMax, minPTauPhoton, minPTauPion, PNeutron, generalPCut
+        )
+        
     nRecoTaus = len(recoTaus)
 
     logger_process.debug(
@@ -634,12 +676,21 @@ for eventid, event in enumerate(reader.get("events")):
         for c in range(0, recoTauNConsts):
             const = recoTauConsts[c]
             constP4 = ROOT.TLorentzVector()
-            constP4.SetXYZM(
-                const.getMomentum().x,
-                const.getMomentum().y,
-                const.getMomentum().z,
-                const.getMass(),
-            )
+            try:
+                constP4.SetXYZM(
+                    const.getMomentum().x,
+                    const.getMomentum().y,
+                    const.getMomentum().z,
+                    const.getMass(),
+                )
+            except AttributeError:
+                # If the const does not have a mass, we assume it is a photon
+                constP4.SetXYZM(
+                    const.getMomentum().X(),
+                    const.getMomentum().Y(),
+                    const.getMomentum().Z(),
+                    const.getMass(),
+                )
 
             # This may be an error as we are confusing photons with neutrons
 
@@ -666,12 +717,21 @@ for eventid, event in enumerate(reader.get("events")):
                 for c in range(0, recoTauNConsts):
                     const = recoTauConsts[c]
                     constP4 = ROOT.TLorentzVector()
-                    constP4.SetXYZM(
-                        const.getMomentum().x,
-                        const.getMomentum().y,
-                        const.getMomentum().z,
-                        const.getMass(),
-                    )
+                    try:
+                        constP4.SetXYZM(
+                            const.getMomentum().x,
+                            const.getMomentum().y,
+                            const.getMomentum().z,
+                            const.getMass(),
+                        )
+                    except AttributeError:
+                        # If the const does not have a mass, we assume it is a photon
+                        constP4.SetXYZM(
+                            const.getMomentum().X(),
+                            const.getMomentum().Y(),
+                            const.getMomentum().Z(),
+                            const.getMass(),
+                        )
                     if const.getCharge() == 0:
                         hRecoRhoTwoPhotonDecayP.Fill(constP4.P())
                         photonCumP4 += constP4
@@ -689,22 +749,40 @@ for eventid, event in enumerate(reader.get("events")):
                 for c in range(0, genTauNConsts):
                     const = genTauConsts[c]
                     constP4 = ROOT.TLorentzVector()
-                    constP4.SetXYZM(
-                        const.getMomentum().x,
-                        const.getMomentum().y,
-                        const.getMomentum().z,
-                        const.getMass(),
-                    )
+                    try:
+                        constP4.SetXYZM(
+                            const.getMomentum().x,
+                            const.getMomentum().y,
+                            const.getMomentum().z,
+                            const.getMass(),
+                        )
+                    except AttributeError:
+                        # If the const does not have a mass, we assume it is a photon
+                        constP4.SetXYZM(
+                            const.getMomentum().X(),
+                            const.getMomentum().Y(),
+                            const.getMomentum().Z(),
+                            const.getMass(),
+                        )
                     if const.getCharge() == 0:
                         dau = const.getDaughters()
                         for dau in const.getDaughters():
                             photonP = ROOT.TLorentzVector()
-                            photonP.SetXYZM(
-                                dau.getMomentum().x,
-                                dau.getMomentum().y,
-                                dau.getMomentum().z,
-                                dau.getMass(),
-                            )
+                            try:
+                                photonP.SetXYZM(
+                                    dau.getMomentum().x,
+                                    dau.getMomentum().y,
+                                    dau.getMomentum().z,
+                                    dau.getMass(),
+                                )
+                            except AttributeError:
+                                # If the dau does not have a mass, we assume it is a photon
+                                photonP.SetXYZM(
+                                    dau.getMomentum().X(),
+                                    dau.getMomentum().Y(),
+                                    dau.getMomentum().Z(),
+                                    dau.getMass(),
+                                )
                             hGenRhoTwoPhotonDecayP.Fill(photonP.P())
                             photonCumP4 += photonP
                     else:
@@ -718,12 +796,20 @@ for eventid, event in enumerate(reader.get("events")):
                 for c in range(0, recoTauNConsts):
                     const = recoTauConsts[c]
                     constP4 = ROOT.TLorentzVector()
-                    constP4.SetXYZM(
-                        const.getMomentum().x,
-                        const.getMomentum().y,
-                        const.getMomentum().z,
-                        const.getMass(),
-                    )
+                    try:
+                        constP4.SetXYZM(
+                            const.getMomentum().x,
+                            const.getMomentum().y,
+                            const.getMomentum().z,
+                            const.getMass(),
+                        )
+                    except AttributeError:
+                        constP4.SetXYZM(
+                            const.getMomentum().X(),
+                            const.getMomentum().Y(),
+                            const.getMomentum().Z(),
+                            const.getMass(),
+                        )
                     if const.getCharge() == 0:
                         photonP = constP4
                         hRecoRhoOnePhotonDecayPhotonP.Fill(constP4.P())
@@ -738,22 +824,38 @@ for eventid, event in enumerate(reader.get("events")):
                 for c in range(0, genTauNConsts):
                     const = genTauConsts[c]
                     constP4 = ROOT.TLorentzVector()
-                    constP4.SetXYZM(
-                        const.getMomentum().x,
-                        const.getMomentum().y,
-                        const.getMomentum().z,
-                        const.getMass(),
-                    )
+                    try:
+                        constP4.SetXYZM(
+                            const.getMomentum().x,
+                            const.getMomentum().y,
+                            const.getMomentum().z,
+                            const.getMass(),
+                        )
+                    except AttributeError:
+                        constP4.SetXYZM(
+                            const.getMomentum().X(),
+                            const.getMomentum().Y(),
+                            const.getMomentum().Z(),
+                            const.getMass(),
+                        )
                     if const.getPDG() == 111:
                         pi0daughters = const.getDaughters()
                         for dau in pi0daughters:
                             photonP = ROOT.TLorentzVector()
-                            photonP.SetXYZM(
-                                dau.getMomentum().x,
-                                dau.getMomentum().y,
-                                dau.getMomentum().z,
-                                dau.getMass(),
-                            )
+                            try:
+                                photonP.SetXYZM(
+                                    dau.getMomentum().x,
+                                    dau.getMomentum().y,
+                                    dau.getMomentum().z,
+                                    dau.getMass(),
+                                )
+                            except AttributeError:
+                                photonP.SetXYZM(
+                                    dau.getMomentum().X(),
+                                    dau.getMomentum().Y(),
+                                    dau.getMomentum().Z(),
+                                    dau.getMass(),
+                                )
                             hGenRhoOnePhotonDecayPhotonP.Fill(photonP.P())
                             photonCumP4 += photonP
                             photonsP.append(photonP)
@@ -778,12 +880,21 @@ for eventid, event in enumerate(reader.get("events")):
                 if noMatchedPhotons:
                     for ide, photon in noMatchedPhotons.items(): 
                         PhotonP4 = ROOT.TLorentzVector()
-                        PhotonP4.SetXYZM(
-                        photon.getMomentum().x,
-                        photon.getMomentum().y,
-                        photon.getMomentum().z,
-                        photon.getMass(),
-                        )
+                        try:
+                            PhotonP4.SetXYZM(
+                                photon.getMomentum().x,
+                                photon.getMomentum().y,
+                                photon.getMomentum().z,
+                                photon.getMass(),
+                            )
+                        except AttributeError:
+                            # If the photon does not have a mass, we assume it is a photon
+                            PhotonP4.SetXYZM(
+                                photon.getMomentum().X(),
+                                photon.getMomentum().Y(),
+                                photon.getMomentum().Z(),
+                                photon.getMass(),
+                            )
                         if genTauId == 2:
                             hRecoConstlessPhotonPa1strMass.Fill(PhotonP4.P())
                             hRecoConstlessPhotonPa1strMassZoom.Fill(PhotonP4.P())
@@ -794,19 +905,35 @@ for eventid, event in enumerate(reader.get("events")):
                             
                     matched_keys = [key for key in range(3) if key not in noMatchedPhotons.keys()]
                     first_matched_P = ROOT.TLorentzVector()
-                    first_matched_P.SetXYZM(
-                        recoTaus_photons[matched_keys[0]].getMomentum().x,
-                        recoTaus_photons[matched_keys[0]].getMomentum().y,
-                        recoTaus_photons[matched_keys[0]].getMomentum().z,
-                        recoTaus_photons[matched_keys[0]].getMass(),
-                    )
-                    second_matched_P = ROOT.TLorentzVector()
-                    second_matched_P.SetXYZM(
-                        recoTaus_photons[matched_keys[1]].getMomentum().x,
-                        recoTaus_photons[matched_keys[1]].getMomentum().y,
-                        recoTaus_photons[matched_keys[1]].getMomentum().z,
-                        recoTaus_photons[matched_keys[1]].getMass(),
-                    )
+                    try:
+                        first_matched_P.SetXYZM(
+                            recoTaus_photons[matched_keys[0]].getMomentum().x,
+                            recoTaus_photons[matched_keys[0]].getMomentum().y,
+                            recoTaus_photons[matched_keys[0]].getMomentum().z,
+                            recoTaus_photons[matched_keys[0]].getMass(),
+                        )
+                        second_matched_P = ROOT.TLorentzVector()
+                        second_matched_P.SetXYZM(
+                            recoTaus_photons[matched_keys[1]].getMomentum().x,
+                            recoTaus_photons[matched_keys[1]].getMomentum().y,
+                            recoTaus_photons[matched_keys[1]].getMomentum().z,
+                            recoTaus_photons[matched_keys[1]].getMass(),
+                        )
+                    except AttributeError:
+                        # If the photon does not have a mass, we assume it is a photon
+                        first_matched_P.SetXYZM(
+                            recoTaus_photons[matched_keys[0]].getMomentum().X(),
+                            recoTaus_photons[matched_keys[0]].getMomentum().Y(),
+                            recoTaus_photons[matched_keys[0]].getMomentum().Z(),
+                            recoTaus_photons[matched_keys[0]].getMass(),
+                        )
+                        second_matched_P = ROOT.TLorentzVector()
+                        second_matched_P.SetXYZM(
+                            recoTaus_photons[matched_keys[1]].getMomentum().X(),
+                            recoTaus_photons[matched_keys[1]].getMomentum().Y(),
+                            recoTaus_photons[matched_keys[1]].getMomentum().Z(),
+                            recoTaus_photons[matched_keys[1]].getMass(),
+                        )
                     non_matched_P = PhotonP4
                     # Moment of the photons
                     hRecoThreePhotonMatchOnestrMassP.Fill(first_matched_P.P())
@@ -819,31 +946,56 @@ for eventid, event in enumerate(reader.get("events")):
                 if noMatchedPhoton:
                     for ide, photon in noMatchedPhotons.items(): 
                         PhotonP4 = ROOT.TLorentzVector()
-                        PhotonP4.SetXYZM(
-                        photon.getMomentum().x,
-                        photon.getMomentum().y,
-                        photon.getMomentum().z,
-                        photon.getMass(),
-                        )
+                        try:
+                            PhotonP4.SetXYZM(
+                                photon.getMomentum().x,
+                                photon.getMomentum().y,
+                                photon.getMomentum().z,
+                                photon.getMass(),
+                            )
+                        except AttributeError:
+                            # If the photon does not have a mass, we assume it is a photon
+                            PhotonP4.SetXYZM(
+                                photon.getMomentum().X(),
+                                photon.getMomentum().Y(),
+                                photon.getMomentum().Z(),
+                                photon.getMass(),
+                            )
                         if genTauId == 2:
                             hRecoConstlessPhotonPa1strDist.Fill(PhotonP4.P())
                         elif genTauId == 1:
                             hRecoConstxtraPhotonPrhostrDist.Fill(PhotonP4.P())
                     matched_keys = [key for key in range(3) if key not in noMatchedPhotons.keys()]
                     first_matched_P = ROOT.TLorentzVector()
-                    first_matched_P.SetXYZM(
-                        recoTaus_photons[matched_keys[0]].getMomentum().x,
-                        recoTaus_photons[matched_keys[0]].getMomentum().y,
-                        recoTaus_photons[matched_keys[0]].getMomentum().z,
-                        recoTaus_photons[matched_keys[0]].getMass(),
-                    )
-                    second_matched_P = ROOT.TLorentzVector()
-                    second_matched_P.SetXYZM(
-                        recoTaus_photons[matched_keys[1]].getMomentum().x,
-                        recoTaus_photons[matched_keys[1]].getMomentum().y,
-                        recoTaus_photons[matched_keys[1]].getMomentum().z,
-                        recoTaus_photons[matched_keys[1]].getMass(),
-                    )
+                    try:
+                        first_matched_P.SetXYZM(
+                            recoTaus_photons[matched_keys[0]].getMomentum().x,
+                            recoTaus_photons[matched_keys[0]].getMomentum().y,
+                            recoTaus_photons[matched_keys[0]].getMomentum().z,
+                            recoTaus_photons[matched_keys[0]].getMass(),
+                        )
+                        second_matched_P = ROOT.TLorentzVector()
+                        second_matched_P.SetXYZM(
+                            recoTaus_photons[matched_keys[1]].getMomentum().x,
+                            recoTaus_photons[matched_keys[1]].getMomentum().y,
+                            recoTaus_photons[matched_keys[1]].getMomentum().z,
+                            recoTaus_photons[matched_keys[1]].getMass(),
+                        )
+                    except AttributeError:
+                        # If the photon does not have a mass, we assume it is a photon
+                        first_matched_P.SetXYZM(
+                            recoTaus_photons[matched_keys[0]].getMomentum().X(),
+                            recoTaus_photons[matched_keys[0]].getMomentum().Y(),
+                            recoTaus_photons[matched_keys[0]].getMomentum().Z(),
+                            recoTaus_photons[matched_keys[0]].getMass(),
+                        )
+                        second_matched_P = ROOT.TLorentzVector()
+                        second_matched_P.SetXYZM(
+                            recoTaus_photons[matched_keys[1]].getMomentum().X(),
+                            recoTaus_photons[matched_keys[1]].getMomentum().Y(),
+                            recoTaus_photons[matched_keys[1]].getMomentum().Z(),
+                            recoTaus_photons[matched_keys[1]].getMass(),
+                        )
                     non_matched_P = PhotonP4
                     # Moment of the photons
                     hRecoThreePhotonMatchOnestrDistP.Fill(first_matched_P.P())
@@ -868,19 +1020,35 @@ for eventid, event in enumerate(reader.get("events")):
                 )
                 hRecoConstPi0Mass.Fill(photonCumulativeP4.M())
                 photon1_P4 = ROOT.TLorentzVector()
-                photon1_P4.SetXYZM(
-                    recoTaus_photons[0].getMomentum().x,
-                    recoTaus_photons[0].getMomentum().y,
-                    recoTaus_photons[0].getMomentum().z,
-                    recoTaus_photons[0].getMass(),
-                )
-                photon2_P4 = ROOT.TLorentzVector()
-                photon2_P4.SetXYZM(
-                    recoTaus_photons[1].getMomentum().x,
-                    recoTaus_photons[1].getMomentum().y,
-                    recoTaus_photons[1].getMomentum().z,
-                    recoTaus_photons[1].getMass(),
-                )
+                try:
+                    photon1_P4.SetXYZM(
+                        recoTaus_photons[0].getMomentum().x,
+                        recoTaus_photons[0].getMomentum().y,
+                        recoTaus_photons[0].getMomentum().z,
+                        recoTaus_photons[0].getMass(),
+                    )
+                    photon2_P4 = ROOT.TLorentzVector()
+                    photon2_P4.SetXYZM(
+                        recoTaus_photons[1].getMomentum().x,
+                        recoTaus_photons[1].getMomentum().y,
+                        recoTaus_photons[1].getMomentum().z,
+                        recoTaus_photons[1].getMass(),
+                    )
+                except AttributeError:
+                    # If the photon does not have a mass, we assume it is a photon
+                    photon1_P4.SetXYZM(
+                        recoTaus_photons[0].getMomentum().X(),
+                        recoTaus_photons[0].getMomentum().Y(),
+                        recoTaus_photons[0].getMomentum().Z(),
+                        recoTaus_photons[0].getMass(),
+                    )
+                    photon2_P4 = ROOT.TLorentzVector()
+                    photon2_P4.SetXYZM(
+                        recoTaus_photons[1].getMomentum().X(),
+                        recoTaus_photons[1].getMomentum().Y(),
+                        recoTaus_photons[1].getMomentum().Z(),
+                        recoTaus_photons[1].getMass(),
+                    )
                 ang_dist = myutils.dRAngle(
                     photon1_P4, photon2_P4
                 )

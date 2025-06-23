@@ -11,7 +11,7 @@ general:
   outfile: effis
   sample: ZTauTau_SMPol_25Sept_MuonFix
   matchedCM: "True"
-  test: 'True'
+  test: 'False'
 output:
   outputfile:
   outputpath:
