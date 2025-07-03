@@ -13,6 +13,142 @@ try:
    logger = logging.getLogger("processing")
 except:
    logger = None
+   
+   
+def GetGenDaughters(mc_particles):
+   """Find all generator level pion.
+   
+   Args:
+       mc_particles (Particle Collection): All particles in the event.
+       
+   Returns:
+      genPions (dict): Dictionary with the generator level pions containing tuples with the visible 4-momentum, the tau ID, and the charge.
+   """
+   genDaughters={}
+   nGenDau=0
+   for particle in mc_particles:
+      # only taus
+      if abs(particle.getPDG()) != 15:
+         continue
+      # in the pythia sample we need to check the genStatus:
+      # (in some events we have several copies of the tau)
+      
+      # 2: final state tau (to not double count)
+      if particle.getGeneratorStatus()!=2:
+         continue
+#        print ("genTau!",particle.getGeneratorStatus())
+      daughters=particle.getDaughters()
+      
+      # loop over daughter particles of the tau 
+      for dTau in daughters:
+            dauPDG=abs(dTau.getPDG())
+            dauP4=ROOT.TLorentzVector()
+            dauP4.SetXYZM(dTau.getMomentum().x,dTau.getMomentum().y,dTau.getMomentum().z,dTau.getMass())
+            genDau = GenParticle(dauP4, dauPDG, dTau.getCharge(), dauP4, 0, 0, None, dauPDG)
+            genDaughters[nGenDau]=genDau
+            nGenDau+=1
+
+   return genDaughters
+
+def GetRecoPions(pfos):
+   """Find all reco level pion.
+   
+   Args:
+       mc_particles (Particle Collection): All particles in the event.
+       
+   Returns:
+      genPions (dict): Dictionary with the generator level pions containing tuples with the visible 4-momentum, the tau ID, and the charge.
+   """
+   recoPions={}
+   nRecoPions=0
+   for particle in pfos:
+      # only pions
+      if abs(particle.getPDG()) != 211:
+         continue
+      
+      try:
+         dauP4=ROOT.TLorentzVector()
+         dauP4.SetXYZM(particle.getMomentum().x,particle.getMomentum().y,particle.getMomentum().z,particle.getMass())
+         recoPion = RecoParticle(dauP4, 211, particle.getCharge(),0, 0, None, 211)
+      except AttributeError:
+         recoPion = particle
+
+      recoPions[nRecoPions]=recoPion
+      nRecoPions+=1
+
+   return recoPions
+
+def MatchRecoPionGenParticle(genDaus, recoPions, maxDRMatch=1, non_considered_particles = []):
+   reco_gen_match = {}
+   for recoPion in recoPions:
+      findMatch = -1
+      findMatchPion = -1
+      recoPiP4 = recoPions[recoPion].getMomentum()
+      minDR = maxDRMatch
+      minDRPion = maxDRMatch
+      for genDau in genDaus:
+         genP4 = genDaus[genDau].getMomentum()
+         angleMatch = myutils.dRAngle(recoPiP4, genP4)
+         # HACER QUE NO PUEDA SER UN NEUTRINO
+         # HACER QUE SEA UNA PARTÍCULA CARGADA (METER CONDICIONES)
+         gendauPDG = abs(genDaus[genDau].getPDG())
+         if (gendauPDG in non_considered_particles):
+            continue
+         # logger.info(f"GENPDG INTENTA MATCH{gendauPDG}")
+         if angleMatch < minDR:
+            minDR = angleMatch
+            findMatch = genDau
+         if gendauPDG == 211 and angleMatch < minDRPion:
+            minDRPion = angleMatch
+            findMatchPion = genDau
+            
+      if findMatchPion != -1 and findMatchPion not in reco_gen_match.values():
+         # Prioriza el match con pión
+         reco_gen_match[recoPion] = findMatchPion
+      elif findMatch != -1 and findMatch not in reco_gen_match.values():
+         # Si no hay match con pión, usa la partícula más cercana
+         reco_gen_match[recoPion] = findMatch
+         
+   return reco_gen_match
+      
+
+def MatchedUnmatchedPions(mc_particles, pfos, maxDRMatch=1, non_considered_particles=[]):
+   """ Get matched and unmatched pions from generator and reconstructed particles.
+   Args:
+       mc_particles (Particle Collection): All particles in the event.
+       pfos (Particle Collection): All particles in the event.
+       maxDRMatch (float, optional): Maximum angle between the momenta. Defaults to 1.
+   Returns:
+       Tuple: Tuple with dictionaries of matched and unmatched pions.
+   """
+   genDaus = GetGenDaughters(mc_particles)
+   recoPions = GetRecoPions(pfos)
+   
+   matched_pions = MatchRecoPionGenParticle(genDaus, recoPions, maxDRMatch, non_considered_particles)
+   
+   reco_pions_matched_with_gen_pions = {}
+   reco_pions_matched_with_other_particles = {}
+   for recoPion, genDau in matched_pions.items():
+      recoPion_obj = recoPions[recoPion]
+      genDau_obj = genDaus[genDau]
+      genDauPDG = genDau_obj.getPDG()
+      if genDauPDG == 211:
+         reco_pions_matched_with_gen_pions[recoPion_obj] = genDau_obj
+      else:
+         reco_pions_matched_with_other_particles[recoPion_obj] = genDau_obj
+   # unmatched generator pions
+   unmatched_gen_pions = []
+   for genDau in genDaus:
+      if genDau not in matched_pions.values() and genDaus[genDau].getPDG() == 211:
+         unmatched_gen_pions.append(genDaus[genDau])
+   # unmatched reconstructed pions
+   unmatched_reco_pions = []
+   for recoPion in recoPions:
+      if recoPion not in matched_pions.keys():
+         unmatched_reco_pions.append(recoPions[recoPion])
+         
+   return unmatched_gen_pions, unmatched_reco_pions, reco_pions_matched_with_gen_pions, reco_pions_matched_with_other_particles
+      
 
 def MatchRecoGenTau(genTau, recoTaus, nTausType, maxDRMatch=1, selectDecay=-777):
    """ Find the reconstructed tau that is closest to the generator level tau using the angle between the momenta.
@@ -127,7 +263,10 @@ def visTauGen(candTau):
             countPi0TauGen+=1
          # Charged particles that are not electrons or muons
          elif dTau.getCharge()!=0 and (dauPDG!=11 and dauPDG!=13):
-            print (dTau.getPDG()) 
+            logger.warning(
+               f"Found a charged particle with PDG {dauPDG} and charge {dTau.getCharge()} in the tau decay. "
+               f"This is not expected and may indicate an issue with the tau decay reconstruction."
+            )
             countOther+=1
 
          # compute the angle of the constituents (cone size) for further studies 
@@ -158,12 +297,22 @@ def visTauGen(candTau):
 
    # return an object with the visible pt, ID, charge, and the true Pt 
    # a future step would be to define a class for the tau
+   if tauID == 0:
+      logger.debug(f"Tau Visible Momentum: {visTauP4.P()}")
+      cum_momentum = ROOT.TLorentzVector()
+      cum_momentum.SetXYZM(0, 0, 0, 0)
+      for const_key in const:
+         daup4 = ROOT.TLorentzVector()
+         daup4.SetXYZM(const[const_key].getMomentum().x, const[const_key].getMomentum().y, const[const_key].getMomentum().z, const[const_key].getMass())
+         cum_momentum += daup4
+         logger.debug(f"Constituent {const_key} PDG {const[const_key].getPDG()}: {daup4.P()}")
+         logger.debug(f"Total Visible Momentum: {cum_momentum.P()}")
    return (visTauP4,tauID,chargeTau,genTauP4,maxAngleConsts,nConsts,const)                 
 
 # Reversed procedure for reconstructed pfos
 # Starting from a pion, find particles in a cone around it, and 
 # build the tau 
-def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutron=1, genminP = 0.5):
+def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutron=1, genminP = 0.5, charge_condition=True):
    """ Starting from a pion, find particles in a cone around it, and build the tau.
 
    Args:
@@ -229,7 +378,7 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
 
       # now check ID and clean
       # Ignore events with electrons and muons
-      if candPDG==11 or candPDG==13: 
+      if abs(candPDG)==11 or abs(candPDG)==13: 
          continue
       # Counting neutrons
       elif (candPDG==2112 and candP4.P()>PNeutron): # Pandora FIXME: pion -> neutron misID 
@@ -257,7 +406,7 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
 
    # set the ID: only valid combinations can be a tau (charge, constituents compatible with
    # tau decay). can be refined in the future. 
-   if abs(chargeTau)==1:
+   if abs(chargeTau)==1 or not charge_condition:
       if (countPions==1 and countNeutrons==0):
          if countPhotons<10:
             tauID=countPhotons
@@ -287,7 +436,11 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
       #    f"chargeTau: {chargeTau}, countPhotons: {countPhotons}, countPions: {countPions}, countNeutrons: {countNeutrons}, tauP4.P(): {tauP4.P()}, math.cos(tauP4.Theta()): {math.cos(tauP4.Theta())}, tauID: {tauID}"
       # )
       # print (tauP4.P(),math.cos(tauP4.Theta()),chargeTau,countPions,countPhotons,tauID)
-
+      # if tauID == -1:
+      #    logger.warning(
+      #       f"Tau ID is -1, which is unexpected. "
+      #       f"chargeTau: {chargeTau}, countPhotons: {countPhotons}, countPions: {countPions}, countNeutrons: {countNeutrons}"
+      #    )
       return (tauP4,tauID,chargeTau,maxConeTau,nConsts,const), None
 
    else:
@@ -341,7 +494,7 @@ def findAllGenTaus(mc_particles):
    return genTaus
 
 # function to find all reco taus starting from PFO collection 
-def findAllTaus(pfos, dRMax, minP_photon, minP_pion, PNeutron, genminP):
+def findAllTaus(pfos, dRMax, minP_photon, minP_pion, PNeutron, genminP, charge_condition=True):
    """ Find all tau candidates starting from PFO collection by recognizing the decay products.
 
    Args:
@@ -366,8 +519,16 @@ def findAllTaus(pfos, dRMax, minP_photon, minP_pion, PNeutron, genminP):
          continue 
       # if key in found_pions_id:
       #    continue
+      pionP4 = ROOT.TLorentzVector()
+      try:
+         pionP4.SetXYZM(pf.getMomentum().x,pf.getMomentum().y,pf.getMomentum().z,pf.getMass())
+      except AttributeError as e:
+         pionP4.SetXYZM(pf.getMomentum().X(),pf.getMomentum().Y(),pf.getMomentum().Z(),pf.getMass())
          
-      recoTau_data, pions_id = buildTauFromPion(pf, pfos, dRMax, minP_photon, minP_pion, PNeutron, genminP)
+      if pionP4.P() < minP_pion or  pionP4.P() < genminP:
+         continue
+
+      recoTau_data, pions_id = buildTauFromPion(pf, pfos, dRMax, minP_photon, minP_pion, PNeutron, genminP, charge_condition)
       recoTau = RecoParticle(recoTau_data[0], recoTau_data[1], recoTau_data[2], recoTau_data[3], recoTau_data[4], recoTau_data[5])
       # logger.debug(
       #    f"Id del RecoTau {recoTau.getID()}"

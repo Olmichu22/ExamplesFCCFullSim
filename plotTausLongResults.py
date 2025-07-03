@@ -15,6 +15,8 @@ from modules.ParticleObjects import RecoParticle
 
 from modules import pi0Reco
 from modules import tauReco
+from modules import electronReco
+from modules import muonReco
 from modules import myutils
 
 import logging
@@ -22,6 +24,8 @@ import logging
 
 import argparse
 
+# ------------------------------------------------------------------------
+# Argument parser setup
 parser = argparse.ArgumentParser(
     description="Configure the analysis",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -66,6 +70,11 @@ parser.add_argument(
     type=str,
     help="Path to GATR result for the analysis.",
 )
+
+parser.add_argument(
+    "--test-pfo",
+    action="store_true",
+    help="Use this flag to test the PFOs in same files as GATr.")
 
 args = parser.parse_args()
 
@@ -128,7 +137,15 @@ if selectDecay == -777:
 fileOutName = outfile + decayString + ".root"
 
 
-outputpath = outputbasepath + outfile + cut_string[1:] + "/"
+# Different output paths depending on the GATr result and test PFO
+if args.gatr_result is not None and args.test_pfo:
+    outputpath = outputbasepath + "PFO_"+ outfile + cut_string[1:] + "/"
+elif args.gatr_result is None and args.test_pfo:
+    logger_config.error("Cannot use --test-pfo without --gatr-result.")
+    raise ValueError("Cannot use --test-pfo without --gatr-result.")
+else:
+    outputpath = outputbasepath + outfile + cut_string[1:] + "/"
+
 if args.gatr_result is not None:
     outputpath = "GATr_" + outputpath
 
@@ -146,6 +163,8 @@ if fileOutName not in config["output"]["outputfile"]:
 if not os.path.exists(outputpath):
     os.makedirs(outputpath)
 
+# ------------------------------------------------------------------------
+# Logging configuration
 # Once set the output path, we can set the logger
 if args.verbose == 0:
     log_level = logging.WARNING  # Only warnings and errors
@@ -163,7 +182,7 @@ elif args.verbose == 2:
     log_level = logging.DEBUG  # Debug messages for -vv or higher
     # Crear handlers por separado para configurarlos individualmente
     stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setLevel(logging.INFO)  # Terminal solo muestra INFO o superior
+    stream_handler.setLevel(logging.DEBUG)  # Terminal muestra DEBUG o superior
     file_handler = logging.FileHandler(outputpath + "/" + "app.log", mode="w")
     file_handler.setLevel(logging.DEBUG)   # Archivo guarda TODO (DEBUG y superior)
     handlers=[stream_handler, file_handler]
@@ -188,7 +207,7 @@ logger_pi0mass = logging.getLogger("pi0mass")
 
 # Continue with the rest of configs
 
-
+# ------------------------------------------------------------------------
 # General Configuration
 config["general"]["sample"] = (
     args.sample if args.sample != None else config["general"]["sample"]
@@ -210,8 +229,8 @@ logger_config.info("Configuration loaded!")
 logger_config.info("Configuration:\n%s", pprint.pformat(config, indent=4))
 
 
-# get all the files
 
+# ------------------------------------------------------------------------
 # GATr reading config (if provided)
 
 gatr_results_path = args.gatr_result
@@ -222,45 +241,70 @@ if gatr_results_path is not None:
         sys.exit(1)
     else:
         logger_io.info("Using GATr results from %s", gatr_results_path)
-
-    with open(gatr_results_path, "rb") as f:
-        gatr_results = pickle.load(f)
-        logger_io.info("GATr results loaded successfully.")
-
-    print(gatr_results)
-
-# Simulation files
-path = "/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
-file = "out_reco_edm4hep_edm4hep"
-filenames = []
-dir_path = path + "/" + sample
-
-nfiles = len(os.listdir(dir_path))
-
-nfiles = 1000
-if test == True:
-    nfiles = 2
-
-if gatr_results_path is not None:
-    print(len(gatr_results))
-    nfiles = len(gatr_results)//1000
-
-logger_io.info("Reading files from %s", dir_path)
-for i in range(1, nfiles + 1):
-    filename = dir_path + "/" + file + "_{}.root".format(i)
-    logger_io.debug("Reading file %s", filename)
-    my_file = Path(filename)
-    if my_file.is_file():
-        root_file = myutils.open_root_file(filename)
-        if not root_file or root_file.IsZombie():
-            logger_io.warning("File %s is a zombie or could not be opened.", filename)
+    # abrimos archivo configuracion yml
+    mlpf_config = pd.read_csv(gatr_results_path)
+    filenames = []
+    n_predictions = 0
+    mlpf_results = {}
+    for row in mlpf_config.iterrows():
+        mlpf_predictions_path = row[1]["prediction_file"]
+        simulation_path = row[1]["simulation_file"]
+        my_file = Path(simulation_path)
+        logger_io.debug("Reading file %s", simulation_path)
+        if my_file.is_file():
+            root_file = myutils.open_root_file(simulation_path)
+            if not root_file or root_file.IsZombie():
+                logger_io.warning("File %s is a zombie or could not be opened.", simulation_path)
+                continue
+            filenames.append(simulation_path)
+        
+        with open(mlpf_predictions_path, "rb") as f:
+            mlpf_preds_i = pickle.load(f)
+        if len(mlpf_preds_i) != 1000:
+            logger_io.warning("Expected 1000 predictions, but got %d", len(mlpf_preds_i))
+            logger_io.warning("File %s will be skipped.", simulation_path)
+            filenames.remove(simulation_path)
             continue
-        filenames.append(filename)
+        logger_io.debug("Read %d GATr results", len(mlpf_preds_i))
+            
+        for key, value in mlpf_preds_i.items():
+            mlpf_results[n_predictions] = value
+            n_predictions += 1
+            
+    logger_io.info("Total predictions loaded: %d", n_predictions)
+        
+else:
+    # Simulation files
+    path = "/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
+    file = "out_reco_edm4hep_edm4hep"
+    filenames = []
+    dir_path = path + "/" + sample
 
+    nfiles = len(os.listdir(dir_path))
+
+    nfiles = 1000
+    if test == True:
+        nfiles = 2
+
+    if gatr_results_path is not None:
+        print(len(gatr_results))
+        nfiles = len(gatr_results)//1000
+
+    logger_io.info("Reading files from %s", dir_path)
+    for i in range(1, nfiles + 1):
+        filename = dir_path + "/" + file + "_{}.root".format(i)
+        logger_io.debug("Reading file %s", filename)
+        my_file = Path(filename)
+        if my_file.is_file():
+            root_file = myutils.open_root_file(filename)
+            if not root_file or root_file.IsZombie():
+                logger_io.warning("File %s is a zombie or could not be opened.", filename)
+                continue
+            filenames.append(filename)
 reader = root_io.Reader(filenames)
-
 logger_io.info("Read %d files", len(filenames))
 logger_io.info("First %s files.", filenames[:10]) 
+
 
 # Configs and reading finished
 # ----------------------------------------------------------------------
@@ -271,31 +315,51 @@ genparts = "MCParticles"
 pfobjects = "PandoraPFOs"
 # pfobjects ="TightSelectedPandoraPFOs"
 
-# Defining many histogram
+# ----------------------------------------------------------------------
+# Generation Tau Level Histograms
+
+# Momentum
 hGenTauPt = TH1F("histoGenTauPt", "", 250, 0, 50)
 hGenVisTauPt = TH1F("histoGenTauVisPt", "", 250, 0, 50)
 hGenTauP = TH1F("histoGenTauP", "", 250, 0, 50)
+hGenHadronP = TH1F("histoGenHadronP", "", 12, 0, 50)
 hGenVisTauP = TH1F("histoGenTauVisP", "", 250, 0, 50)
+
+# Decay Type
 hGenTauType = TH1F("histoGenTauType", "", 21, -1, 20)
+
+# Mass and Charge
 hGenVisTauMass = TH1F("histoGenTauVisMass", "", 500, 0, 10)
 hGenTauQ = TH1F("histoGenTauQ", "", 3, -1.5, 1.5)
+
+# Angles
 hGenTauEta = TH1F("histoGenTauEta", "", 100, -5, 5)
 hGenTauTheta = TH1F("histoGenTauTheta", "", 100, 0, 3.15)
 hGenTauDR = TH1F("histoGenTauDR", "Angle of Tau Constituents", 100, 0, 1)
 
-hMatchedGenTauPt = TH1F("histoMatchedGenTauPt", "", 250, 0, 50)
-hMatchedGenVisTauPt = TH1F("histoMatchedGenTauVisPt", "", 250, 0, 50)
+# Matched Generation Tau Level Histograms
+# Momentum
 hMatchedGenTauP = TH1F("histoMatchedGenTauP", "", 250, 0, 50)
 hMatchedGenVisTauP = TH1F("histoMatchedGenTauVisP", "", 250, 0, 50)
+hMatchedGenTauPt = TH1F("histoMatchedGenTauPt", "", 250, 0, 50)
+hMatchedGenVisTauPt = TH1F("histoMatchedGenTauVisPt", "", 250, 0, 50)
+hMatchedGenHadronTauP = TH1F("histoMatchedGenHadronTauP", "", 12, 0, 50)
 
+# Decay Type
 hMatchedGenTauType = TH1F("histoMatchedGenTauType", "", 21, -1, 20)
+
+# Mass and Charge
 hMatchedGenVisTauMass = TH1F("histoMatchedGenTauVisMass", "", 500, 0, 10)
 hMatchedGenTauQ = TH1F("histoMatchedGenTauQ", "", 3, -1.5, 1.5)
+
+# Angles
 hMatchedGenTauEta = TH1F("histoMatchedGenTauEta", "", 100, -5, 5)
 hMatchedGenTauTheta = TH1F("histoMatchedGenTauTheta", "", 100, 0, 3.15)
-
 hMatchedGenTauDR = TH1F("histoMatchedGenTauDR", "Angle of Tau Constituents", 100, 0, 1)
 
+
+# ----------------------------------------------------------------------
+# Reconstructed Tau Level Histograms
 hRecoTauPt = TH1F("histoRecoTauPt", "", 250, 0, 50)
 hRecoTauP = TH1F("histoRecoTauP", "", 250, 0, 50)
 
@@ -305,8 +369,6 @@ hRecoTauQ = TH1F("histoRecoTauQ", "", 3, -1.5, 1.5)
 hRecoTauEta = TH1F("histoRecoTauEta", "", 100, -5, 5)
 hRecoTauTheta = TH1F("histoRecoTauTheta", "", 100, 0, 3.15)
 hRecoTauDR = TH1F("histoRecoTauDR", "Angle of Tau Constituents", 100, 0, 1)
-
-
 
 
 hRecoConstPi0Mass = TH1F("hRecoConstPi0Mass", "", 100, 0, 0.5)
@@ -371,6 +433,8 @@ hGenRhoOnePhotonDecayPhotonAng = TH1F("hGenRhoOnePhotonDecayPhotonAng", "", 100,
 h2DRecoRhoOnePhotonDecayPiPhotonP = TH2F("h2DRecoRhoOnePhotonDecayPiPhotonP", "",100, 0, 50, 100, 0, 50)
 # Hist of pi P vs photon P at gen level:
 h2DGenRhoOnePhotonDecayPiPhotonSumP = TH2F("h2DGenRhoOnePhotonDecayPiPhotonSumP", "",100, 0, 50, 100, 0, 50)
+h2DPionPid = TH2F("histo2DPionPid", "", 100, 0, 50, 40, -20, 20)
+
 
 h2DTauPt = TH2F("histo2DTauPt", "", 250, 0, 50, 250, 0, 50)
 h2DTauP = TH2F("histo2DTauP", "", 250, 0, 50, 250, 0, 50)
@@ -394,7 +458,8 @@ hMatchedTausChargeRes = TH1F("histoMatchedTausChargeRes", "", 500, -1, 1)
 hMatchedTausMaxAngleRes = TH1F("histoMatchedTausMaxAngleRes", "", 500, -1, 1)
 hMatchedTausNCompRes = TH1F("histoMatchedTausNCompRes", "", 500, -1, 1)
 
-true_predicted_label = {"GenID": [], "True": [], "Predicted": [], "PhotonPredicted": []}
+true_predicted_label = {"GenID": [], "True": [], "Predicted": [], "PhotonPredicted": [],
+                        "Countpions":[],"Countphotons": [], "Countneutrons": []}
 unmatched_true_label = {}
 countEvents = 0
 # run over all events
@@ -424,39 +489,90 @@ hMatchedTauThetaRes1 = TH1F("histoMatchedTauThetaRes1", "", 500, -1, 1)
 hMatchedTauThetaRes2 = TH1F("histoMatchedTauThetaRes2", "", 500, -1, 1)
 hMatchedTauThetaRes10 = TH1F("histoMatchedTauThetaRes10", "", 500, -1, 1)
 
-# P (Momentum)
-hGenTauP0 = TH1F("histoGenTauP0", "", 100, 0, 50)
-hGenTauP1 = TH1F("histoGenTauP1", "", 100, 0, 50)
-hGenTauP2 = TH1F("histoGenTauP2", "", 100, 0, 50)
-hGenTauP10 = TH1F("histoGenTauP10", "", 100, 0, 50)
-hGenTauVisP0 = TH1F("histoGenTauVisP0", "", 100, 0, 50)
-hGenTauVisP1 = TH1F("histoGenTauVisP1", "", 100, 0, 50)
-hGenTauVisP2 = TH1F("histoGenTauVisP2", "", 100, 0, 50)
-hGenTauVisP10 = TH1F("histoGenTauVisP10", "", 100, 0, 50)
-hMatchedGenTauP0 = TH1F("histoMatchedGenTauP0", "", 100, 0, 50)
-hMatchedGenTauP1 = TH1F("histoMatchedGenTauP1", "", 100, 0, 50)
-hMatchedGenTauP2 = TH1F("histoMatchedGenTauP2", "", 100, 0, 50)
-hMatchedGenTauP10 = TH1F("histoMatchedGenTauP10", "", 100, 0, 50)
-hMatchedGenTauVisP0 = TH1F("histoMatchedGenTauVisP0", "", 100, 0, 50)
-hMatchedGenTauVisP1 = TH1F("histoMatchedGenTauVisP1", "", 100, 0, 50)
-hMatchedGenTauVisP2 = TH1F("histoMatchedGenTauVisP2", "", 100, 0, 50)
-hMatchedGenTauVisP10 = TH1F("histoMatchedGenTauVisP10", "", 100, 0, 50)
+# Neutral Hadrons
+hRecoNeutralHadronP = TH1F("histoRecoNeutralHadronP", "", 100, 0, 50)
+hRecoNeutralHadronTauP = TH1F("histoRecoNeutralHadronTauP", "", 100, 0, 50)
+# Photons and Pions
+# Theta
+hGenPhotonTheta = TH1F("histoGenPhotonTheta", "", 100, 0, 3.15)
+hMatchedGenPhotonTheta = TH1F("histoMatchedGenPhotonTheta", "", 100, 0, 3.15)
+hGenPionTheta = TH1F("histoGenPionTheta", "", 100, 0, 3.15)
+hMatchedGenPionTheta = TH1F("histoMatchedGenPionTheta", "", 100, 0, 3.15)
 
-hRecoTauP0 = TH1F("histoRecoTauP0", "", 100, 0, 50)
-hRecoTauP1 = TH1F("histoRecoTauP1", "", 100, 0, 50)
-hRecoTauP2 = TH1F("histoRecoTauP2", "", 100, 0, 50)
-hRecoTauP10 = TH1F("histoRecoTauP10", "", 100, 0, 50)
+
+hRecoPhotonTheta = TH1F("histoRecoPhotonTheta", "", 100, 0, 3.15)
+hRecoPionTheta = TH1F("histoRecoPionTheta", "", 100, 0, 3.15)
+
+# Matched pions gen level (2d)
+hMatchedPionsP = TH2F("hMatchedPionsP", "", 100, 0, 50, 100, 0, 50)
+# Unmatched pions gen level (hist)
+hGenAllPionsP = TH1F("hGenAllPionsP", "", 100, 0, 50)
+hMatchedAllPionsP = TH1F("hMatchedAllPionsP", "", 100, 0, 50)
+hGenAllPionsTheta = TH1F("hGenAllPionsTheta", "", 100, 0, 3.15)
+hMatchedAllPionsTheta = TH1F("hMatchedAllPionsTheta", "", 100, 0, 3.15)
+
+hGenAllPionsThetaCut = TH1F("histoGenAllPionsThetaCut", "", 100, 0, 3.15)
+hMatchedAllGenPionThetaCut = TH1F("histoMatchedAllPionsPionThetaCut", "", 100, 0, 3.15)
+hGenAllPionsPCut = TH1F("hGenAllPionsPCut", "", 100, 0, 50)
+hMatchedAllPionsPCut = TH1F("hMatchedAllPionsPCut", "", 100, 0, 50)
+
+hUnmatchedGenPionsP = TH1F("hUnmatchedGenPionP", "", 100, 0, 50)
+# Unmatched pions reco level (hist)
+hUnmatchedRecoPionsP = TH1F("hUnmatchedRecoPionsP", "", 100, 0, 50)
+hMatchedPionsTheta = TH2F("hMatchedPionsTheta", "", 100, 0, 3.15, 100, 0, 3.15)
+hUnmatchedGenPionsTheta = TH1F("hUnmatchedPionsTheta", "", 100, 0, 3.15)
+hUnmatchedRecoPionsTheta = TH1F("hUnmatchedRecoPionsTheta", "", 100, 0, 3.15)
+
+# P (Momentum)
+hGenTauP0 = TH1F("histoGenTauP0", "", 12, 0, 50)
+hGenTauP1 = TH1F("histoGenTauP1", "", 12, 0, 50)
+hGenTauP2 = TH1F("histoGenTauP2", "", 12, 0, 50)
+hGenTauP10 = TH1F("histoGenTauP10", "", 12, 0, 50)
+hGenTauVisP0 = TH1F("histoGenTauVisP0", "", 12, 0, 50)
+hGenTauVisP1 = TH1F("histoGenTauVisP1", "", 12, 0, 50)
+hGenTauVisP2 = TH1F("histoGenTauVisP2", "", 12, 0, 50)
+hGenTauVisP10 = TH1F("histoGenTauVisP10", "", 12, 0, 50)
+hMatchedGenTauP0 = TH1F("histoMatchedGenTauP0", "", 12, 0, 50)
+hMatchedGenTauP1 = TH1F("histoMatchedGenTauP1", "", 12, 0, 50)
+hMatchedGenTauP2 = TH1F("histoMatchedGenTauP2", "", 12, 0, 50)
+hMatchedGenTauP10 = TH1F("histoMatchedGenTauP10", "", 12, 0, 50)
+hMatchedGenTauVisP0 = TH1F("histoMatchedGenTauVisP0", "", 12, 0, 50)
+hMatchedGenTauVisP1 = TH1F("histoMatchedGenTauVisP1", "", 12, 0, 50)
+hMatchedGenTauVisP2 = TH1F("histoMatchedGenTauVisP2", "", 12, 0, 50)
+hMatchedGenTauVisP10 = TH1F("histoMatchedGenTauVisP10", "", 12, 0, 50)
+
+# Photons and Pions P
+hGenPhotonP = TH1F("histoGenPhotonP", "", 100, 0, 25)
+hMatchedGenPhotonP = TH1F("histoMatchedGenPhotonP", "", 100, 0, 25)
+hGenTauPionP = TH1F("histoGenPionP", "", 100, 0, 50)
+hGenPionP0 = TH1F("histoGenPionP0", "", 100, 0, 50)
+hGenPionP1 = TH1F("histoGenPionP1", "", 100, 0, 50)
+hGenPionP2 = TH1F("histoGenPionP2", "", 100, 0, 50)
+hGenPionP10 = TH1F("histoGenPionP10", "", 100, 0, 50)
+hMatchedGenPionP = TH1F("histoMatchedGenPionP", "", 100, 0, 50)
+
+
+
+hRecoTauP0 = TH1F("histoRecoTauP0", "", 12, 0, 50)
+hRecoTauP1 = TH1F("histoRecoTauP1", "", 12, 0, 50)
+hRecoTauP2 = TH1F("histoRecoTauP2", "", 12, 0, 50)
+hRecoTauP10 = TH1F("histoRecoTauP10", "", 12, 0, 50)
+
+hRecoPhotonP = TH1F("histoRecoPhotonP", "", 100, 0, 25)
+hRecoPionP = TH1F("histoRecoPionP", "", 100, 0, 50)
 
 # Resolution P
-hTauPRes0 = TH1F("histoTauPRes0", "", 500, -1, 1)
-hTauPRes1 = TH1F("histoTauPRes1", "", 500, -1, 1)
-hTauPRes2 = TH1F("histoTauPRes2", "", 500, -1, 1)
-hTauPRes10 = TH1F("histoTauPRes10", "", 500, -1, 1)
+hTauPRes0 = TH1F("histoTauPRes0", "", 500, -2, 2)
+hTauPRes1 = TH1F("histoTauPRes1", "", 500, -2, 2)
+hTauPRes2 = TH1F("histoTauPRes2", "", 500, -2, 2)
+hTauPRes10 = TH1F("histoTauPRes10", "", 500, -2, 2)
 
 hMatchedTauPRes0 = TH1F("histoMatchedTauPRes0", "", 500, -1, 1)
 hMatchedTauPRes1 = TH1F("histoMatchedTauPRes1", "", 500, -1, 1)
 hMatchedTauPRes2 = TH1F("histoMatchedTauPRes2", "", 500, -1, 1)
 hMatchedTauPRes10 = TH1F("histoMatchedTauPRes10", "", 500, -1, 1)
+
+
 
 result_labels = {}
 result_labels["tau1"] = []
@@ -464,10 +580,14 @@ result_labels["tau2"] = []
 result_labels["id-tau1"] = []
 result_labels["id-tau2"] = []
 
+unmatched_reco_pions_match_list = []
+unmatched_reco_pions_P_per_miss = {"Non_matched":hUnmatchedRecoPionsP}
+
+
 for eventid, event in enumerate(reader.get("events")):
-    if gatr_results_path is not None and eventid > len(gatr_results) - 1:
-        logger_process.info("Reached the end of GATr results, stopping processing.")
-        break
+    # if gatr_results_path is not None and eventid > len(gatr_results) - 1:
+    #     logger_process.info("Reached the end of GATr results, stopping processing.")
+    #     break
     logger_process.debug("Processing event %d", eventid)
     if countEvents % 1000 == 0:
         logger_process.info("Processing event %d", countEvents)
@@ -484,15 +604,107 @@ for eventid, event in enumerate(reader.get("events")):
         nGenTaus,
         "\n".join("GenTau %d: %s" % (i, tau) for i, tau in genTaus.items()),
     )
-    if gatr_results_path is not None:
-        recoTaus = tauReco.findAllTaus(
-            gatr_results[f"event_{eventid}"], dRMax, minPTauPhoton, minPTauPion, PNeutron, generalPCut
+    if gatr_results_path is not None and not args.test_pfo:
+        recoTau = tauReco.findAllTaus(
+            mlpf_results[eventid], dRMax, minPTauPhoton, minPTauPion, PNeutron, generalPCut, charge_condition=False
         )
+        recoElectrons = electronReco.findAllElectrons(mlpf_results[eventid], generalPCut)
+        recoMuons = muonReco.findAllMuons(mlpf_results[eventid], generalPCut)
     else:
-        recoTaus = tauReco.findAllTaus(
+        recoTau = tauReco.findAllTaus(
             pfos, dRMax, minPTauPhoton, minPTauPion, PNeutron, generalPCut
         )
-        
+        recoElectrons = electronReco.findAllElectrons(pfos, generalPCut)
+        recoMuons = muonReco.findAllMuons(pfos, generalPCut)
+    
+    # Pion Matching
+    if gatr_results_path is not None and not args.test_pfo:
+        unmatched_gen_pions, unmatched_reco_pions, reco_pions_matched_with_gen_pions, reco_pions_matched_with_other_particles = tauReco.MatchedUnmatchedPions(mc_particles,
+                                                                                                                                                              mlpf_results[eventid],
+                                                                                                                                                              maxDRMatch=1,
+                                                                                                                                                              non_considered_particles = [12, 14, 16])
+    else:
+        unmatched_gen_pions, unmatched_reco_pions, reco_pions_matched_with_gen_pions, reco_pions_matched_with_other_particles = tauReco.MatchedUnmatchedPions(mc_particles, pfos, maxDRMatch=1)
+    
+    logger_process.debug("Total Gen Pions: %d, Total Reco Pions: %d, Matched Pions: %d, Unmatched Gen Pions: %d, Unmatched Reco Pions: %d",
+                 len(reco_pions_matched_with_gen_pions) + len(unmatched_gen_pions),
+                 len(unmatched_reco_pions) + len(reco_pions_matched_with_gen_pions) + len(reco_pions_matched_with_other_particles),
+                 len(reco_pions_matched_with_gen_pions),
+                 len(unmatched_gen_pions),
+                 len(unmatched_reco_pions))
+    
+    
+    if reco_pions_matched_with_other_particles:
+        for recoPion, genDau in reco_pions_matched_with_other_particles.items():
+            genDauPDG = abs(genDau.getPDG())
+            unmatched_reco_pions_match_list.append(genDauPDG)
+            recoPionP4 = recoPion.getMomentum()
+            if str(genDauPDG) not in unmatched_reco_pions_P_per_miss.keys():
+                unmatched_reco_pions_P_per_miss[str(genDauPDG)] = TH1F(f"h{genDauPDG}RecoPionsP", "", 100, 0, 50)
+            
+            unmatched_reco_pions_P_per_miss[str(genDauPDG)].Fill(recoPionP4.P())
+    if reco_pions_matched_with_gen_pions:
+        for genPion, recoPion in reco_pions_matched_with_gen_pions.items():
+            hMatchedPionsP.Fill(genPion.getMomentum().P(),
+                                recoPion.getMomentum().P())
+            hMatchedPionsTheta.Fill(genPion.getMomentum().Theta(),
+                                    recoPion.getMomentum().Theta())
+            hGenAllPionsP.Fill(genPion.getMomentum().P())
+            hMatchedAllPionsP.Fill(genPion.getMomentum().P())
+            hGenAllPionsTheta.Fill(genPion.getMomentum().Theta())
+            hMatchedAllPionsTheta.Fill(genPion.getMomentum().Theta())
+            theta = genPion.getMomentum().Theta()
+            costheta = np.cos(theta)
+            # Aceptancia en theta
+            if abs(costheta) < 0.9:
+                hGenAllPionsThetaCut.Fill(genPion.getMomentum().Theta())
+                hMatchedAllGenPionThetaCut.Fill(genPion.getMomentum().Theta())
+                hGenAllPionsPCut.Fill(genPion.getMomentum().P())
+                hMatchedAllPionsPCut.Fill(genPion.getMomentum().P())
+    if unmatched_gen_pions:
+        for genPion in unmatched_gen_pions:
+            hUnmatchedGenPionsP.Fill(genPion.getMomentum().P())
+            hUnmatchedGenPionsTheta.Fill(genPion.getMomentum().Theta())
+            hGenAllPionsP.Fill(genPion.getMomentum().P())
+            hGenAllPionsTheta.Fill(genPion.getMomentum().Theta())
+            theta = genPion.getMomentum().Theta()
+            costheta = np.cos(theta)
+            # Aceptancia en theta
+            
+            if abs(costheta) < 0.9:
+                hGenAllPionsThetaCut.Fill(genPion.getMomentum().Theta())
+                hGenAllPionsPCut.Fill(genPion.getMomentum().P())
+            
+            
+    # Introducir 
+    if unmatched_reco_pions:
+        for recoPion in unmatched_reco_pions:
+            unmatched_reco_pions_P_per_miss["Non_matched"].Fill(recoPion.getMomentum().P())
+            hUnmatchedRecoPionsTheta.Fill(recoPion.getMomentum().Theta())
+    
+    
+    # Neutral hadrons
+    for particle in mlpf_results[eventid]:
+        recoParticlecharge = particle.getCharge()
+        if recoParticlecharge == 0:
+            recoParticleP4 = particle.getMomentum()
+            hRecoNeutralHadronP.Fill(recoParticleP4.P())
+    
+    nRecoTaus = len(recoTau)
+    nRecoElectrons = len(recoElectrons)
+    nRecoMuons = len(recoMuons)
+
+    recoTaus = {}
+    pidx = 0
+    for taui in range(nRecoTaus):
+        recoTaus[pidx] = recoTau[taui]
+        pidx += 1
+    for elei in range(nRecoElectrons):
+        recoTaus[pidx] = recoElectrons[elei]
+        pidx += 1
+    for mui in range(nRecoMuons):
+        recoTaus[pidx] = recoMuons[mui]
+        pidx += 1
     nRecoTaus = len(recoTaus)
 
     logger_process.debug(
@@ -516,7 +728,7 @@ for eventid, event in enumerate(reader.get("events")):
     for i in range(0, nGenTaus):
         genVisTauP4 = genTaus[
             i
-        ].getvisMomentum()  # to do: find a clearer dictionary for this
+        ].getvisMomentum()  
         genTauId = genTaus[i].getID()
         genTauQ = genTaus[i].getCharge()
         genTauP4 = genTaus[i].getMomentum()
@@ -546,6 +758,59 @@ for eventid, event in enumerate(reader.get("events")):
 
         nGenTausType += 1
         foundGen = True
+        
+        # Get Photon Information at generation level
+        cum_p4 = ROOT.TLorentzVector()
+        cum_p4.SetXYZM(
+            0, 0, 0, 0
+        )
+        for c in range(0, genTauNConsts):
+            const = genTauConsts[c]
+            dauP4 = ROOT.TLorentzVector()
+            try:
+                dauP4.SetXYZM(
+                    const.getMomentum().x,
+                    const.getMomentum().y,
+                    const.getMomentum().z,
+                    const.getMass(),
+                )
+            except AttributeError:
+                # If the dau does not have a mass, we assume it is a photon
+                dauP4.SetXYZM(
+                    const.getMomentum().X(),
+                    const.getMomentum().Y(),
+                    const.getMomentum().Z(),
+                    const.getMass(),
+                )
+            if genTauId == 0:
+                cum_p4 += dauP4
+            # Si se trata de un pion neutro, lo añadimos a la suma de fotones
+            if const.getPDG() == 111:
+                photons = const.getDaughters()
+                for photon in photons:
+                    photonP4 = ROOT.TLorentzVector()
+                    photonP4.SetXYZM(
+                        photon.getMomentum().x,
+                        photon.getMomentum().y,
+                        photon.getMomentum().z,
+                        photon.getMass(),
+                    )
+                    hGenPhotonP.Fill(photonP4.P())
+                    hGenPhotonTheta.Fill(photonP4.Theta())
+            elif abs(const.getPDG()) == 211:  # Pion
+                h2DPionPid.Fill(dauP4.P(), genTauId)
+                hGenTauPionP.Fill(dauP4.P())
+                if genTauId == 0:
+                    hGenPionP0.Fill(dauP4.P())
+                elif genTauId == 1:
+                    hGenPionP1.Fill(dauP4.P())
+                elif genTauId == 2:
+                    hGenPionP2.Fill(dauP4.P())
+                elif genTauId == 10:
+                    hGenPionP10.Fill(dauP4.P())
+                if dauP4.P() > 5:
+                    hGenPionTheta.Fill(dauP4.Theta())
+                # If the photon is matched, fill the histogram
 
         # # # P4 Tau filters
         # if genVisTauP4.P() < 5:
@@ -566,6 +831,8 @@ for eventid, event in enumerate(reader.get("events")):
         hGenTauEta.Fill(genTauP4.Eta())  # Pseudo-rapidity
         hGenTauTheta.Fill(genTauP4.Theta())  # Theta angle
         
+        if genTauId >= 0:
+            hGenHadronP.Fill(genTauP4.P())  # Hadronic tau momentum
         if genTauId == 0:
             hGenTauTheta0.Fill(genTauP4.Theta())
             hGenTauP0.Fill(genTauP4.P())
@@ -596,9 +863,9 @@ for eventid, event in enumerate(reader.get("events")):
             genTaus[i], recoTaus, nTausType, maxDRMatch=dRMatch, selectDecay=selectDecay
         )
         # For each generator level tau, find the reconstructed tau that is closest:
-        if not matched_cm:
-            true_predicted_label["GenID"].append(str(eventid) + str(i))
-            true_predicted_label["True"].append(genTauId)
+        # if not matched_cm:
+        true_predicted_label["GenID"].append(str(eventid) + str(i))
+        true_predicted_label["True"].append(genTauId)
 
         # If you have not found it, continue: this is a efficiency loss
         if findMatch == -1:
@@ -609,16 +876,19 @@ for eventid, event in enumerate(reader.get("events")):
             elif nGenTaus <= 2:
                 result_labels[f"id-tau{i+1}"].append(-2)
             
-            if not matched_cm:
+            # if not matched_cm:
                 # true_predicted_label["Predicted"].append(-1)
-                true_predicted_label["Predicted"].append(-2)
-                true_predicted_label["PhotonPredicted"].append(-2)
+            true_predicted_label["Predicted"].append(-2)
+            true_predicted_label["PhotonPredicted"].append(-2)
+            true_predicted_label["Countpions"].append(-999)
+            true_predicted_label["Countphotons"].append(-999)
+            true_predicted_label["Countneutrons"].append(-999)
             continue
 
         logger_process.debug("Found matched tau. Details:\n%s", recoTaus[findMatch])
-        if matched_cm:
-            true_predicted_label["GenID"].append(str(eventid) + str(i))
-            true_predicted_label["True"].append(genTauId)
+        # if matched_cm:
+        #     true_predicted_label["GenID"].append(str(eventid) + str(i))
+        #     true_predicted_label["True"].append(genTauId)
         # now, get the kinematics of the matched reco tau
         recoTauP4 = recoTaus[findMatch].getMomentum()
         recoTauId = recoTaus[findMatch].getID()
@@ -663,6 +933,44 @@ for eventid, event in enumerate(reader.get("events")):
         countPionsRun = 0
         # print ("Matched GEN!")
         # GEN: Look inside the tau, constituents:
+        for c in range(0, genTauNConsts):
+            const = genTauConsts[c]
+            
+            dauP4 = ROOT.TLorentzVector()
+            try:
+                dauP4.SetXYZM(
+                    const.getMomentum().x,
+                    const.getMomentum().y,
+                    const.getMomentum().z,
+                    const.getMass(),
+                )
+            except AttributeError:
+                # If the dau does not have a mass, we assume it is a photon
+                dauP4.SetXYZM(
+                    const.getMomentum().X(),
+                    const.getMomentum().Y(),
+                    const.getMomentum().Z(),
+                    const.getMass(),
+                )
+            # Si se trata de un pion neutro, lo añadimos a la suma de fotones
+            if const.getPDG() == 111:
+                photons = const.getDaughters()
+                for photon in photons:
+                    photonP4 = ROOT.TLorentzVector()
+                    photonP4.SetXYZM(
+                        photon.getMomentum().x,
+                        photon.getMomentum().y,
+                        photon.getMomentum().z,
+                        photon.getMass(),
+                    )
+                    hMatchedGenPhotonP.Fill(photonP4.P())
+                    hMatchedGenPhotonTheta.Fill(photonP4.Theta())
+            elif abs(const.getPDG()) == 211:  # Pion
+                hMatchedGenPionP.Fill(dauP4.P())
+                if dauP4.P() > 5:
+                
+                    hMatchedGenPionTheta.Fill(dauP4.Theta())
+                # If the photon is matched, fill the histogram
 
 
         countPionsRun = 0
@@ -673,6 +981,8 @@ for eventid, event in enumerate(reader.get("events")):
         # Filling histograms for the matched tau with reco level information
         recoTaus_photons = {}
         n_photons = 0
+        n_pions = 0
+        n_neutrons = 0
         for c in range(0, recoTauNConsts):
             const = recoTauConsts[c]
             constP4 = ROOT.TLorentzVector()
@@ -695,14 +1005,34 @@ for eventid, event in enumerate(reader.get("events")):
             # This may be an error as we are confusing photons with neutrons
 
             logger_pi0mass.debug(f"Evaluating const to get photon with PDGID {const.getPDG()} and charge {const.getCharge()}")
-            if const.getCharge() == 0:
+            if const.getCharge() == 0 and const.getPDG() != 22:
+                hRecoNeutralHadronTauP.Fill(constP4.P())
+            if const.getPDG() == 22:
                 photonCumulativeP4 += constP4
-                
                 recoTaus_photons[n_photons] = const
                 n_photons += 1
+                hRecoPhotonP.Fill(constP4.P())
+                hRecoPhotonTheta.Fill(constP4.Theta())
+            elif abs(const.getPDG()) == 211:  # Pion
+                hRecoPionP.Fill(constP4.P())
+                if constP4.P() < minPTauPion:
+                    logger_process.warning(f"Encontrado pion con momento menor {constP4.P()}")
+                    logger_process.warning(const)
+                # if constP4.P() < 15:
+                #     logger_process.warning(f"Encontrado pion con momento mayor")
+                #     logger_process.warning(const)
+                
+                    
+                n_pions += 1
+                if constP4.P() > 5:
+                    hRecoPionTheta.Fill(constP4.Theta())
             
+            elif abs(const.getPDG()) == 2112:  # Neutron
+                n_neutrons += 1
         
-        
+        true_predicted_label["Countpions"].append(n_pions)
+        true_predicted_label["Countphotons"].append(n_photons)
+        true_predicted_label["Countneutrons"].append(n_neutrons)
         
         if n_pi0s > 0:
             logger_pi0mass.debug(
@@ -1087,6 +1417,9 @@ for eventid, event in enumerate(reader.get("events")):
 
         h2DTauDR.Fill(recoTauDR, genTauDR)
 
+        if genTauId >=0:
+            hMatchedGenHadronTauP.Fill(genTauP4.P())
+        
         if genTauId == 0:
             hMatchedGenTauP0.Fill(genTauP4.P())
             hMatchedGenTauVisP0.Fill(genVisTauP4.P())
@@ -1209,6 +1542,8 @@ hEffiGenTauP = hMatchedGenTauP.Clone()
 hEffiGenTauP.SetName("hEffiGenTauP")
 hEffiGenTauP.Divide(hGenTauP)
 
+
+
 hEffiGenVisTauP = hMatchedGenVisTauP.Clone()
 hEffiGenVisTauP.SetName("hEffiGenVisTauP")
 hEffiGenVisTauP.Divide(hGenVisTauP)
@@ -1229,6 +1564,46 @@ hEffiGenTauType = hMatchedGenTauType.Clone()
 hEffiGenTauType.SetName("hEffiGenTauType")
 hEffiGenTauType.Divide(hGenTauType)
 
+hEffiGenPhotonP = hMatchedGenPhotonP.Clone()
+hEffiGenPhotonP.SetName("hEffiGenPhotonP")
+hEffiGenPhotonP.Divide(hGenPhotonP)
+
+hEffiGenPhotonTheta = hMatchedGenPhotonTheta.Clone()
+hEffiGenPhotonTheta.SetName("hEffiGenPhotonTheta")
+hEffiGenPhotonTheta.Divide(hGenPhotonTheta)
+
+hEffiGenPionP = hMatchedGenPionP.Clone()
+hEffiGenPionP.SetName("hEffiGenTauPionP")
+hEffiGenPionP.Divide(hGenTauPionP)
+
+hEffiGenPionTheta = hMatchedGenPionTheta.Clone()
+hEffiGenPionTheta.SetName("hEffiGenTauPionTheta")
+hEffiGenPionTheta.Divide(hGenPionTheta)
+
+hEffiAllPionsP = hMatchedAllPionsP.Clone()
+hEffiAllPionsP.SetName("hEffiGenAllPionsP")
+hEffiAllPionsP.Divide(hGenAllPionsP)
+
+hEffiAllPionsTheta = hMatchedAllPionsTheta.Clone()
+hEffiAllPionsTheta.SetName("hEffiGenAllPionsTheta")
+hEffiAllPionsTheta.Divide(hGenAllPionsTheta)
+
+hMatchedGenHadronTauP.Sumw2()
+hGenHadronP.Sumw2()
+# hEffiGenHadronTauP = hMatchedGenHadronTauP.Clone()
+# hEffiGenHadronTauP.SetName("hEffiGenHadronTauP")
+# hEffiGenHadronTauP.Divide(hMatchedGenHadronTauP, hGenHadronP, 1, 1, "B")
+hEffiGenHadronTauP = ROOT.TGraphAsymmErrors()
+hEffiGenHadronTauP.Divide(hMatchedGenHadronTauP, hGenHadronP, "cl=0.683 b(1,1) mode")
+hEffiGenHadronTauP.SetName("hEffiGenHadronTauP")
+
+hEffiGenAllPionsPCut = hMatchedAllPionsPCut.Clone()
+hEffiGenAllPionsPCut.SetName("hEffiGenAllPionsPCut")
+hEffiGenAllPionsPCut.Divide(hGenAllPionsPCut)
+
+hEffiGenAllPionsPionThetaCut = hMatchedAllGenPionThetaCut.Clone()
+hEffiGenAllPionsPionThetaCut.SetName("hEffiGenAllPionsPionThetaCut")
+hEffiGenAllPionsPionThetaCut.Divide(hGenAllPionsThetaCut)
 
 # Theta angle per decay
 hEffiGenTauTheta0 = hMatchedGenTauTheta0.Clone()
@@ -1246,18 +1621,47 @@ hEffiGenTauTheta10.Divide(hGenTauTheta10)
 
 
 # Momentum per decay
-hEffiGenTauP0 = hMatchedGenTauP0.Clone()
+# hEffiGenTauP0 = ROOT.TEfficiency(hMatchedGenTauP0, hGenTauP0)
+# hEffiGenTauP0.SetName("hEffiGenTau0")
+# hEffiGenTauP1 = ROOT.TEfficiency(hMatchedGenTauP1, hGenTauP1)
+# hEffiGenTauP1.SetName("hEffiGenTau1")
+# hEffiGenTauP2 = ROOT.TEfficiency(hMatchedGenTauP2, hGenTauP2)
+# hEffiGenTauP2.SetName("hEffiGenTau2")
+# hEffiGenTauP10 = ROOT.TEfficiency(hMatchedGenTauP10, hGenTauP10)
+# hEffiGenTauP10.SetName("hEffiGenTau10")
+hMatchedGenTauP0.Sumw2()
+hMatchedGenTauP1.Sumw2()
+hMatchedGenTauP2.Sumw2()
+hMatchedGenTauP10.Sumw2()
+hGenTauP0.Sumw2()
+hGenTauP1.Sumw2()
+hGenTauP2.Sumw2()
+# hGenTauP10.Sumw2()
+# hEffiGenTauP0 = hMatchedGenTauP0.Clone()
+# hEffiGenTauP0.SetName("hEffiGenTauP0")
+# hEffiGenTauP0.Divide(hMatchedGenTauP0, hGenTauP0,1, 1,"B")
+# hEffiGenTauP1 = hMatchedGenTauP1.Clone()
+# hEffiGenTauP1.SetName("hEffiGenTauP1")
+# hEffiGenTauP1.Divide(hMatchedGenTauP1, hGenTauP1,1, 1,"B")
+# hEffiGenTauP2 = hMatchedGenTauP2.Clone()
+# hEffiGenTauP2.SetName("hEffiGenTauP2")
+# hEffiGenTauP2.Divide(hMatchedGenTauP2, hGenTauP2,1,1,"B")
+# hEffiGenTauP10 = hMatchedGenTauP10.Clone()
+# hEffiGenTauP10.SetName("hEffiGenTauP10")
+# hEffiGenTauP10.Divide(hMatchedGenTauP10, hGenTauP10,1,1,"B")
+hEffiGenTauP0 = ROOT.TGraphAsymmErrors()
+hEffiGenTauP0.Divide(hMatchedGenTauP0, hGenTauP0, "cl=0.683 b(1,1) mode")
 hEffiGenTauP0.SetName("hEffiGenTauP0")
-hEffiGenTauP0.Divide(hGenTauP0)
-hEffiGenTauP1 = hMatchedGenTauP1.Clone()
+hEffiGenTauP1 = ROOT.TGraphAsymmErrors()
+hEffiGenTauP1.Divide(hMatchedGenTauP1, hGenTauP1, "cl=0.683 b(1,1) mode")
 hEffiGenTauP1.SetName("hEffiGenTauP1")
-hEffiGenTauP1.Divide(hGenTauP1)
-hEffiGenTauP2 = hMatchedGenTauP2.Clone()
+hEffiGenTauP2 = ROOT.TGraphAsymmErrors()
+hEffiGenTauP2.Divide(hMatchedGenTauP2, hGenTauP2, "cl=0.683 b(1,1) mode")
 hEffiGenTauP2.SetName("hEffiGenTauP2")
-hEffiGenTauP2.Divide(hGenTauP2)
-hEffiGenTauP10 = hMatchedGenTauP10.Clone()
+hEffiGenTauP10 = ROOT.TGraphAsymmErrors()
+hEffiGenTauP10.Divide(hMatchedGenTauP10, hGenTauP10, "cl=0.683 b(1,1) mode")
 hEffiGenTauP10.SetName("hEffiGenTauP10")
-hEffiGenTauP10.Divide(hGenTauP10)
+
 
 # Vis Momentum per decay
 hEffiGenTauVisP0 = hMatchedGenTauVisP0.Clone()
@@ -1287,6 +1691,11 @@ true_predicted_label_df.to_csv(true_predicted_label_output_file, index=False)
 
 result_labels = pd.DataFrame(result_labels)
 result_labels.to_csv(outputpath + "result_labels_pfo.csv", index=False)
+
+unmatched_reco_pions_match_list_df = pd.DataFrame({"PDGID": unmatched_reco_pions_match_list})
+unmatched_reco_pions_match_count = unmatched_reco_pions_match_list_df["PDGID"].value_counts()
+# Guardamos
+unmatched_reco_pions_match_count.to_csv(outputpath + "unmatched_reco_pions_match_count.csv", index=True) 
 
 # Check if config["output"]["outputlabels"] is a list
 if type(config["output"]["outputlabels"]) is not list:
@@ -1330,6 +1739,9 @@ hMatchedTauThetaRes2.Write()
 hMatchedTauThetaRes10.Write()
 
 # P (Momentum)
+hEffiGenHadronTauP.Write()
+hMatchedGenHadronTauP.Write()
+hGenHadronP.Write()
 hGenTauP0.Write() 
 hGenTauP1.Write() 
 hGenTauP2.Write() 
@@ -1351,6 +1763,47 @@ hRecoTauP0.Write()
 hRecoTauP1.Write()
 hRecoTauP2.Write()
 hRecoTauP10.Write()
+
+
+hEffiGenAllPionsPCut.Write()
+hEffiGenAllPionsPionThetaCut.Write()
+
+hGenPhotonP.Write()
+hMatchedGenPhotonP.Write()
+hRecoPhotonP.Write()
+hGenPhotonTheta.Write()
+hMatchedGenPhotonTheta.Write()
+hRecoPhotonTheta.Write()
+hGenTauPionP.Write()
+hMatchedGenPionP.Write()
+hRecoPionP.Write()
+hGenPionTheta.Write()
+hMatchedGenPionTheta.Write()
+hRecoPionTheta.Write()
+hGenPionP0.Write()
+hGenPionP1.Write()
+hGenPionP2.Write()
+hGenPionP10.Write()
+
+
+hGenAllPionsP.Write()
+hMatchedAllPionsP.Write()
+hGenAllPionsTheta.Write()
+hMatchedAllPionsTheta.Write()
+hEffiAllPionsP.Write()
+hEffiAllPionsTheta.Write()
+
+# Matched pions gen level (2d)
+hMatchedPionsP.Write()
+# Unmatched pions gen level (hist)
+hUnmatchedGenPionsP.Write()
+# Unmatched pions reco level (hist)
+for hist in unmatched_reco_pions_P_per_miss.values():
+    hist.Write()
+
+hMatchedPionsTheta.Write()
+hUnmatchedGenPionsTheta.Write()
+hUnmatchedRecoPionsTheta.Write()
 
 # Resolution P
 hTauPRes0.Write()
@@ -1376,8 +1829,9 @@ hEffiGenTauVisP1.Write()
 hEffiGenTauVisP2.Write()
 hEffiGenTauVisP10.Write()
 
-
-
+# Neutral Hadrons
+hRecoNeutralHadronP.Write()
+hRecoNeutralHadronTauP.Write()
 
 # Reco Mass and P from different strategies
 hRecoConstPi0MassFromPhotonMasstr.Write()
@@ -1440,7 +1894,7 @@ hGenConstPi0Mass.Write()
 hEffiGenPi0Mass.Write()
 hMatchedGenConstPi0Mass.Write()
 h2DPi0MassOverNPhoton.Write()
-
+h2DPionPid.Write()
 
 hGenTauPt.Write()
 hGenVisTauPt.Write()
@@ -1477,6 +1931,11 @@ hEffiGenTauType.Write()
 hEffiGenVisTauMass.Write()
 hEffiGenTauEta.Write()
 hEffiGenTauTheta.Write()
+
+hEffiGenPhotonP.Write()
+hEffiGenPhotonTheta.Write()
+hEffiGenPionP.Write()
+hEffiGenPionTheta.Write()
 
 
 hRecoTauPt.Write()

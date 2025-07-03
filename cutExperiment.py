@@ -11,7 +11,7 @@ import yaml
 import pandas as pd
 import logging
 import copy
-
+import pickle
 from modules import tauReco 
 from modules import myutils 
 
@@ -25,7 +25,7 @@ parser.add_argument(
     "-V",
     "--value",
     type=str,
-    help="Value to modify. It has to be one of the available cuts: NeutronP, PhotonP, PionP, dRMax, MatchedGenMinDR, generalP",
+    help="Value to modify. It has to be one of the available cuts: NeutronCut, TauPhotonPCut, TauPionPCut, dRMax, MatchedGenMinDR, generalPCut",
 )
 parser.add_argument(
     "-p", "--TauPhotonPCut", type=float
@@ -61,6 +61,11 @@ parser.add_argument(
     action="count",
     default=0,
     help="Increase verbosity level: -v for INFO, -vv for DEBUG",
+)
+parser.add_argument(
+    "--gatr-result",
+    type=str,
+    help="Path to GATR result for the analysis.",
 )
 
 args = parser.parse_args()
@@ -127,6 +132,8 @@ outfile = config["general"]["outfile"]
 fileOutName = outfile + decayString + ".root"
 
 outputpath = outputbasepath + outfile + cut_string + "/"
+if args.gatr_result is not None:
+    outputpath = "GATr_" + outputpath
 if not os.path.exists(outputpath):
     os.makedirs(outputpath)
 
@@ -183,21 +190,74 @@ dir_path=path+"/"+sample
 names = ROOT.std.vector('string')()
 nfiles=len(os.listdir(dir_path))
 
-nfiles=1000
-if test==True:
-   nfiles=10
+gatr_results_path = args.gatr_result
 
-logger_io.info("Reading files from %s", dir_path)
-for i in range(1,nfiles+1):
-    filename=dir_path+"/"+file+"_{}.root".format(i)
-    logger_io.debug("Opening file %s", filename)
-    my_file = Path(filename)
-    if my_file.is_file():
-        root_file = myutils.open_root_file(filename)
-        if not root_file or root_file.IsZombie():
-            logger_io.warning("File %s is a zombie or could not be opened.", filename)
+if gatr_results_path is not None:
+    if not os.path.exists(gatr_results_path):
+        logger_io.error("GATr results path %s does not exist.", gatr_results_path)
+        sys.exit(1)
+    else:
+        logger_io.info("Using GATr results from %s", gatr_results_path)
+    # abrimos archivo configuracion yml
+    mlpf_config = pd.read_csv(gatr_results_path)
+    filenames = []
+    n_predictions = 0
+    mlpf_results = {}
+    for row in mlpf_config.iterrows():
+        mlpf_predictions_path = row[1]["prediction_file"]
+        simulation_path = row[1]["simulation_file"]
+        my_file = Path(simulation_path)
+        logger_io.debug("Reading file %s", simulation_path)
+        if my_file.is_file():
+            root_file = myutils.open_root_file(simulation_path)
+            if not root_file or root_file.IsZombie():
+                logger_io.warning("File %s is a zombie or could not be opened.", simulation_path)
+                continue
+            filenames.append(simulation_path)
+        
+        with open(mlpf_predictions_path, "rb") as f:
+            mlpf_preds_i = pickle.load(f)
+        if len(mlpf_preds_i) != 1000:
+            logger_io.warning("Expected 1000 predictions, but got %d", len(mlpf_preds_i))
+            logger_io.warning("File %s will be skipped.", simulation_path)
+            filenames.remove(simulation_path)
             continue
-        filenames.append(filename)
+        logger_io.debug("Read %d GATr results", len(mlpf_preds_i))
+            
+        for key, value in mlpf_preds_i.items():
+            mlpf_results[n_predictions] = value
+            n_predictions += 1
+            
+    logger_io.info("Total predictions loaded: %d", n_predictions)
+        
+else:
+    # Simulation files
+    path = "/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
+    file = "out_reco_edm4hep_edm4hep"
+    filenames = []
+    dir_path = path + "/" + sample
+
+    nfiles = len(os.listdir(dir_path))
+
+    nfiles = 1000
+    if test == True:
+        nfiles = 2
+
+    if gatr_results_path is not None:
+        print(len(gatr_results))
+        nfiles = len(gatr_results)//1000
+
+    logger_io.info("Reading files from %s", dir_path)
+    for i in range(1, nfiles + 1):
+        filename = dir_path + "/" + file + "_{}.root".format(i)
+        logger_io.debug("Reading file %s", filename)
+        my_file = Path(filename)
+        if my_file.is_file():
+            root_file = myutils.open_root_file(filename)
+            if not root_file or root_file.IsZombie():
+                logger_io.warning("File %s is a zombie or could not be opened.", filename)
+                continue
+            filenames.append(filename)
 
 
 
@@ -242,12 +302,21 @@ for exp, exp_value in enumerate(config["cuts"][config["experiment"]]):
         "\n".join("GenTau %d: %s" % (i, tau) for i, tau in genTaus.items()),
         )
         logger_process.debug("Running tau reconstruction with parameters: %s", experiment_parameters)
-        recoTaus = tauReco.findAllTaus(pfos,
-                                   experiment_parameters["dRMax"],
-                                   experiment_parameters["TauPhotonPCut"],
-                                   experiment_parameters["TauPionPCut"],
-                                   experiment_parameters["NeutronCut"],
-                                   experiment_parameters["generalPCut"])
+        if gatr_results_path is not None:
+            recoTaus = tauReco.findAllTaus(mlpf_results[eventid],
+                                    experiment_parameters["dRMax"],
+                                    experiment_parameters["TauPhotonPCut"],
+                                    experiment_parameters["TauPionPCut"],
+                                    experiment_parameters["NeutronCut"],
+                                    experiment_parameters["generalPCut"],
+                                    charge_condition=False)
+        else:
+            recoTaus = tauReco.findAllTaus(pfos,
+                                experiment_parameters["dRMax"],
+                                experiment_parameters["TauPhotonPCut"],
+                                experiment_parameters["TauPionPCut"],
+                                experiment_parameters["NeutronCut"],
+                                experiment_parameters["generalPCut"])
 
         nRecoTaus=len(recoTaus)
         logger_process.debug(

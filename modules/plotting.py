@@ -34,8 +34,12 @@ def id_to_key_root(event_id, photons=False):
         key = f"{RE}"
       elif event_id <= -20:
         key = f"h{RN}"
-      else:
+      elif event_id == -1:
         key = "Unknown"
+      elif event_id == -2:
+        key = "Unmatched"
+      else:
+        key = "Unknown ID"      
     elif event_id == 0:
       key = f"h"
     elif event_id < 10:
@@ -53,8 +57,12 @@ def id_to_key_root(event_id, photons=False):
         key = f"{RTAU} \\rightarrow {RE}2{RNEUTRINO}"
       elif event_id <= -20:
         key = f"{RPI}{RN}"
-      else:
+      elif event_id == -1:
         key = "Unknown"
+      elif event_id == -2:
+        key = "Unmatched"
+      else:
+        key = "Unknown ID"  
     elif event_id == 0:
       key = f"{RTAU} \\rightarrow {RPI}{RNEUTRINO}"
     elif event_id < 10:
@@ -80,8 +88,12 @@ def id_to_key(event_id, photons=False):
         key = f"{E}"
       elif event_id <= -20:
         key = f"h{N}"
-      else:
+      elif event_id == -1:
         key = "Unknown"
+      elif event_id == -2:
+        key = "Unmatched"
+      else:
+        key = "Unknown ID"  
     elif event_id == 0:
       key = f"h"
     elif event_id == 1:
@@ -101,8 +113,12 @@ def id_to_key(event_id, photons=False):
         key = f"{TAU} → {E}2{NEUTRINO}"
       elif event_id <= -20:
         key = f"{PI}{N}"
-      else:
+      elif event_id == -1:
         key = "Unknown"
+      elif event_id == -2:
+        key = "Unmatched"
+      else:
+        key = "Unknown ID"  
     elif event_id == 0:
       key = f"{TAU} → {PI}{NEUTRINO}"
     elif event_id < 10:
@@ -135,8 +151,13 @@ def plot_1D_hist(file, variabs, labels, outputpath, normalize):
         # If label config exists, set axis titles and overall title
         if var in labels:
             cfg = labels[var]
-            histo.SetXTitle(cfg.get("x", ""))
-            histo.SetYTitle(cfg.get("y", ""))
+            # Si hist es un ROOT.TGraphAsymmErrors
+            if isinstance(histo, ROOT.TGraphAsymmErrors):
+              histo.GetXaxis().SetTitle(cfg.get("x", ""))
+              histo.GetYaxis().SetTitle(cfg.get("y", ""))
+            else:
+              histo.SetXTitle(cfg.get("x", ""))
+              histo.SetYTitle(cfg.get("y", ""))
             histo.GetYaxis().SetMaxDigits(2)
             title = cfg.get("title", "")
             if title:
@@ -150,10 +171,28 @@ def plot_1D_hist(file, variabs, labels, outputpath, normalize):
                 title = "\\text{" + title_text + "}(" + decay_str+")"
             histo.SetTitle(title)
         c.Clear()
+        if "effi" in var.lower():
+          # Configuración para gráficos de eficiencia (que pueden ser TGraphAsymmErrors)
+          histo.SetMarkerStyle(20)   # círculos sólidos
+          histo.SetMarkerSize(1.1)
+          histo.SetMarkerColor(9)
+
         if normalize:
-          histo.DrawNormalized()
+          if "effi" in var.lower():
+            if isinstance(histo, ROOT.TGraphAsymmErrors):
+              histo.DrawNormalized("AP")  # A: crea los ejes, P: muestra puntos, E: muestra barras de error
+            else:
+              histo.DrawNormalized("P")  # Solo puntos para histogramas normales de eficiencia
+          else:
+            histo.DrawNormalized("HIST")  # Para histogramas regulares, usar HIST
         else:
-          histo.Draw()
+          if "effi" in var.lower():
+            if isinstance(histo, ROOT.TGraphAsymmErrors):
+              histo.Draw("AP")  # A: crea los ejes, P: muestra puntos, E: muestra barras de error
+            else:
+              histo.Draw("P")  # Solo puntos para histogramas normales de eficiencia
+          else:            
+            histo.Draw("HIST")
         out_file = os.path.join(out_dir, f"{var}.png")
         c.SaveAs(out_file)
         print(f"Saved histogram '{var}' as '{out_file}'")
@@ -213,9 +252,21 @@ def plot_hist_zoom(file, zoom_config, outputpath):
             elif i == 2:
                 histo.SetLineStyle(3)
                 histo.SetLineColor(ROOT.kGreen+2)
-            else:
+            elif i == 3:
                 histo.SetLineColor(ROOT.kMagenta)
                 histo.SetLineStyle(4)
+            elif i == 4:
+                histo.SetLineStyle(2)
+                histo.SetLineColor(ROOT.kYellow)
+            elif i == 5:
+                histo.SetLineStyle(2)
+                histo.SetLineColor(ROOT.Spring)
+            elif i == 6:
+                histo.SetLineStyle(2)
+                histo.SetLineColor(ROOT.kAzure)
+            elif i == 7:
+                histo.SetLineStyle(2)
+                histo.SetLineColor(ROOT.kViolet)
                 
             histo.SetLineWidth(2)
             
@@ -287,9 +338,21 @@ def plot_hist_zoom(file, zoom_config, outputpath):
             elif i == 2:
                 histo.SetLineStyle(3)
                 histo.SetLineColor(ROOT.kGreen+2)
-            else:
+            elif i == 3:
                 histo.SetLineColor(ROOT.kMagenta)
                 histo.SetLineStyle(4)
+            elif i == 4:
+                histo.SetLineStyle(2)
+                histo.SetLineColor(ROOT.kYellow)
+            elif i == 5:
+                histo.SetLineStyle(2)
+                histo.SetLineColor(ROOT.Spring)
+            elif i == 6:
+                histo.SetLineStyle(2)
+                histo.SetLineColor(ROOT.kAzure)
+            elif i == 7:
+                histo.SetLineStyle(2)
+                histo.SetLineColor(ROOT.kViolet)
                 
             histo.SetLineWidth(2)
             
@@ -339,6 +402,10 @@ def plot_hist_together(file, together_config, outputpath):
     
     # Iterate over each group in the together configuration
     for group, cfg in together_config.items():
+        if "effi" in group.lower():
+          scatter_plot = True
+        else:
+          scatter_plot = False
         c = ROOT.TCanvas(f"c_together_{group}", group, 900, 700)
         position = cfg.get("position", None)
         if position:
@@ -370,23 +437,73 @@ def plot_hist_together(file, together_config, outputpath):
             
             # Assign a distinct line color for each histogram (simple scheme)
             if i == 0:
-                histo.SetLineColor(ROOT.kRed)
+              histo.SetLineColor(ROOT.kRed)
+              histo.SetMarkerColor(ROOT.kRed)
+              if scatter_plot:
+                histo.SetMarkerStyle(20)
             elif i == 1:
+              if not scatter_plot:
                 histo.SetLineStyle(2)
-                histo.SetLineColor(ROOT.kBlue)
+              else:
+                histo.SetMarkerStyle(20)   # círculos sólidos
+              histo.SetLineColor(ROOT.kBlue)
+              histo.SetMarkerColor(ROOT.kBlue)
             elif i == 2:
+              if not scatter_plot:
                 histo.SetLineStyle(3)
-                histo.SetLineColor(ROOT.kGreen+2)
-            else:
-                histo.SetLineColor(ROOT.kMagenta)
+              else:
+                histo.SetMarkerStyle(20)   # círculos sólidos
+              histo.SetLineColor(ROOT.kGreen+2)
+              histo.SetMarkerColor(ROOT.kGreen+2)
+            elif i == 3:
+              if not scatter_plot:
                 histo.SetLineStyle(4)
+              else:
+                histo.SetMarkerStyle(20)   # círculos sólidos
+                 
+              histo.SetLineColor(ROOT.kMagenta)
+              histo.SetMarkerColor(ROOT.kMagenta)
+              histo.SetMarkerStyle(20)   # círculos sólidos
+            elif i == 4:
+              if not scatter_plot:
+                histo.SetLineStyle(2)
+              else:
+                histo.SetMarkerStyle(20)   # círculos sólidos
+              histo.SetLineColor(ROOT.kCyan)
+              histo.SetMarkerColor(ROOT.kCyan)
+              # histo.SetMarkerStyle(34)   # círculos sólidos
+            elif i == 5:
+              if not scatter_plot:
+                histo.SetLineStyle(2)
+              else:
+                histo.SetMarkerStyle(20)   # círculos sólidos
+              histo.SetLineColor(ROOT.kSpring)
+              histo.SetMarkerColor(ROOT.kSpring)
+            elif i == 6:
+              if not scatter_plot:
+                histo.SetLineStyle(2)
+              else:
+                histo.SetMarkerStyle(20)   # círculos sólidos
+              histo.SetLineColor(ROOT.kYellow)
+              histo.SetMarkerColor(ROOT.kYellow)
+            elif i == 7:
+              if not scatter_plot:
+                histo.SetLineStyle(2)
+              else:
+                histo.SetMarkerStyle(20)   # círculos sólidos
+              histo.SetLineColor(ROOT.kAzure+3)
+              histo.SetMarkerColor(ROOT.kAzure+3)
                 
             histo.SetLineWidth(2)
             
             # Draw the first histogram normally; then draw others with "same"
             if first:
-              histo.SetXTitle(cfg.get("x", ""))
-              histo.SetYTitle(cfg.get("y", ""))
+              if isinstance(histo, ROOT.TGraphAsymmErrors):
+                histo.GetXaxis().SetTitle(cfg.get("x", ""))
+                histo.GetYaxis().SetTitle(cfg.get("y", ""))
+              else:
+                histo.SetXTitle(cfg.get("x", ""))
+                histo.SetYTitle(cfg.get("y", ""))
               # Optionally, set the title of the histogram (or leave it empty)
               title = cfg.get("title", "")
               if title:
@@ -404,10 +521,24 @@ def plot_hist_together(file, together_config, outputpath):
                 if max_val != 0:
                 # Escalamos para que el máximo sea 1.
                   histo.Scale(1.0 / max_val)
-                histo.GetYaxis().SetRangeUser(0., 1.1)
+                if cfg.get("logy", False):
+                  histo.GetYaxis().SetRangeUser(0.001, 1.1)
+                else:
+                  histo.GetYaxis().SetRangeUser(0., 1.1)
               else:
-                histo.GetYaxis().SetRangeUser(0, 1.1 * global_max_value)
-              histo.Draw("HIST")
+                if cfg.get("logy", False):
+                  histo.GetYaxis().SetRangeUser(0.001, 1.1 * global_max_value)
+                else:
+                  histo.GetYaxis().SetRangeUser(0, 1.1 * global_max_value)
+              if scatter_plot:
+                # histo.Sumw2()
+                if isinstance(histo, ROOT.TGraphAsymmErrors):
+                  histo.Draw("AP")
+                else:
+                  histo.Draw("P")
+                # histo.Draw("L SAME")
+              else:
+                histo.Draw("HIST")
               first = False
             else:
               max_val = histo.GetMaximum()
@@ -417,8 +548,12 @@ def plot_hist_together(file, together_config, outputpath):
                   histo.Scale(1.0 / max_val)
                 # histo_norm.GetYaxis().SetRangeUser(0, 1)
                 
-
-              histo.Draw("HIST same")
+              if scatter_plot:
+                # histo.Sumw2()
+                histo.Draw("P same")
+                # histo.Draw("L same")
+              else:
+                histo.Draw("HIST same")
 
                 # Set axis from 0 to 1
                 
@@ -427,6 +562,8 @@ def plot_hist_together(file, together_config, outputpath):
             legend.AddEntry(histo, label, "l")
         
         legend.Draw()
+        if cfg.get("logy", False):
+            c.SetLogy()
         out_file = os.path.join(out_dir, f"{group}.png")
         c.SaveAs(out_file)
         print(f"Saved group '{group}' as '{out_file}'")
@@ -507,10 +644,11 @@ def plot_cm(results_df, outputpath, plotphotons=False, plot_config={}):
         # Use sklearn's confusion_matrix for a square matrix
         classes = np.unique(np.concatenate((y_true.values, y_pred.values)))
         cm = confusion_matrix(y_true, y_pred, labels=classes)
+        cm_df = pd.DataFrame(cm, index=classes, columns=classes)
+        
         if "decays" in plot_config:
           # Select only the decays in the config file
           decays = plot_config["decays"]
-          cm_df = pd.DataFrame(cm, index=classes, columns=classes)
           cm = cm_df.loc[decays, decays].copy()
           cm = cm.values
           classes = decays
@@ -595,7 +733,7 @@ def plot_cm(results_df, outputpath, plotphotons=False, plot_config={}):
         tick_marks = np.arange(len(mapped_classes_true))
         plt.xticks(tick_marks, mapped_classes_true, rotation=45)
         plt.yticks(tick_marks, mapped_classes_true)
-    
+    cm_normalized = cm_normalized.to_numpy()
     thresh_norm = cm_normalized.max() / 2.
     # Annotate each cell with the percentage
     for i in range(cm_normalized.shape[0]):

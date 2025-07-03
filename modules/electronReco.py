@@ -26,7 +26,11 @@ def findAllElectrons(pfos, minPt):
 
     
     electronP4 = ROOT.TLorentzVector()
-    electronP4.SetXYZM(pf.getMomentum().x,pf.getMomentum().y,pf.getMomentum().z,pf.getMass())
+    try:
+        electronP4.SetXYZM(pf.getMomentum().x,pf.getMomentum().y,pf.getMomentum().z,pf.getMass())
+    except AttributeError:
+        # Handle the case where getMass() is not available
+        electronP4.SetXYZM(pf.getMomentum().X(), pf.getMomentum().Y(), pf.getMomentum().Z(),  pf.getMass())
     if electronP4.P()<minPt:
         continue
     electronpdg = pf.getPDG()

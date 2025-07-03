@@ -6,6 +6,6 @@ migrations:
   10->10: [10,10]  
   10->0: [10,0]
 axis:
-  xlabel: "Neutron P Cut (GeV/c)"
-  title: "Migrations regarding Neutron P Cut"
-metric: "recall"
+  xlabel: "Neutral Hadrons P Cut (GeV/c)"
+  title: "Migrations regarding Neutral Hadrons P Cut"
+metric: "purity"

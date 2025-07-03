@@ -26,7 +26,11 @@ def findAllMuons(pfos, minPt):
 
     
     muonP4 = ROOT.TLorentzVector()
-    muonP4.SetXYZM(pf.getMomentum().x,pf.getMomentum().y,pf.getMomentum().z,pf.getMass())
+    try:
+        muonP4.SetXYZM(pf.getMomentum().x,pf.getMomentum().y,pf.getMomentum().z,pf.getMass())
+    except AttributeError:
+        # Handle the case where getMass() is not available
+        muonP4.SetXYZM(pf.getMomentum().X(), pf.getMomentum().Y(), pf.getMomentum().Z(),  pf.getMass())
     if muonP4.P()<minPt:
         continue
     muonpdg = pf.getPDG()
