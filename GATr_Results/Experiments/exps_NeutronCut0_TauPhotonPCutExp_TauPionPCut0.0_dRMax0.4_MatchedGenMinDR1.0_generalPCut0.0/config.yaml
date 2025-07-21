@@ -1,0 +1,32 @@
+cuts:
+  MatchedGenMinDR: 1.0
+  NeutronCut: 0
+  TauPhotonPCut:
+  - 0.0
+  - 0.5
+  - 1.0
+  - 1.5
+  - 2.0
+  - 2.5
+  - 3.0
+  TauPionPCut: 0.0
+  dRMax: 0.4
+  generalPCut: 0.0
+experiment: TauPhotonPCut
+general:
+  decay: -777
+  matchedCM: 'True'
+  outfile: exps
+  sample: ZTauTau_SMPol_25Sept_MuonFix
+  test: 'True'
+output:
+  outputfile: expsdecayAll_NeutronCut0_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0.root
+  outputlabels:
+  - GATr_Results/Experiments/exps_NeutronCut0_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0/true_predicted_label_decayAll_TauPhotonPCut_0.0.csv
+  - GATr_Results/Experiments/exps_NeutronCut0_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0/true_predicted_label_decayAll_TauPhotonPCut_0.5.csv
+  - GATr_Results/Experiments/exps_NeutronCut0_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0/true_predicted_label_decayAll_TauPhotonPCut_1.0.csv
+  - GATr_Results/Experiments/exps_NeutronCut0_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0/true_predicted_label_decayAll_TauPhotonPCut_1.5.csv
+  - GATr_Results/Experiments/exps_NeutronCut0_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0/true_predicted_label_decayAll_TauPhotonPCut_2.0.csv
+  - GATr_Results/Experiments/exps_NeutronCut0_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0/true_predicted_label_decayAll_TauPhotonPCut_2.5.csv
+  - GATr_Results/Experiments/exps_NeutronCut0_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0/true_predicted_label_decayAll_TauPhotonPCut_3.0.csv
+  outputpath: GATr_Results/Experiments/exps_NeutronCut0_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0/

@@ -8,4 +8,4 @@ migrations:
 axis:
   xlabel: "Neutral Hadrons P Cut (GeV/c)"
   title: "Migrations regarding Neutral Hadrons P Cut"
-metric: "purity"
+metric: "recall"

@@ -8,8 +8,10 @@ from array import array
 from podio import root_io
 import edm4hep
 import logging
+import pandas as pd
+import pickle
 import numpy as np
-
+import pprint
 logger_io = logging.getLogger('io')
 def associate_reco_with_gen_taus(gen_taus, reco_tau):
     """Asocia cada hemisferio con el tau correspondiente usando la dirección del tau."""
@@ -85,7 +87,7 @@ def sort_by_P(Tau):
     tau_with_P = []
 
     for i in range(0,len(Tau)):
-        tau_with_P.append((Tau[i], Tau[i][0].P()))
+        tau_with_P.append((Tau[i], Tau[i].getMomentum().P()))
     
     # Sort the list based on the P() value in descending order
     sorted_tau_with_P = sorted(tau_with_P, key=lambda x: x[1], reverse=True)
@@ -137,4 +139,177 @@ def load_yaml_config(config_file, default_config):
             # print(f"Loaded default configuration parameters from '{default_config}'.")
     else:
         raise FileNotFoundError(f"Error: A valid default configuration file is required.")
-    return config                
+    return config
+
+
+
+
+def setup_analysis_config(
+    default_config: str = "config/default/taurecolong.yaml",
+    output_base: str = "Results/TauReco/"
+):
+    """
+    Encapsula la configuración de argumentos, cargas de configuración,
+    aplicación de cortes, configuración de rutas de salida y logging.
+
+    Devuelve un diccionario con keys:
+      - args: Namespace de argparse
+      - config: diccionario de configuración actualizado
+      - outputpath: ruta de salida creada
+      - fileOutName: nombre de archivo de salida
+      - loggers: diccionario con loggers (config, io, processing, pi0mass)
+    """
+    # Argument parser setup
+    parser = argparse.ArgumentParser(
+        description="Configure the analysis",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    
+    
+    
+    parser.add_argument("-f", "--sample")
+    parser.add_argument("-o", "--outfile")
+    parser.add_argument("-d", "--decay", type=int)
+    parser.add_argument("-p", "--TauPhotonPCut", type=float)
+    parser.add_argument("-i", "--TauPionPCut", type=float)
+    parser.add_argument("-t","--tauCut",default=2,type=float)
+    parser.add_argument("-R", "--dRMax", type=float)
+    parser.add_argument("-n", "--NeutronCut", type=float)
+    parser.add_argument("-g", "--generalPCut", type=float)
+    parser.add_argument("-r", "--MatchedGenMinDR", type=float)
+    parser.add_argument(
+        "-m", "--matchedCM",
+        default="True",
+        type=str,
+        help="Use only matched taus to compute confusion matrix.",
+    )
+    parser.add_argument(
+        "--test",
+        type=str,
+        help="Run in test mode with limited number of files",
+    )
+    parser.add_argument(
+        "-c", "--config", type=str, help="Configuration file"
+    )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="count",
+        default=0,
+        help="Increase verbosity level: -v for INFO, -vv for DEBUG",
+    )
+    parser.add_argument(
+        "--gatr-result",
+        type=str,
+        help="Path to GATR result for the analysis.",
+    )
+    parser.add_argument(
+        "--test-pfo",
+        action="store_true",
+        help="Use this flag to test the PFOs in same files as GATr.",
+    )
+
+    args = parser.parse_args()
+
+    # Load config
+    config = load_yaml_config(args.config, default_config)
+
+    # Cut Configuration
+    cuts = config.get("cuts", {})
+    for key in ["tauCut", "dRMax", "TauPhotonPCut", "TauPionPCut", "NeutronCut", "MatchedGenMinDR", "generalPCut"]:
+        val = getattr(args, key) if getattr(args, key) is not None else cuts.get(key)
+        cuts[key] = val
+    config["cuts"] = cuts
+
+    # Decay selection
+    decay_list = config.setdefault("general", {}).setdefault("decay", [])
+    select_decay = args.decay if args.decay is not None else decay_list[0]
+    if args.decay is not None and args.decay not in decay_list:
+        decay_list.append(args.decay)
+    config["general"]["decay"] = decay_list
+
+    # Output filename
+    outfile = args.outfile or config["general"].get("outfile")
+    config["general"]["outfile"] = outfile
+
+    # Build strings
+    dr = cuts["dRMax"]
+    tph = cuts["TauPhotonPCut"]
+    tpi = cuts["TauPionPCut"]
+    npe = cuts["NeutronCut"]
+    gpc = cuts["generalPCut"]
+    mdr = cuts["MatchedGenMinDR"]
+
+    suffix = f"_{dr}_tph{tph}_tpi{tpi}_n{npe}_g{gpc}"
+    decay_str = f"decay{select_decay}" + suffix
+    if select_decay == -777:
+        decay_str = "decayAll" + suffix
+    file_out = f"{outfile}{decay_str}.root"
+
+    # Output path logic
+    base = output_base + outfile + suffix[1:] + "/"
+    if args.gatr_result and args.test_pfo:
+        path = output_base + "PFO_" + outfile + suffix[1:] + "/"
+    elif args.test_pfo:
+        raise ValueError("Cannot use --test-pfo without --gatr-result.")
+    else:
+        path = base
+    if args.gatr_result:
+        path = "GATr_" + path
+    os.makedirs(path, exist_ok=True)
+
+    config.setdefault("output", {}).setdefault("outputfile", [])
+    if not config["output"].get("outputfile") is None:
+        if file_out not in config["output"]["outputfile"]:
+            config["output"]["outputfile"].append(file_out)
+    else:
+        config["output"]["outputfile"] = [file_out]
+    config["output"]["outputpath"] = path
+
+    # Logging
+    lvl = logging.WARNING if args.verbose == 0 else logging.INFO if args.verbose == 1 else logging.DEBUG
+    handlers = []
+    if args.verbose < 2:
+        handlers = [logging.StreamHandler(sys.stdout), logging.FileHandler(os.path.join(path, "app.log"), mode="w")]
+    elif args.verbose == 2:
+        sh = logging.StreamHandler(sys.stdout); sh.setLevel(logging.DEBUG)
+        fh = logging.FileHandler(os.path.join(path, "app.log"), mode="w"); fh.setLevel(logging.DEBUG)
+        handlers = [sh, fh]
+    else:
+        handlers = [logging.FileHandler(os.path.join(path, "app.log"), mode="w")]
+
+    logging.basicConfig(
+        level=lvl,
+        format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
+        handlers=handlers
+    )
+
+    loggers = {
+        "config": logging.getLogger("config"),
+        "io": logging.getLogger("io"),
+        "processing": logging.getLogger("processing"),
+        "pi0mass": logging.getLogger("pi0mass")
+    }
+
+    # General args to config
+    for key in ["sample", "matchedCM", "test"]:
+        config["general"][key] = getattr(args, key) if getattr(args, key) is not None else config["general"].get(key)
+
+    # Convert flags
+    matched_cm = True if config["general"]["matchedCM"] == "True" else False
+    test_mode = True if config["general"]["test"] == "True" else False
+
+    loggers["config"].info("Configuration loaded!")
+    loggers["config"].info("Configuration:\n%s", pprint.pformat(config, indent=4))
+
+    return {
+        "args": args,
+        "config": config,
+        "outputpath": path,
+        "fileOutName": file_out,
+        "loggers": loggers,
+        "decay": select_decay,
+        "flags": {
+            "matched_cm": matched_cm,
+            "test": test_mode
+        }
+    }
