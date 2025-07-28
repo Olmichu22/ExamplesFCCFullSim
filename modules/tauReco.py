@@ -449,7 +449,7 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
       #    f"chargeTau: {chargeTau}, countPhotons: {countPhotons}, countPions: {countPions}, countNeutrons: {countNeutrons}"
       # )
       tauP4.SetXYZM(0,0,0,0) # safety, always return an object 
-      return (tauP4,-1,0,0,0,0), None
+      return (tauP4,-1,0,0,0,dict()), None
                  
 
 # loop over all gen taus 
