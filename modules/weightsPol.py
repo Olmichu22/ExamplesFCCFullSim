@@ -126,10 +126,10 @@ def newAtauRHO(TauP4, RhoP4,beamE, TauConst, Type,New_Atau,sin2theta_effective= 
     cosPsi= (x * (mtau*mtau + mRho*mRho) - 2*mRho*mRho)/((mtau*mtau-mRho*mRho)*math.sqrt(x*x-4*mRho*mRho/sqrts/sqrts))
 
     if cosPsi>1:
-       print ('What happened?', cosPsi)
+    #    print ('What happened?', cosPsi)
        cosPsi=1
     if cosPsi<-1:
-       print ('What happened?', cosPsi)
+    #    print ('What happened?', cosPsi)
        cosPsi=-1
 
     anglePsi=math.acos(cosPsi)

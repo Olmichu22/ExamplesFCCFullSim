@@ -12,6 +12,8 @@ import pandas as pd
 import pickle
 import numpy as np
 import pprint
+from pathlib import Path
+from modules import myutils
 logger_io = logging.getLogger('io')
 def associate_reco_with_gen_taus(gen_taus, reco_tau):
     """Asocia cada hemisferio con el tau correspondiente usando la dirección del tau."""
@@ -313,3 +315,70 @@ def setup_analysis_config(
             "test": test_mode
         }
     }
+
+
+def get_root_trees_path(sample, gatr_results_path, loggers, test):
+    
+    mlpf_results = {}
+    
+    if gatr_results_path is not None:
+        if not os.path.exists(gatr_results_path):
+            loggers["io"].error("GATr results path %s does not exist.", gatr_results_path)
+            sys.exit(1)
+        else:
+            loggers["io"].info("Using GATr results from %s", gatr_results_path)
+        # abrimos archivo configuracion yml
+        mlpf_config = pd.read_csv(gatr_results_path)
+        filenames = []
+        n_files = 0
+        n_preds = 1
+        for row in mlpf_config.iterrows():
+            mlpf_predictions_path = row[1]["prediction_file"]
+            simulation_path = row[1]["simulation_file"]
+            my_file = Path(simulation_path)
+            loggers["io"].debug("Reading file %s", simulation_path)
+            if my_file.is_file():
+                root_file = myutils.open_root_file(simulation_path)
+                if not root_file or root_file.IsZombie():
+                    loggers["io"].warning("File %s is a zombie or could not be opened.", simulation_path)
+                    continue
+                filenames.append(simulation_path)
+            
+            with open(mlpf_predictions_path, "rb") as f:
+                mlpf_preds_i = pickle.load(f)
+            
+            loggers["io"].debug("Read %d GATr results", len(mlpf_results))
+                
+            for key, value in mlpf_preds_i.items():
+                key_id = n_files*1000 + key - 1
+                mlpf_results[key_id] = value
+                n_preds += 1
+            n_files += 1
+
+        loggers["io"].info("Total predictions loaded: %d", n_preds)
+            
+    else:
+        # Simulation files
+        path = "/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
+        file = "out_reco_edm4hep_edm4hep"
+        filenames = []
+        dir_path = path + "/" + sample
+
+        nfiles = len(os.listdir(dir_path))
+
+        nfiles = 1000
+        if test == True:
+            nfiles = 1
+
+        loggers["io"].info("Reading files from %s", dir_path)
+        for i in range(1, nfiles + 1):
+            filename = dir_path + "/" + file + "_{}.root".format(i)
+            loggers["io"].debug("Reading file %s", filename)
+            my_file = Path(filename)
+            if my_file.is_file():
+                root_file = myutils.open_root_file(filename)
+                if not root_file or root_file.IsZombie():
+                    logger_io.warning("File %s is a zombie or could not be opened.", filename)
+                    continue
+                filenames.append(filename)
+    return filenames, mlpf_results

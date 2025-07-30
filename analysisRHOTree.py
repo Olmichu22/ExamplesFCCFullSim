@@ -2,7 +2,7 @@
 # Looks for MuTau / ETau combinations 
 # Then checks the tau polatization using the hadronic tau 
 
-
+import yaml
 import sys, os, math 
 from array import array
 import ROOT
@@ -42,7 +42,7 @@ sample=run_config["general"]["sample"]
 # POL="Test"
 
 fileOutName=os.path.join(general_configs["outputpath"], general_configs["fileOutName"])
-print("Output file name: ", fileOutName)
+loggers["io"].info("Output file name: %s", fileOutName)
 
 dRMax=run_config["cuts"]["dRMax"]
 photonPCut =run_config["cuts"]["TauPhotonPCut"]
@@ -80,7 +80,11 @@ if gatr_results_path is not None:
                 loggers["io"].warning("File %s is a zombie or could not be opened.", simulation_path)
                 continue
             filenames.append(simulation_path)
+        else:
+            loggers["io"].warning("File %s does not exist, skipping.", simulation_path)
+            # continue
         
+        print(filenames)
         with open(mlpf_predictions_path, "rb") as f:
             mlpf_preds_i = pickle.load(f)
         if len(mlpf_preds_i) != 1000:
@@ -106,7 +110,7 @@ else:
     nfiles = len(os.listdir(dir_path))
 
     nfiles = 1000
-    if test == True:
+    if general_configs["flags"]["test"] == True:
         nfiles = 2
 
     if gatr_results_path is not None:
@@ -124,6 +128,8 @@ else:
                 loggers["io"].warning("File %s is a zombie or could not be opened.", filename)
                 continue
             filenames.append(filename)
+            
+            
 reader = root_io.Reader(filenames)
 loggers["io"].info("Read %d files", len(filenames))
 loggers["io"].info("First %s files.", filenames[:10])
@@ -343,7 +349,7 @@ lumi=70*1000 # discuss this with Michele. Prob missing a factor 2
 xsecZtautau=1476.58 #pb , from https://fcc-physics-events.web.cern.ch/FCCee/delphes/winter2023/idea/ 
 weight=1#xsecZtautau/totalEvents 
 
-print ("Events? :", totalEvents," Xsec (pb) :",xsecZtautau," Weight : ",weight) 
+loggers["processing"].info(f"Events? {totalEvents}, Xsec (pb) : {xsecZtautau}, Weight : {weight}")
 
 totalEvents=0
 selectedEvents=0
@@ -831,11 +837,18 @@ for eventid, event in enumerate(reader.get("events")):
     hCosTheta_GEN_BG.Fill(gen_cos_theta,weight)
     hCosPsi_GEN_BG.Fill(gen_cos_psi,weight)
 
+output_config_file = general_configs["outputpath"] + "config.yaml"
+with open(output_config_file, "w") as file:
+    yaml.dump(general_configs["config"], file)
+    loggers["io"].info("Configuration file saved to %s", output_config_file)
 
 
 loggers["io"].info(f"Run over {totalEvents}, selected {selectedEvents}")#," ->",selectedEvents/totalEvents)
 loggers["io"].info(f"Weights? {sumWeights}, {sumWeightsP1}, {sumWeightsM1}")
 loggers["io"].info(f"Writing file {fileOutName}")
+
+
+  
 
 outfile.cd() # =ROOT.TFile(fileOutName,"RECREATE")
 

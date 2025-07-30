@@ -1,7 +1,7 @@
 cuts:
-  NeutronCut: 0.01
+  NeutronCut: 0
   TauPhotonPCut: 0.
-  TauPionPCut: 0.01
+  TauPionPCut: 0.
   dRMax: 0.4
   MatchedGenMinDR: 1
   generalPCut: 0.

@@ -1,310 +1,95 @@
-import sys, os, math
-from array import array
-import ROOT
-from ROOT import TFile, TTree, TH1F, TH2F
-import numpy as np
-from podio import root_io
-import edm4hep
-from pathlib import Path
-import pprint
-import yaml
-import pandas as pd
+import argparse
+import copy
+import logging
+import math
+import os
 import pickle
-from modules import ParticleObjects
+import pprint
+import sys
+from array import array
+from pathlib import Path
+
+import edm4hep
+import numpy as np
+import pandas as pd
+import ROOT
+import yaml
+from podio import root_io
+from ROOT import TH1F, TH2F, TFile, TTree
+
+from modules import (ParticleObjects, electronReco, muonReco, myutils, pi0Reco,
+                     tauReco)
 from modules.ParticleObjects import RecoParticle
 
-from modules import pi0Reco
-from modules import tauReco
-from modules import electronReco
-from modules import muonReco
-from modules import myutils
 
-import logging
-
-
-import argparse
-
-# ------------------------------------------------------------------------
-# Argument parser setup
-parser = argparse.ArgumentParser(
-    description="Configure the analysis",
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-)
-parser.add_argument("-f", "--sample")
-parser.add_argument("-o", "--outfile")
-parser.add_argument("-d", "--decay", type=int)  # GEN
-parser.add_argument(
-    "-p", "--TauPhotonPCut", type=float
-)  
-parser.add_argument("-i", "--TauPionPCut", type=float)
-parser.add_argument("-R", "--dRMax", type=float)
-parser.add_argument("-n", "--NeutronCut", type=float)
-parser.add_argument("-g", "--generalPCut", type=float)
-parser.add_argument("-r", "--MatchedGenMinDR", type=float)
-parser.add_argument(
-    "-m",
-    "--matchedCM",
-    default="True",
-    type=str,
-    help="Use only matched taus to compute confusion matrix.",
-)
-parser.add_argument(
-    "-t",
-    "--test",
-    type=str,
-    help="Run in test mode with limited number of files",
-)
-parser.add_argument(
-    "-c", "--config", type=str, help="Configuration file"
-)
-parser.add_argument(
-    "-v",
-    "--verbose",
-    action="count",
-    default=0,
-    help="Increase verbosity level: -v for INFO, -vv for DEBUG",
-)
-
-parser.add_argument(
-    "--gatr-result",
-    type=str,
-    help="Path to GATR result for the analysis.",
-)
-
-parser.add_argument(
-    "--test-pfo",
-    action="store_true",
-    help="Use this flag to test the PFOs in same files as GATr.")
-
-args = parser.parse_args()
+def write_histograms_recursive(obj):
+    """
+    Recorre un diccionario anidado y ejecuta `.Write()` en cada objeto tipo ROOT histogram.
+    """
+    if isinstance(obj, dict):
+        for value in obj.values():
+            write_histograms_recursive(value)
+    else:
+        # Si no es diccionario, asumimos que es un histograma de ROOT
+        try:
+            obj.Write()
+        except AttributeError:
+            print(f"Objeto {obj} no tiene método .Write(). Ignorado.")
 
 # ----------------------------------------------------------------------------
 # Load config (necessary for set up the logger)
 default_config = "config/default/taurecolong.yaml"
-config = myutils.load_yaml_config(args.config, default_config)
-
-
-# Cut Configuration
-config["cuts"]["dRMax"] = args.dRMax if args.dRMax != None else config["cuts"]["dRMax"]
-config["cuts"]["TauPhotonPCut"] = (
-    args.TauPhotonPCut
-    if args.TauPhotonPCut != None
-    else config["cuts"]["TauPhotonPCut"]
-)
-config["cuts"]["TauPionPCut"] = (
-    args.TauPionPCut if args.TauPionPCut != None else config["cuts"]["TauPionPCut"]
-)
-config["cuts"]["NeutronCut"] = (
-    args.NeutronCut if args.NeutronCut != None else config["cuts"]["NeutronCut"]
-)
-config["cuts"]["MatchedGenMinDR"] = (
-    args.MatchedGenMinDR
-    if args.MatchedGenMinDR != None
-    else config["cuts"]["MatchedGenMinDR"]
-)
-config["cuts"]["generalPCut"] = (
-    args.generalPCut if args.generalPCut != None else config["cuts"]["generalPCut"]
-)
-dRMax = config["cuts"]["dRMax"]
-minPTauPhoton = config["cuts"]["TauPhotonPCut"]
-minPTauPion = config["cuts"]["TauPionPCut"]
-PNeutron = config["cuts"]["NeutronCut"]
-dRMatch = config["cuts"]["MatchedGenMinDR"]
-generalPCut = config["cuts"]["generalPCut"]
-
-# We can use same config but different decay mode
-# Priority is given to the decay mode in the command line
-if args.decay not in config["general"]["decay"] and args.decay != None:
-    config["general"]["decay"].append(args.decay)
-    selectDecay = args.decay
-else:
-    selectDecay = args.decay if args.decay != None else config["general"]["decay"][0]
-
-config["general"]["outfile"] = (
-    args.outfile if args.outfile != None else config["general"]["outfile"]
-)
-outfile = config["general"]["outfile"]
-
-
 # Output Configuration
 outputbasepath = "Results/TauReco/"
 
-
-cut_string = f"_{dRMax}_tph{minPTauPhoton}_tpi{minPTauPion}_n{PNeutron}_g{generalPCut}"
-decayString = f"decay{selectDecay}" + cut_string
-if selectDecay == -777:
-    decayString = "decayAll" + cut_string
-fileOutName = outfile + decayString + ".root"
+general_configs = myutils.setup_analysis_config(default_config, outputbasepath)
 
 
-# Different output paths depending on the GATr result and test PFO
-if args.gatr_result is not None and args.test_pfo:
-    outputpath = outputbasepath + "PFO_"+ outfile + cut_string[1:] + "/"
-elif args.gatr_result is None and args.test_pfo:
-    logger_config.error("Cannot use --test-pfo without --gatr-result.")
-    raise ValueError("Cannot use --test-pfo without --gatr-result.")
-else:
-    outputpath = outputbasepath + outfile + cut_string[1:] + "/"
+loggers = general_configs["loggers"]
 
-if args.gatr_result is not None:
-    outputpath = "GATr_" + outputpath
+run_config = general_configs["config"]
 
-config["output"]["outputpath"] = outputpath
-# Check if config["output"]["outputfile"] is a list
-if type(config["output"]["outputfile"]) is not list:
-    if config["output"]["outputfile"] is None:
-        config["output"]["outputfile"] = []
-    else:
-        config["output"]["outputfile"] = [config["output"]["outputfile"]]
-
-if fileOutName not in config["output"]["outputfile"]:
-    config["output"]["outputfile"].append(fileOutName)
-
-if not os.path.exists(outputpath):
-    os.makedirs(outputpath)
-
-# ------------------------------------------------------------------------
-# Logging configuration
-# Once set the output path, we can set the logger
-if args.verbose == 0:
-    log_level = logging.WARNING  # Only warnings and errors
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(outputpath + "/" + "app.log", mode="w"),
-    ]
-elif args.verbose == 1:
-    log_level = logging.INFO  # Informational messages
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(outputpath + "/" + "app.log", mode="w"),
-    ]
-elif args.verbose == 2:
-    log_level = logging.DEBUG  # Debug messages for -vv or higher
-    # Crear handlers por separado para configurarlos individualmente
-    stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setLevel(logging.DEBUG)  # Terminal muestra DEBUG o superior
-    file_handler = logging.FileHandler(outputpath + "/" + "app.log", mode="w")
-    file_handler.setLevel(logging.DEBUG)   # Archivo guarda TODO (DEBUG y superior)
-    handlers=[stream_handler, file_handler]
-elif args.verbose > 2:
-    log_level = logging.DEBUG  # Debug messages for -vv or higher
-    handlers=[
-        logging.FileHandler(outputpath + "/" + "app.log", mode="w"),
-    ]
-    
+# config = myutils.load_yaml_config(args.config, default_config)
 
 
-logging.basicConfig(
-    level=log_level,
-    format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
-    handlers=handlers)
+# Cut Configuration
+dRMax=run_config["cuts"]["dRMax"]
+minPTauPhoton =run_config["cuts"]["TauPhotonPCut"]
+minPTauPion = run_config["cuts"]["TauPionPCut"]
+PNeutron = run_config["cuts"]["NeutronCut"]
+dRMatch = run_config["cuts"]["MatchedGenMinDR"]
+generalPCut = run_config["cuts"]["generalPCut"]
 
-logger_config = logging.getLogger("config")
-logger_io = logging.getLogger("io")
-logger_process = logging.getLogger("processing")
-logger_pi0mass = logging.getLogger("pi0mass")
+selectDecay=general_configs["decay"]
+
+outputpath = general_configs["outputpath"]
+fileOutName=os.path.join(general_configs["outputpath"], general_configs["fileOutName"])
+
+logger_config = loggers["config"]
+logger_io = loggers["io"]
+logger_process = loggers["processing"]
+logger_pi0mass = loggers["pi0mass"]
 
 
 # Continue with the rest of configs
 
 # ------------------------------------------------------------------------
 # General Configuration
-config["general"]["sample"] = (
-    args.sample if args.sample != None else config["general"]["sample"]
-)
-config["general"]["matchedCM"] = (
-    args.matchedCM if args.matchedCM != None else config["general"]["matchedCM"]
-)
-config["general"]["test"] = (
-    args.test if args.test != None else config["general"]["test"]
-)
-
-sample = config["general"]["sample"]
-matched_cm_arg = config["general"]["matchedCM"]
-matched_cm = True if matched_cm_arg == "True" else False
-test_arg = config["general"]["test"]
-test = True if test_arg == "True" else False
+sample=run_config["general"]["sample"]
+matched_cm_arg = general_configs["flags"]["matched_cm"]
+test_arg = general_configs["flags"]["test"]
 
 logger_config.info("Configuration loaded!")
-logger_config.info("Configuration:\n%s", pprint.pformat(config, indent=4))
-
+logger_config.info("Configuration:\n%s", pprint.pformat(general_configs, indent=4))
 
 
 # ------------------------------------------------------------------------
-# GATr reading config (if provided)
+gatr_results_path = general_configs["args"].gatr_result
 
-gatr_results_path = args.gatr_result
-
-if gatr_results_path is not None:
-    if not os.path.exists(gatr_results_path):
-        logger_io.error("GATr results path %s does not exist.", gatr_results_path)
-        sys.exit(1)
-    else:
-        logger_io.info("Using GATr results from %s", gatr_results_path)
-    # abrimos archivo configuracion yml
-    mlpf_config = pd.read_csv(gatr_results_path)
-    filenames = []
-    n_predictions = 0
-    mlpf_results = {}
-    for row in mlpf_config.iterrows():
-        mlpf_predictions_path = row[1]["prediction_file"]
-        simulation_path = row[1]["simulation_file"]
-        my_file = Path(simulation_path)
-        logger_io.debug("Reading file %s", simulation_path)
-        if my_file.is_file():
-            root_file = myutils.open_root_file(simulation_path)
-            if not root_file or root_file.IsZombie():
-                logger_io.warning("File %s is a zombie or could not be opened.", simulation_path)
-                continue
-            filenames.append(simulation_path)
-        
-        with open(mlpf_predictions_path, "rb") as f:
-            mlpf_preds_i = pickle.load(f)
-        if len(mlpf_preds_i) != 1000:
-            logger_io.warning("Expected 1000 predictions, but got %d", len(mlpf_preds_i))
-            logger_io.warning("File %s will be skipped.", simulation_path)
-            filenames.remove(simulation_path)
-            continue
-        logger_io.debug("Read %d GATr results", len(mlpf_preds_i))
-            
-        for key, value in mlpf_preds_i.items():
-            mlpf_results[n_predictions] = value
-            n_predictions += 1
-            
-    logger_io.info("Total predictions loaded: %d", n_predictions)
-        
-else:
-    # Simulation files
-    path = "/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
-    file = "out_reco_edm4hep_edm4hep"
-    filenames = []
-    dir_path = path + "/" + sample
-
-    nfiles = len(os.listdir(dir_path))
-
-    nfiles = 1000
-    if test == True:
-        nfiles = 2
-
-    if gatr_results_path is not None:
-        print(len(gatr_results))
-        nfiles = len(gatr_results)//1000
-
-    logger_io.info("Reading files from %s", dir_path)
-    for i in range(1, nfiles + 1):
-        filename = dir_path + "/" + file + "_{}.root".format(i)
-        logger_io.debug("Reading file %s", filename)
-        my_file = Path(filename)
-        if my_file.is_file():
-            root_file = myutils.open_root_file(filename)
-            if not root_file or root_file.IsZombie():
-                logger_io.warning("File %s is a zombie or could not be opened.", filename)
-                continue
-            filenames.append(filename)
+filenames, mlpf_results = myutils.get_root_trees_path(sample, gatr_results_path, loggers, test_arg)
 reader = root_io.Reader(filenames)
 logger_io.info("Read %d files", len(filenames))
 logger_io.info("First %s files.", filenames[:10]) 
-
 
 # Configs and reading finished
 # ----------------------------------------------------------------------
@@ -317,146 +102,154 @@ pfobjects = "PandoraPFOs"
 
 # ----------------------------------------------------------------------
 # Generation Tau Level Histograms
+histogram_type = {"Effi":{}, "Events":{}, "Resolution":{}}
+root_histograms = {"Gen":copy.deepcopy(histogram_type),
+                   "Matched":copy.deepcopy(histogram_type),
+                   "Reco":copy.deepcopy(histogram_type),
+                   "GenVSReco":copy.deepcopy(histogram_type)}
+
 
 # Momentum
-hGenTauPt = TH1F("histoGenTauPt", "", 250, 0, 50)
-hGenVisTauPt = TH1F("histoGenTauVisPt", "", 250, 0, 50)
-hGenTauP = TH1F("histoGenTauP", "", 250, 0, 50)
-hGenHadronP = TH1F("histoGenHadronP", "", 12, 0, 50)
-hGenVisTauP = TH1F("histoGenTauVisP", "", 250, 0, 50)
+root_histograms["Gen"]["Events"]["TauPt"] = TH1F("histoGenTauPt", "", 250, 0, 50)
+root_histograms["Gen"]["Events"]["TauVisPt"] = TH1F("histoGenTauVisPt", "", 250, 0, 50)
+root_histograms["Gen"]["Events"]["TauP"] = TH1F("histoGenTauP", "", 250, 0, 50) 
+root_histograms["Gen"]["Events"]["HadronTauP"] = TH1F("histoGenHadronTauP", "", 12, 0, 50)
+root_histograms["Gen"]["Events"]["TauVisP"] = TH1F("histoGenTauVisP", "", 250, 0, 50)
 
 # Decay Type
-hGenTauType = TH1F("histoGenTauType", "", 21, -1, 20)
+root_histograms["Gen"]["Events"]["TauType"] = TH1F("histoGenTauType", "", 21, -1, 20)
 
 # Mass and Charge
-hGenVisTauMass = TH1F("histoGenTauVisMass", "", 500, 0, 10)
-hGenTauQ = TH1F("histoGenTauQ", "", 3, -1.5, 1.5)
+root_histograms["Gen"]["Events"]["TauVisMass"] = TH1F("histoGenTauVisMass", "", 500, 0, 10)
+root_histograms["Gen"]["Events"]["TauQ"] = TH1F("histoGenTauQ", "", 3, -1.5, 1.5)
 
 # Angles
-hGenTauEta = TH1F("histoGenTauEta", "", 100, -5, 5)
-hGenTauTheta = TH1F("histoGenTauTheta", "", 100, 0, 3.15)
-hGenTauDR = TH1F("histoGenTauDR", "Angle of Tau Constituents", 100, 0, 1)
+root_histograms["Gen"]["Events"]["TauEta"] = TH1F("histoGenTauEta", "", 100, -5, 5)
+root_histograms["Gen"]["Events"]["TauTheta"] = TH1F("histoGenTauTheta", "", 100, 0, 3.15)
+root_histograms["Gen"]["Events"]["TauDR"] = TH1F("histoGenTauDR", "Angle of Tau Constituents", 100, 0, 1)
 
+root_histograms["Gen"]["Events"]["ConstPi0Mass"] = TH1F("hGenConstPi0Mass", "", 100, 0, 0.5)
 # Matched Generation Tau Level Histograms
 # Momentum
-hMatchedGenTauP = TH1F("histoMatchedGenTauP", "", 250, 0, 50)
-hMatchedGenVisTauP = TH1F("histoMatchedGenTauVisP", "", 250, 0, 50)
-hMatchedGenTauPt = TH1F("histoMatchedGenTauPt", "", 250, 0, 50)
-hMatchedGenVisTauPt = TH1F("histoMatchedGenTauVisPt", "", 250, 0, 50)
-hMatchedGenHadronTauP = TH1F("histoMatchedGenHadronTauP", "", 12, 0, 50)
+root_histograms["Matched"]["Events"]["TauP"] = TH1F("histoMatchedGenTauP", "", 250, 0, 50)
+root_histograms["Matched"]["Events"]["TauVisP"] = TH1F("histoMatchedGenTauVisP", "", 250, 0, 50)
+root_histograms["Matched"]["Events"]["TauPt"] = TH1F("histoMatchedGenTauPt", "", 250, 0, 50)
+root_histograms["Matched"]["Events"]["TauVisPt"] = TH1F("histoMatchedGenTauVisPt", "", 250, 0, 50)
+root_histograms["Matched"]["Events"]["HadronTauP"] = TH1F("histoMatchedGenHadronTauP", "", 12, 0, 50)
 
 # Decay Type
-hMatchedGenTauType = TH1F("histoMatchedGenTauType", "", 21, -1, 20)
+root_histograms["Matched"]["Events"]["TauType"] = TH1F("histoMatchedGenTauType", "", 21, -1, 20)
 
 # Mass and Charge
-hMatchedGenVisTauMass = TH1F("histoMatchedGenTauVisMass", "", 500, 0, 10)
-hMatchedGenTauQ = TH1F("histoMatchedGenTauQ", "", 3, -1.5, 1.5)
+root_histograms["Matched"]["Events"]["TauVisMass"] = TH1F("histoMatchedGenTauVisMass", "", 500, 0, 10)
+root_histograms["Matched"]["Events"]["TauQ"] = TH1F("histoMatchedGenTauQ", "", 3, -1.5, 1.5)
 
 # Angles
-hMatchedGenTauEta = TH1F("histoMatchedGenTauEta", "", 100, -5, 5)
-hMatchedGenTauTheta = TH1F("histoMatchedGenTauTheta", "", 100, 0, 3.15)
-hMatchedGenTauDR = TH1F("histoMatchedGenTauDR", "Angle of Tau Constituents", 100, 0, 1)
+root_histograms["Matched"]["Events"]["TauEta"] = TH1F("histoMatchedGenTauEta", "", 100, -5, 5)
+root_histograms["Matched"]["Events"]["TauTheta"] = TH1F("histoMatchedGenTauTheta", "", 100, 0, 3.15)
+root_histograms["Matched"]["Events"]["TauDR"] = TH1F("histoMatchedGenTauDR", "", 100, 0, 1)
+
+
+root_histograms["Matched"]["Events"]["ConstPi0Mass"] = TH1F("hMatchedConstPi0Mass", "", 100, 0, 0.5)
 
 
 # ----------------------------------------------------------------------
 # Reconstructed Tau Level Histograms
-hRecoTauPt = TH1F("histoRecoTauPt", "", 250, 0, 50)
-hRecoTauP = TH1F("histoRecoTauP", "", 250, 0, 50)
+root_histograms["Reco"]["Events"]["TauPt"] = TH1F("histoRecoTauPt", "", 250, 0, 50)
+root_histograms["Reco"]["Events"]["TauP"] = TH1F("histoRecoTauP", "", 250, 0, 50)
 
-hRecoTauMass = TH1F("histoRecoTauMass", "", 500, 0, 10)
-hRecoTauType = TH1F("histoRecoTauType", "", 21, -1, 20)
-hRecoTauQ = TH1F("histoRecoTauQ", "", 3, -1.5, 1.5)
-hRecoTauEta = TH1F("histoRecoTauEta", "", 100, -5, 5)
-hRecoTauTheta = TH1F("histoRecoTauTheta", "", 100, 0, 3.15)
-hRecoTauDR = TH1F("histoRecoTauDR", "Angle of Tau Constituents", 100, 0, 1)
-
-
-hRecoConstPi0Mass = TH1F("hRecoConstPi0Mass", "", 100, 0, 0.5)
-hRecoConstTwoPhotonAngDist = TH1F("hRecoConstTwoPhotonAngDist", "", 100, 0, 2)
-
-hRecoConstPi0MassFromPhotonMasstr = TH1F("hRecoConstPi0MassFromPhotonMasstr", "", 100, 0, 0.5)
-hRecoConstPi0MassFromPhotonDiststr = TH1F("hRecoConstPi0MassFromPhotonDiststr", "", 100, 0, 0.5)
+root_histograms["Reco"]["Events"]["TauMass"] = TH1F("histoRecoTauMass", "", 500, 0, 10)
+root_histograms["Reco"]["Events"]["TauType"] = TH1F("histoRecoTauType", "", 21, -1, 20)
+root_histograms["Reco"]["Events"]["TauQ"] = TH1F("histoRecoTauQ", "", 3, -1.5, 1.5)
+root_histograms["Reco"]["Events"]["TauEta"] = TH1F("histoRecoTauEta", "", 100, -5, 5)
+root_histograms["Reco"]["Events"]["TauTheta"] = TH1F("histoRecoTauTheta", "", 100, 0, 3.15)
+root_histograms["Reco"]["Events"]["TauDR"] = TH1F("histoRecoTauDR", "Angle of Tau Constituents", 100, 0, 1)
 
 
-hGenConstPi0Mass = TH1F("hGenConstPi0Mass", "", 100, 0, 0.5)
-hMatchedGenConstPi0Mass = TH1F("hMatchedConstPi0Mass", "", 100, 0, 0.5)
-h2DPi0MassOverNPhoton = TH2F("hRecoPi0MassOverNPhoton", "", 100, 0, 2, 20, 0, 20)
+root_histograms["Reco"]["Events"]["ConstPi0Mass"] = TH1F("hRecoConstPi0Mass", "", 100, 0, 0.5)
+root_histograms["Reco"]["Events"]["ConstTwoPhotonAngDist"] = TH1F("hRecoConstTwoPhotonAngDist", "", 100, 0, 2)
+
+root_histograms["Reco"]["Events"]["ConstPi0MassFromPhotonMass"] = TH1F("hRecoConstPi0MassFromPhotonMass", "", 100, 0, 0.5)
+root_histograms["Reco"]["Events"]["ConstPi0MassFromPhotonDist"] = TH1F("hRecoConstPi0MassFromPhotonDist", "", 100, 0, 0.5)
+
+
+root_histograms["Reco"]["Events"]["Pi0MassOverNPhoton"] = TH2F("hRecoPi0MassOverNPhoton", "", 100, 0, 2, 20, 0, 20)
 
 # Hist for reconstructed photons in a1 (pi pi0 pi0), rho (pi0 pi0), and pi cases
 # 3 photon cases
-hRecoConstlessPhotonPa1strMass = TH1F("hRecoConstlessPhotonPa1strMass", "", 100, 0, 50)
-hRecoConstlessPhotonPa1strMassZoom = TH1F("hRecoConstlessPhotonPa1strMassZoom", "", 100, 0, 2)
-hRecoConstlessPhotonPa1strDist = TH1F("hRecoConstlessPhotonPa1strDist", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ConstlessPhotonPa1strMass"] = TH1F("hRecoConstlessPhotonPa1strMass", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ConstlessPhotonPa1strMassZoom"] = TH1F("hRecoConstlessPhotonPa1strMassZoom", "", 100, 0, 2)
+root_histograms["Reco"]["Events"]["ConstlessPhotonPa1strDist"] = TH1F("hRecoConstlessPhotonPa1strDist", "", 100, 0, 50)
 
-hRecoConstxtraPhotonPrhostrMass = TH1F("hRecoConstxtraPhotonPrhostrMass", "", 100, 0, 50)
-hRecoConstxtraPhotonPrhostrMassZoom = TH1F("hRecoConstxtraPhotonPrhostrMassZoom", "", 100, 0, 2)
-hRecoConstxtraPhotonPrhostrDist = TH1F("hRecoConstxtraPhotonPrhostrDist", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ConstxtraPhotonPrhostrMass"] = TH1F("hRecoConstxtraPhotonPrhostrMass", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ConstxtraPhotonPrhostrMassZoom"] = TH1F("hRecoConstxtraPhotonPrhostrMassZoom", "", 100, 0, 2)
+root_histograms["Reco"]["Events"]["ConstxtraPhotonPrhostrDist"] = TH1F("hRecoConstxtraPhotonPrhostrDist", "", 100, 0, 50)
 
 # 1 photon cases
-hRecoConstlessPhotonPrho = TH1F("hRecoConstlessPhotonPrho", "", 100, 0, 50)
-hRecoConstxtraPhotonPi = TH1F("hRecoConstxtraPhotonPi", "", 100, 0, 50)
-hRecoConstlessPhotonPrhoZoom = TH1F("hRecoConstlessPhotonPrhoZoom", "", 100, 0, 2)
-hRecoConstxtraPhotonPiZoom = TH1F("hRecoConstxtraPhotonPiZoom", "", 100, 0, 2)
+root_histograms["Reco"]["Events"]["ConstlessPhotonPrho"] = TH1F("hRecoConstlessPhotonPrho", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ConstxtraPhotonPi"] = TH1F("hRecoConstxtraPhotonPi", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ConstlessPhotonPrhoZoom"] = TH1F("hRecoConstlessPhotonPrhoZoom", "", 100, 0, 2)
+root_histograms["Reco"]["Events"]["ConstxtraPhotonPiZoom"] = TH1F("hRecoConstxtraPhotonPiZoom", "", 100, 0, 2)
 
 
 # Photon P in the 3 photon case
-hRecoThreePhotonMatchOnestrMassP = TH1F("hRecoThreePhotonMatchOnestrMassP", "", 100, 0, 50)
-hRecoThreePhotonMatchOnestrDistP = TH1F("hRecoThreePhotonMatchOnestrDistP", "", 100, 0, 50)
-hRecoThreePhotonMatchTwostrMassP = TH1F("hRecoThreePhotonMatchTwostrMassP", "", 100, 0, 50)
-hRecoThreePhotonMatchTwostrDistP = TH1F("hRecoThreePhotonMatchTwostrDistP", "", 100, 0, 50)
-hRecoThreePhotonNoMatchstrMassP = TH1F("hRecoThreePhotonNoMatchstrMassP", "", 100, 0, 50)
-hRecoThreePhotonNoMatchstrDistP = TH1F("hRecoThreePhotonNoMatchstrDistP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ThreePhotonMatchOnestrMassP"] = TH1F("hRecoThreePhotonMatchOnestrMassP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ThreePhotonMatchOnestrDistP"] = TH1F("hRecoThreePhotonMatchOnestrDistP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ThreePhotonMatchTwostrMassP"] = TH1F("hRecoThreePhotonMatchTwostrMassP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ThreePhotonMatchTwostrDistP"] = TH1F("hRecoThreePhotonMatchTwostrDistP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ThreePhotonNoMatchstrMassP"] = TH1F("hRecoThreePhotonNoMatchstrMassP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["ThreePhotonNoMatchstrDistP"] = TH1F("hRecoThreePhotonNoMatchstrDistP", "", 100, 0, 50)
 
 
 #  Rho decay Pi P
-hRecoRhoPiDecayP = TH1F("hRecoRhoPiDecayP", "", 100, 0, 50)
-hGenRhoPiDecayP = TH1F("hGenRhoPiDecayP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["RhoPiDecayP"] = TH1F("hRecoRhoPiDecayP", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["RhoPiDecayP"] = TH1F("hGenRhoPiDecayP", "", 100, 0, 50)
 # Rho decay two photons case P
-hRecoRhoTwoPhotonDecayP = TH1F("hRecoRhoTwoPhotonDecayP", "", 100, 0, 50)
-hGenRhoTwoPhotonDecayP = TH1F("hGenRhoTwoPhotonDecayP", "", 100, 0, 50)
-hRecoRhoTwoPhotonDecaySumP = TH1F("hRecoRhoTwoPhotonDecaySumP", "", 100, 0, 50)
-hGenRhoTwoPhotonDecaySumP = TH1F("hGenRhoTwoPhotonDecaySumP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["RhoTwoPhotonDecayP"] = TH1F("hRecoRhoTwoPhotonDecayP", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["RhoTwoPhotonDecayP"] = TH1F("hGenRhoTwoPhotonDecayP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["RhoTwoPhotonDecaySumP"] = TH1F("hRecoRhoTwoPhotonDecaySumP", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["RhoTwoPhotonDecaySumP"] = TH1F("hGenRhoTwoPhotonDecaySumP", "", 100, 0, 50)
 # Hist of pi P vs sum of photons P
 
-h2DRecoRhoTwoPhotonDecayPiPhotonSumP = TH2F("h2DRecoRhoTwoPhotonDecayPiPhotonSumP", "", 100, 0, 50, 100, 0, 50)
-h2DGenRhoTwoPhotonDecayPiPhotonSumP = TH2F("h2DGenRhoTwoPhotonDecayPiPhotonSumP", "", 100, 0, 50, 100, 0, 50)
+root_histograms["Reco"]["Events"]["RhoTwoPhotonDecayPiPhotonSumP"] = TH2F("h2DRecoRhoTwoPhotonDecayPiPhotonSumP", "", 100, 0, 50, 100, 0, 50)
+root_histograms["Gen"]["Events"]["RhoTwoPhotonDecayPiPhotonSumP"] = TH2F("h2DGenRhoTwoPhotonDecayPiPhotonSumP", "", 100, 0, 50, 100, 0, 50)
 
 # Rho False decay (one photon)
-hRecoRhoOnePhotonDecayPiP = TH1F("hRecoRhoOnePhotonDecayPiP", "", 100, 0, 50)
-hGenRhoOnePhotonDecayPiP = TH1F("hGenRhoOnePhotonDecayPiP", "", 100, 0, 50)
-hRecoRhoOnePhotonDecayPhotonP = TH1F("hRecoRhoOnePhotonDecayPhotonP", "", 100, 0, 50)
-hGenRhoOnePhotonDecayPhotonP = TH1F("hGenRhoOnePhotonDecayPhotonP", "", 100, 0, 50)
-hGenRhoOnePhotonDecayPhotonSumP = TH1F("hGenRhoOnePhotonDecayPhotonSumP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["RhoOnePhotonDecayPiP"] = TH1F("hRecoRhoOnePhotonDecayPiP", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["RhoOnePhotonDecayPiP"] = TH1F("hGenRhoOnePhotonDecayPiP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["RhoOnePhotonDecayPhotonP"] = TH1F("hRecoRhoOnePhotonDecayPhotonP", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["RhoOnePhotonDecayPhotonP"] = TH1F("hGenRhoOnePhotonDecayPhotonP", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["RhoOnePhotonDecayPhotonSumP"] = TH1F("hGenRhoOnePhotonDecayPhotonSumP", "", 100, 0, 50)
 # Angle between the photons at gen level
-hGenRhoOnePhotonDecayPhotonAng = TH1F("hGenRhoOnePhotonDecayPhotonAng", "", 100, 0, 2)
+root_histograms["Gen"]["Events"]["RhoOnePhotonDecayPhotonAng"] = TH1F("hGenRhoOnePhotonDecayPhotonAng", "", 100, 0, 2)
 # Hist of pi P vs photon P at reco level:
-h2DRecoRhoOnePhotonDecayPiPhotonP = TH2F("h2DRecoRhoOnePhotonDecayPiPhotonP", "",100, 0, 50, 100, 0, 50)
+root_histograms["Reco"]["Events"]["RhoOnePhotonDecayPiPhotonP"] = TH2F("h2DRecoRhoOnePhotonDecayPiPhotonP", "",100, 0, 50, 100, 0, 50)
 # Hist of pi P vs photon P at gen level:
-h2DGenRhoOnePhotonDecayPiPhotonSumP = TH2F("h2DGenRhoOnePhotonDecayPiPhotonSumP", "",100, 0, 50, 100, 0, 50)
-h2DPionPid = TH2F("histo2DPionPid", "", 100, 0, 50, 40, -20, 20)
+root_histograms["Gen"]["Events"]["RhoOnePhotonDecayPiPhotonSumP"] = TH2F("h2DGenRhoOnePhotonDecayPiPhotonSumP", "",100, 0, 50, 100, 0, 50)
+root_histograms["Gen"]["Events"]["PionPid"] = TH2F("histo2DPionPid", "", 100, 0, 50, 40, -20, 20)
 
 
-h2DTauPt = TH2F("histo2DTauPt", "", 250, 0, 50, 250, 0, 50)
-h2DTauP = TH2F("histo2DTauP", "", 250, 0, 50, 250, 0, 50)
-h2DTauDR = TH2F("histo2DTauDR", "", 100, 0, 1, 100, 0, 1)
-h2DTauMass = TH2F("histo2DTauMass", "", 500, 0, 10, 500, 0, 10)
-h2DTauType = TH2F("histo2DTauType", "", 21, -1, 20, 21, -1, 20)
-h2DTauQ = TH2F("histo2DTauQ", "", 4, -2, 2, 4, -2, 2)
+root_histograms["GenVSReco"]["Events"]["TauPt"] = TH2F("histo2DTauPt", "", 250, 0, 50, 250, 0, 50)
+root_histograms["GenVSReco"]["Events"]["TauP"] = TH2F("histo2DTauP", "", 250, 0, 50, 250, 0, 50)
+root_histograms["GenVSReco"]["Events"]["TauDR"] = TH2F("histo2DTauDR", "", 100, 0, 1, 100, 0, 1)
+root_histograms["GenVSReco"]["Events"]["TauMass"] = TH2F("histo2DTauMass", "", 500, 0, 10, 500, 0, 10)
+root_histograms["GenVSReco"]["Events"]["TauType"] = TH2F("histo2DTauType", "", 21, -1, 20, 21, -1, 20)
+root_histograms["GenVSReco"]["Events"]["TauQ"] = TH2F("histo2DTauQ", "", 4, -2, 2, 4, -2, 2)
 
-hResTauPt = TH1F("histoResTauPt", "", 500, -1, 1)
-hResTauP = TH1F("histoResTauP", "", 500, -1, 1)
-hResTauMass = TH1F("histoResTauMass", "", 500, -1, 1)
+root_histograms["Reco"]["Resolution"]["TauPt"] = TH1F("histoResTauPt", "", 500, -1, 1)
+root_histograms["Reco"]["Resolution"]["TauP"] = TH1F("histoResTauP", "", 500, -1, 1)
+root_histograms["Reco"]["Resolution"]["TauMass"] = TH1F("histoResTauMass", "", 500, -1, 1)
 
-hNTaus = TH1F("histoNTaus", "", 6, 0, 6)
-hNGenTaus = TH1F("histoNGenTaus", "", 6, 0, 6)
-hNTausType = TH1F("histoNTausType", "", 6, 0, 6)
-hNGenTausType = TH1F("histoNGenTausType", "", 6, 0, 6)
+root_histograms["Reco"]["Events"]["NTaus"] = TH1F("histoNTaus", "", 6, 0, 6)
+root_histograms["Gen"]["Events"]["NTaus"] = TH1F("histoNGenTaus", "", 6, 0, 6)
+root_histograms["Reco"]["Events"]["NTausType"] = TH1F("histoNTausType", "", 6, 0, 6)
+root_histograms["Gen"]["Events"]["NTausType"] = TH1F("histoNGenTausType", "", 6, 0, 6)
 
-hMatchedTausPRes = TH1F("histoMatchedTausPRes", "", 500, -1, 1)
-hMatchedTausPtRes = TH1F("histoMatchedTausPtRes", "", 500, -1, 1)
-hMatchedTausChargeRes = TH1F("histoMatchedTausChargeRes", "", 500, -1, 1)
-hMatchedTausMaxAngleRes = TH1F("histoMatchedTausMaxAngleRes", "", 500, -1, 1)
-hMatchedTausNCompRes = TH1F("histoMatchedTausNCompRes", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauP"] = TH1F("histoMatchedTausPRes", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauPt"] = TH1F("histoMatchedTausPtRes", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauCharge"] = TH1F("histoMatchedTausChargeRes", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauMaxAngle"] = TH1F("histoMatchedTausMaxAngleRes", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauNComp"] = TH1F("histoMatchedTausNCompRes", "", 500, -1, 1)
 
 true_predicted_label = {"GenID": [], "True": [], "Predicted": [], "PhotonPredicted": [],
                         "Countpions":[],"Countphotons": [], "Countneutrons": []}
@@ -466,111 +259,111 @@ countEvents = 0
 
 # Results plots
 # Theta
-hGenTauTheta0 = TH1F("histoGenTauTheta0", "", 100, 0, 3.15)
-hGenTauTheta1 = TH1F("histoGenTauTheta1", "", 100, 0, 3.15)
-hGenTauTheta2 = TH1F("histoGenTauTheta2", "", 100, 0, 3.15)
-hGenTauTheta10 = TH1F("histoGenTauTheta10", "", 100, 0, 3.15)
-hMatchedGenTauTheta0 = TH1F("histoMatchedGenTauTheta0", "", 100, 0, 3.15)
-hMatchedGenTauTheta1 = TH1F("histoMatchedGenTauTheta1", "", 100, 0, 3.15)
-hMatchedGenTauTheta2 = TH1F("histoMatchedGenTauTheta2", "", 100, 0, 3.15)
-hMatchedGenTauTheta10 = TH1F("histoMatchedGenTauTheta10", "", 100, 0, 3.15)
-hRecoTauTheta0 = TH1F("histoRecoTauTheta0", "", 100, 0, 3.15)
-hRecoTauTheta1 = TH1F("histoRecoTauTheta1", "", 100, 0, 3.15)
-hRecoTauTheta2 = TH1F("histoRecoTauTheta2", "", 100, 0, 3.15)
-hRecoTauTheta10 = TH1F("histoRecoTauTheta10", "", 100, 0, 3.15)
+root_histograms["Gen"]["Events"]["TauTheta0"] = TH1F("histoGenTauTheta0", "", 100, 0, 3.15)
+root_histograms["Gen"]["Events"]["TauTheta1"] = TH1F("histoGenTauTheta1", "", 100, 0, 3.15)
+root_histograms["Gen"]["Events"]["TauTheta2"] = TH1F("histoGenTauTheta2", "", 100, 0, 3.15)
+root_histograms["Gen"]["Events"]["TauTheta10"] = TH1F("histoGenTauTheta10", "", 100, 0, 3.15)
+root_histograms["Matched"]["Events"]["TauTheta0"] = TH1F("histoMatchedGenTauTheta0", "", 100, 0, 3.15)
+root_histograms["Matched"]["Events"]["TauTheta1"] = TH1F("histoMatchedGenTauTheta1", "", 100, 0, 3.15)
+root_histograms["Matched"]["Events"]["TauTheta2"] = TH1F("histoMatchedGenTauTheta2", "", 100, 0, 3.15)
+root_histograms["Matched"]["Events"]["TauTheta10"] = TH1F("histoMatchedGenTauTheta10", "", 100, 0, 3.15)
+root_histograms["Reco"]["Events"]["TauTheta0"] = TH1F("histoRecoTauTheta0", "", 100, 0, 3.15)
+root_histograms["Reco"]["Events"]["TauTheta1"] = TH1F("histoRecoTauTheta1", "", 100, 0, 3.15)
+root_histograms["Reco"]["Events"]["TauTheta2"] = TH1F("histoRecoTauTheta2", "", 100, 0, 3.15)
+root_histograms["Reco"]["Events"]["TauTheta10"] = TH1F("histoRecoTauTheta10", "", 100, 0, 3.15)
 
-hTauThetaRes0 = TH1F("histoTauThetaRes0", "", 500, -1, 1)
-hTauThetaRes1 = TH1F("histoTauThetaRes1", "", 500, -1, 1)
-hTauThetaRes2 = TH1F("histoTauThetaRes2", "", 500, -1, 1)
-hTauThetaRes10 = TH1F("histoTauThetaRes10", "", 500, -1, 1)
+root_histograms["Reco"]["Resolution"]["TauTheta0"] = TH1F("histoTauThetaRes0", "", 500, -1, 1)
+root_histograms["Reco"]["Resolution"]["TauTheta1"] = TH1F("histoTauThetaRes1", "", 500, -1, 1)
+root_histograms["Reco"]["Resolution"]["TauTheta2"] = TH1F("histoTauThetaRes2", "", 500, -1, 1)
+root_histograms["Reco"]["Resolution"]["TauTheta10"] = TH1F("histoTauThetaRes10", "", 500, -1, 1)
 
-hMatchedTauThetaRes0 = TH1F("histoMatchedTauThetaRes0", "", 500, -1, 1)
-hMatchedTauThetaRes1 = TH1F("histoMatchedTauThetaRes1", "", 500, -1, 1)
-hMatchedTauThetaRes2 = TH1F("histoMatchedTauThetaRes2", "", 500, -1, 1)
-hMatchedTauThetaRes10 = TH1F("histoMatchedTauThetaRes10", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauTheta0"] = TH1F("histoMatchedTauThetaRes0", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauTheta1"] = TH1F("histoMatchedTauThetaRes1", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauTheta2"] = TH1F("histoMatchedTauThetaRes2", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauTheta10"] = TH1F("histoMatchedTauThetaRes10", "", 500, -1, 1)
 
 # Neutral Hadrons
-hRecoNeutralHadronP = TH1F("histoRecoNeutralHadronP", "", 100, 0, 50)
-hRecoNeutralHadronTauP = TH1F("histoRecoNeutralHadronTauP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["NeutralHadronP"] = TH1F("histoRecoNeutralHadronP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["NeutralHadronTauP"] = TH1F("histoRecoNeutralHadronTauP", "", 100, 0, 50)
 # Photons and Pions
 # Theta
-hGenPhotonTheta = TH1F("histoGenPhotonTheta", "", 100, 0, 3.15)
-hMatchedGenPhotonTheta = TH1F("histoMatchedGenPhotonTheta", "", 100, 0, 3.15)
-hGenPionTheta = TH1F("histoGenPionTheta", "", 100, 0, 3.15)
-hMatchedGenPionTheta = TH1F("histoMatchedGenPionTheta", "", 100, 0, 3.15)
+root_histograms["Gen"]["Events"]["PhotonTheta"] = TH1F("histoGenPhotonTheta", "", 100, 0, 3.15)
+root_histograms["Matched"]["Events"]["PhotonTheta"] = TH1F("histoMatchedGenPhotonTheta", "", 100, 0, 3.15)
+root_histograms["Gen"]["Events"]["PionTheta"] = TH1F("histoGenPionTheta", "", 100, 0, 3.15)
+root_histograms["Matched"]["Events"]["PionTheta"] = TH1F("histoMatchedGenPionTheta", "", 100, 0, 3.15)
 
 
-hRecoPhotonTheta = TH1F("histoRecoPhotonTheta", "", 100, 0, 3.15)
-hRecoPionTheta = TH1F("histoRecoPionTheta", "", 100, 0, 3.15)
+root_histograms["Reco"]["Events"]["PhotonTheta"] = TH1F("histoRecoPhotonTheta", "", 100, 0, 3.15)
+root_histograms["Reco"]["Events"]["PionTheta"] = TH1F("histoRecoPionTheta", "", 100, 0, 3.15)
 
 # Matched pions gen level (2d)
-hMatchedPionsP = TH2F("hMatchedPionsP", "", 100, 0, 50, 100, 0, 50)
+root_histograms["Matched"]["Events"]["PionsP"] = TH2F("hMatchedPionsP", "", 100, 0, 50, 100, 0, 50)
 # Unmatched pions gen level (hist)
-hGenAllPionsP = TH1F("hGenAllPionsP", "", 100, 0, 50)
-hMatchedAllPionsP = TH1F("hMatchedAllPionsP", "", 100, 0, 50)
-hGenAllPionsTheta = TH1F("hGenAllPionsTheta", "", 100, 0, 3.15)
-hMatchedAllPionsTheta = TH1F("hMatchedAllPionsTheta", "", 100, 0, 3.15)
+root_histograms["Gen"]["Events"]["AllPionsP"] = TH1F("hGenAllPionsP", "", 100, 0, 50)
+root_histograms["Matched"]["Events"]["AllPionsP"] = TH1F("hMatchedAllPionsP", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["AllPionsTheta"] = TH1F("hGenAllPionsTheta", "", 100, 0, 3.15)
+root_histograms["Matched"]["Events"]["AllPionsTheta"] = TH1F("hMatchedAllPionsTheta", "", 100, 0, 3.15)
 
-hGenAllPionsThetaCut = TH1F("histoGenAllPionsThetaCut", "", 100, 0, 3.15)
-hMatchedAllGenPionThetaCut = TH1F("histoMatchedAllPionsPionThetaCut", "", 100, 0, 3.15)
-hGenAllPionsPCut = TH1F("hGenAllPionsPCut", "", 100, 0, 50)
-hMatchedAllPionsPCut = TH1F("hMatchedAllPionsPCut", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["AllPionsPCut"] = TH1F("hGenAllPionsPCut", "", 100, 0, 50)
+root_histograms["Matched"]["Events"]["AllPionsPCut"] = TH1F("hMatchedAllPionsPCut", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["AllPionsThetaCut"] = TH1F("histoGenAllPionsThetaCut", "", 100, 0, 3.15)
+root_histograms["Matched"]["Events"]["AllPionsThetaCut"] = TH1F("histoMatchedAllPionsThetaCut", "", 100, 0, 3.15)
 
-hUnmatchedGenPionsP = TH1F("hUnmatchedGenPionP", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["UnmatchedPionsP"] = TH1F("hUnmatchedGenPionP", "", 100, 0, 50)
 # Unmatched pions reco level (hist)
-hUnmatchedRecoPionsP = TH1F("hUnmatchedRecoPionsP", "", 100, 0, 50)
-hMatchedPionsTheta = TH2F("hMatchedPionsTheta", "", 100, 0, 3.15, 100, 0, 3.15)
-hUnmatchedGenPionsTheta = TH1F("hUnmatchedPionsTheta", "", 100, 0, 3.15)
-hUnmatchedRecoPionsTheta = TH1F("hUnmatchedRecoPionsTheta", "", 100, 0, 3.15)
+root_histograms["Reco"]["Events"]["UnmatchedPionsP"] = TH1F("hUnmatchedRecoPionsP", "", 100, 0, 50)
+root_histograms["Matched"]["Events"]["PionsTheta"] = TH2F("hMatchedPionsTheta", "", 100, 0, 3.15, 100, 0, 3.15)
+root_histograms["Gen"]["Events"]["UnmatchedPionsTheta"] = TH1F("hUnmatchedPionsTheta", "", 100, 0, 3.15)
+root_histograms["Reco"]["Events"]["UnmatchedPionsTheta"] = TH1F("hUnmatchedRecoPionsTheta", "", 100, 0, 3.15)
 
 # P (Momentum)
-hGenTauP0 = TH1F("histoGenTauP0", "", 12, 0, 50)
-hGenTauP1 = TH1F("histoGenTauP1", "", 12, 0, 50)
-hGenTauP2 = TH1F("histoGenTauP2", "", 12, 0, 50)
-hGenTauP10 = TH1F("histoGenTauP10", "", 12, 0, 50)
-hGenTauVisP0 = TH1F("histoGenTauVisP0", "", 12, 0, 50)
-hGenTauVisP1 = TH1F("histoGenTauVisP1", "", 12, 0, 50)
-hGenTauVisP2 = TH1F("histoGenTauVisP2", "", 12, 0, 50)
-hGenTauVisP10 = TH1F("histoGenTauVisP10", "", 12, 0, 50)
-hMatchedGenTauP0 = TH1F("histoMatchedGenTauP0", "", 12, 0, 50)
-hMatchedGenTauP1 = TH1F("histoMatchedGenTauP1", "", 12, 0, 50)
-hMatchedGenTauP2 = TH1F("histoMatchedGenTauP2", "", 12, 0, 50)
-hMatchedGenTauP10 = TH1F("histoMatchedGenTauP10", "", 12, 0, 50)
-hMatchedGenTauVisP0 = TH1F("histoMatchedGenTauVisP0", "", 12, 0, 50)
-hMatchedGenTauVisP1 = TH1F("histoMatchedGenTauVisP1", "", 12, 0, 50)
-hMatchedGenTauVisP2 = TH1F("histoMatchedGenTauVisP2", "", 12, 0, 50)
-hMatchedGenTauVisP10 = TH1F("histoMatchedGenTauVisP10", "", 12, 0, 50)
+root_histograms["Gen"]["Events"]["TauP0"] = TH1F("histoGenTauP0", "", 12, 0, 50)
+root_histograms["Gen"]["Events"]["TauP1"] = TH1F("histoGenTauP1", "", 12, 0, 50)
+root_histograms["Gen"]["Events"]["TauP2"] = TH1F("histoGenTauP2", "", 12, 0, 50)
+root_histograms["Gen"]["Events"]["TauP10"] = TH1F("histoGenTauP10", "", 12, 0, 50)
+root_histograms["Gen"]["Events"]["TauVisP0"] = TH1F("histoGenTauVisP0", "", 12, 0, 50)
+root_histograms["Gen"]["Events"]["TauVisP1"] = TH1F("histoGenTauVisP1", "", 12, 0, 50)
+root_histograms["Gen"]["Events"]["TauVisP2"] = TH1F("histoGenTauVisP2", "", 12, 0, 50)
+root_histograms["Gen"]["Events"]["TauVisP10"] = TH1F("histoGenTauVisP10", "", 12, 0, 50)
+root_histograms["Matched"]["Events"]["TauP0"] = TH1F("histoMatchedGenTauP0", "", 12, 0, 50)
+root_histograms["Matched"]["Events"]["TauP1"] = TH1F("histoMatchedGenTauP1", "", 12, 0, 50)
+root_histograms["Matched"]["Events"]["TauP2"] = TH1F("histoMatchedGenTauP2", "", 12, 0, 50)
+root_histograms["Matched"]["Events"]["TauP10"] = TH1F("histoMatchedGenTauP10", "", 12, 0, 50)
+root_histograms["Matched"]["Events"]["TauVisP0"] = TH1F("histoMatchedGenTauVisP0", "", 12, 0, 50)
+root_histograms["Matched"]["Events"]["TauVisP1"] = TH1F("histoMatchedGenTauVisP1", "", 12, 0, 50)
+root_histograms["Matched"]["Events"]["TauVisP2"] = TH1F("histoMatchedGenTauVisP2", "", 12, 0, 50)
+root_histograms["Matched"]["Events"]["TauVisP10"] = TH1F("histoMatchedGenTauVisP10", "", 12, 0, 50)
 
 # Photons and Pions P
-hGenPhotonP = TH1F("histoGenPhotonP", "", 100, 0, 25)
-hMatchedGenPhotonP = TH1F("histoMatchedGenPhotonP", "", 100, 0, 25)
-hGenTauPionP = TH1F("histoGenPionP", "", 100, 0, 50)
-hGenPionP0 = TH1F("histoGenPionP0", "", 100, 0, 50)
-hGenPionP1 = TH1F("histoGenPionP1", "", 100, 0, 50)
-hGenPionP2 = TH1F("histoGenPionP2", "", 100, 0, 50)
-hGenPionP10 = TH1F("histoGenPionP10", "", 100, 0, 50)
-hMatchedGenPionP = TH1F("histoMatchedGenPionP", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["PhotonP"] = TH1F("histoGenPhotonP", "", 100, 0, 25)
+root_histograms["Matched"]["Events"]["PhotonP"] = TH1F("histoMatchedGenPhotonP", "", 100, 0, 25)
+root_histograms["Gen"]["Events"]["PionP"] = TH1F("histoGenPionP", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["PionP0"] = TH1F("histoGenPionP0", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["PionP1"] = TH1F("histoGenPionP1", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["PionP2"] = TH1F("histoGenPionP2", "", 100, 0, 50)
+root_histograms["Gen"]["Events"]["PionP10"] = TH1F("histoGenPionP10", "", 100, 0, 50)
+root_histograms["Matched"]["Events"]["PionP"] = TH1F("histoMatchedGenPionP", "", 100, 0, 50)
 
 
 
-hRecoTauP0 = TH1F("histoRecoTauP0", "", 12, 0, 50)
-hRecoTauP1 = TH1F("histoRecoTauP1", "", 12, 0, 50)
-hRecoTauP2 = TH1F("histoRecoTauP2", "", 12, 0, 50)
-hRecoTauP10 = TH1F("histoRecoTauP10", "", 12, 0, 50)
+root_histograms["Reco"]["Events"]["TauP0"] = TH1F("histoRecoTauP0", "", 12, 0, 50)
+root_histograms["Reco"]["Events"]["TauP1"] = TH1F("histoRecoTauP1", "", 12, 0, 50)
+root_histograms["Reco"]["Events"]["TauP2"] = TH1F("histoRecoTauP2", "", 12, 0, 50)
+root_histograms["Reco"]["Events"]["TauP10"] = TH1F("histoRecoTauP10", "", 12, 0, 50)
 
-hRecoPhotonP = TH1F("histoRecoPhotonP", "", 100, 0, 25)
-hRecoPionP = TH1F("histoRecoPionP", "", 100, 0, 50)
+root_histograms["Reco"]["Events"]["PhotonP"] = TH1F("histoRecoPhotonP", "", 100, 0, 25)
+root_histograms["Reco"]["Events"]["PionP"] = TH1F("histoRecoPionP", "", 100, 0, 50)
 
 # Resolution P
-hTauPRes0 = TH1F("histoTauPRes0", "", 500, -2, 2)
-hTauPRes1 = TH1F("histoTauPRes1", "", 500, -2, 2)
-hTauPRes2 = TH1F("histoTauPRes2", "", 500, -2, 2)
-hTauPRes10 = TH1F("histoTauPRes10", "", 500, -2, 2)
+root_histograms["Reco"]["Resolution"]["TauP0"] = TH1F("histoTauPRes0", "", 500, -2, 2)
+root_histograms["Reco"]["Resolution"]["TauP1"] = TH1F("histoTauPRes1", "", 500, -2, 2)
+root_histograms["Reco"]["Resolution"]["TauP2"] = TH1F("histoTauPRes2", "", 500, -2, 2)
+root_histograms["Reco"]["Resolution"]["TauP10"] = TH1F("histoTauPRes10", "", 500, -2, 2)
 
-hMatchedTauPRes0 = TH1F("histoMatchedTauPRes0", "", 500, -1, 1)
-hMatchedTauPRes1 = TH1F("histoMatchedTauPRes1", "", 500, -1, 1)
-hMatchedTauPRes2 = TH1F("histoMatchedTauPRes2", "", 500, -1, 1)
-hMatchedTauPRes10 = TH1F("histoMatchedTauPRes10", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauP0"] = TH1F("histoMatchedTauPRes0", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauP1"] = TH1F("histoMatchedTauPRes1", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauP2"] = TH1F("histoMatchedTauPRes2", "", 500, -1, 1)
+root_histograms["Matched"]["Resolution"]["TauP10"] = TH1F("histoMatchedTauPRes10", "", 500, -1, 1)
 
 
 
@@ -581,7 +374,7 @@ result_labels["id-tau1"] = []
 result_labels["id-tau2"] = []
 
 unmatched_reco_pions_match_list = []
-unmatched_reco_pions_P_per_miss = {"Non_matched":hUnmatchedRecoPionsP}
+unmatched_reco_pions_P_per_miss = {"Non_matched":root_histograms["Reco"]["Events"]["UnmatchedPionsP"]}
 
 
 for eventid, event in enumerate(reader.get("events")):
@@ -604,12 +397,13 @@ for eventid, event in enumerate(reader.get("events")):
         nGenTaus,
         "\n".join("GenTau %d: %s" % (i, tau) for i, tau in genTaus.items()),
     )
-    if gatr_results_path is not None and not args.test_pfo:
+    if gatr_results_path is not None and not general_configs["args"].test_pfo:
+        particles = mlpf_results.get(eventid, {})
         recoTau = tauReco.findAllTaus(
-            mlpf_results[eventid], dRMax, minPTauPhoton, minPTauPion, PNeutron, generalPCut, charge_condition=False
+            particles, dRMax, minPTauPhoton, minPTauPion, PNeutron, generalPCut, charge_condition=False
         )
-        recoElectrons = electronReco.findAllElectrons(mlpf_results[eventid], generalPCut)
-        recoMuons = muonReco.findAllMuons(mlpf_results[eventid], generalPCut)
+        recoElectrons = electronReco.findAllElectrons(particles, generalPCut)
+        recoMuons = muonReco.findAllMuons(particles, generalPCut)  
     else:
         recoTau = tauReco.findAllTaus(
             pfos, dRMax, minPTauPhoton, minPTauPion, PNeutron, generalPCut
@@ -618,11 +412,18 @@ for eventid, event in enumerate(reader.get("events")):
         recoMuons = muonReco.findAllMuons(pfos, generalPCut)
     
     # Pion Matching
-    if gatr_results_path is not None and not args.test_pfo:
-        unmatched_gen_pions, unmatched_reco_pions, reco_pions_matched_with_gen_pions, reco_pions_matched_with_other_particles = tauReco.MatchedUnmatchedPions(mc_particles,
-                                                                                                                                                              mlpf_results[eventid],
-                                                                                                                                                              maxDRMatch=1,
-                                                                                                                                                              non_considered_particles = [12, 14, 16])
+    if gatr_results_path is not None and not general_configs["args"].test_pfo:
+        try:
+            unmatched_gen_pions, unmatched_reco_pions, reco_pions_matched_with_gen_pions, reco_pions_matched_with_other_particles = tauReco.MatchedUnmatchedPions(mc_particles,
+                                                                                                                                                                mlpf_results[eventid],
+                                                                                                                                                                maxDRMatch=1,
+                                                                                                                                                                non_considered_particles = [12, 14, 16])
+        except KeyError:
+            logger_process.warning("KeyError in mlpf_results for event %d", eventid)
+            unmatched_gen_pions = []
+            unmatched_reco_pions = []
+            reco_pions_matched_with_gen_pions = {}
+            reco_pions_matched_with_other_particles = {}
     else:
         unmatched_gen_pions, unmatched_reco_pions, reco_pions_matched_with_gen_pions, reco_pions_matched_with_other_particles = tauReco.MatchedUnmatchedPions(mc_particles, pfos, maxDRMatch=1)
     
@@ -645,51 +446,65 @@ for eventid, event in enumerate(reader.get("events")):
             unmatched_reco_pions_P_per_miss[str(genDauPDG)].Fill(recoPionP4.P())
     if reco_pions_matched_with_gen_pions:
         for genPion, recoPion in reco_pions_matched_with_gen_pions.items():
-            hMatchedPionsP.Fill(genPion.getMomentum().P(),
+            root_histograms["Matched"]["Events"]["PionsP"].Fill(genPion.getMomentum().P(),
                                 recoPion.getMomentum().P())
-            hMatchedPionsTheta.Fill(genPion.getMomentum().Theta(),
+            root_histograms["Matched"]["Events"]["PionsTheta"].Fill(genPion.getMomentum().Theta(),
                                     recoPion.getMomentum().Theta())
-            hGenAllPionsP.Fill(genPion.getMomentum().P())
-            hMatchedAllPionsP.Fill(genPion.getMomentum().P())
-            hGenAllPionsTheta.Fill(genPion.getMomentum().Theta())
-            hMatchedAllPionsTheta.Fill(genPion.getMomentum().Theta())
+            root_histograms["Gen"]["Events"]["AllPionsP"].Fill(genPion.getMomentum().P())
+            root_histograms["Matched"]["Events"]["AllPionsP"].Fill(genPion.getMomentum().P())
+            root_histograms["Gen"]["Events"]["AllPionsTheta"].Fill(genPion.getMomentum().Theta())
+            root_histograms["Matched"]["Events"]["AllPionsTheta"].Fill(genPion.getMomentum().Theta())
             theta = genPion.getMomentum().Theta()
             costheta = np.cos(theta)
             # Aceptancia en theta
             if abs(costheta) < 0.9:
-                hGenAllPionsThetaCut.Fill(genPion.getMomentum().Theta())
-                hMatchedAllGenPionThetaCut.Fill(genPion.getMomentum().Theta())
-                hGenAllPionsPCut.Fill(genPion.getMomentum().P())
-                hMatchedAllPionsPCut.Fill(genPion.getMomentum().P())
+                root_histograms["Gen"]["Events"]["AllPionsThetaCut"].Fill(genPion.getMomentum().Theta())
+                root_histograms["Matched"]["Events"]["AllPionsThetaCut"].Fill(genPion.getMomentum().Theta())
+                root_histograms["Gen"]["Events"]["AllPionsPCut"].Fill(genPion.getMomentum().P())
+                root_histograms["Matched"]["Events"]["AllPionsPCut"].Fill(genPion.getMomentum().P())
     if unmatched_gen_pions:
         for genPion in unmatched_gen_pions:
-            hUnmatchedGenPionsP.Fill(genPion.getMomentum().P())
-            hUnmatchedGenPionsTheta.Fill(genPion.getMomentum().Theta())
-            hGenAllPionsP.Fill(genPion.getMomentum().P())
-            hGenAllPionsTheta.Fill(genPion.getMomentum().Theta())
+            root_histograms["Gen"]["Events"]["UnmatchedPionsP"].Fill(genPion.getMomentum().P())
+            root_histograms["Gen"]["Events"]["UnmatchedPionsTheta"].Fill(genPion.getMomentum().Theta())
+            root_histograms["Gen"]["Events"]["AllPionsP"].Fill(genPion.getMomentum().P())
+            root_histograms["Gen"]["Events"]["AllPionsTheta"].Fill(genPion.getMomentum().Theta())
             theta = genPion.getMomentum().Theta()
             costheta = np.cos(theta)
             # Aceptancia en theta
             
             if abs(costheta) < 0.9:
-                hGenAllPionsThetaCut.Fill(genPion.getMomentum().Theta())
-                hGenAllPionsPCut.Fill(genPion.getMomentum().P())
+                root_histograms["Gen"]["Events"]["AllPionsThetaCut"].Fill(genPion.getMomentum().Theta())
+                root_histograms["Gen"]["Events"]["AllPionsPCut"].Fill(genPion.getMomentum().P())
             
             
     # Introducir 
     if unmatched_reco_pions:
         for recoPion in unmatched_reco_pions:
             unmatched_reco_pions_P_per_miss["Non_matched"].Fill(recoPion.getMomentum().P())
-            hUnmatchedRecoPionsTheta.Fill(recoPion.getMomentum().Theta())
+            root_histograms["Reco"]["Events"]["UnmatchedPionsTheta"].Fill(recoPion.getMomentum().Theta())
     
     
     # Neutral hadrons
-    for particle in mlpf_results[eventid]:
+    if gatr_results_path is not None and not general_configs["args"].test_pfo:
+        particles = mlpf_results.get("particles", {})
+    else:
+        particles = pfos
+        
+    for particle in particles:
         recoParticlecharge = particle.getCharge()
         if recoParticlecharge == 0:
             recoParticleP4 = particle.getMomentum()
-            hRecoNeutralHadronP.Fill(recoParticleP4.P())
-    
+            if isinstance(recoParticleP4, ROOT.TLorentzVector):
+                root_histograms["Reco"]["Events"]["NeutralHadronP"].Fill(recoParticleP4.P())
+            else:
+                recoParticleP4 = ROOT.TLorentzVector()
+                recoParticleP4.SetXYZM(
+                    particle.getMomentum().x,
+                    particle.getMomentum().y,
+                    particle.getMomentum().z,
+                    particle.getMass()
+                )
+
     nRecoTaus = len(recoTau)
     nRecoElectrons = len(recoElectrons)
     nRecoMuons = len(recoMuons)
@@ -795,21 +610,21 @@ for eventid, event in enumerate(reader.get("events")):
                         photon.getMomentum().z,
                         photon.getMass(),
                     )
-                    hGenPhotonP.Fill(photonP4.P())
-                    hGenPhotonTheta.Fill(photonP4.Theta())
+                    root_histograms["Gen"]["Events"]["PhotonP"].Fill(photonP4.P())
+                    root_histograms["Gen"]["Events"]["PhotonTheta"].Fill(photonP4.Theta())
             elif abs(const.getPDG()) == 211:  # Pion
-                h2DPionPid.Fill(dauP4.P(), genTauId)
-                hGenTauPionP.Fill(dauP4.P())
+                root_histograms["Gen"]["Events"]["PionPid"].Fill(dauP4.P(), genTauId)
+                root_histograms["Gen"]["Events"]["PionP"].Fill(dauP4.P())
                 if genTauId == 0:
-                    hGenPionP0.Fill(dauP4.P())
+                    root_histograms["Gen"]["Events"]["PionP0"].Fill(dauP4.P())
                 elif genTauId == 1:
-                    hGenPionP1.Fill(dauP4.P())
+                    root_histograms["Gen"]["Events"]["PionP1"].Fill(dauP4.P())
                 elif genTauId == 2:
-                    hGenPionP2.Fill(dauP4.P())
+                    root_histograms["Gen"]["Events"]["PionP2"].Fill(dauP4.P())
                 elif genTauId == 10:
-                    hGenPionP10.Fill(dauP4.P())
+                    root_histograms["Gen"]["Events"]["PionP10"].Fill(dauP4.P())
                 if dauP4.P() > 5:
-                    hGenPionTheta.Fill(dauP4.Theta())
+                    root_histograms["Gen"]["Events"]["PionTheta"].Fill(dauP4.Theta())
                 # If the photon is matched, fill the histogram
 
         # # # P4 Tau filters
@@ -821,38 +636,36 @@ for eventid, event in enumerate(reader.get("events")):
         # print ("Gen",genTauP4.P(),genVisTauP4.P(),genVisTauP4.Theta(),genVisTauP4.Phi(),genTauId,genTauQ,genTauDR,genTauNConsts)
 
         # Fill histograms
-        hGenTauPt.Fill(genTauP4.Pt())  # Transverse momentum
-        hGenVisTauPt.Fill(genVisTauP4.Pt())  # Visible transverse momentum
-        hGenTauP.Fill(genTauP4.P())  # Momentum
-        hGenVisTauP.Fill(genVisTauP4.P())  # Visible momentum
-        hGenVisTauMass.Fill(genVisTauP4.M())  # Visible mass
-        hGenTauType.Fill(genTauId)  # Tau decay type
-        hGenTauQ.Fill(genTauQ)  # Tau charge
-        hGenTauEta.Fill(genTauP4.Eta())  # Pseudo-rapidity
-        hGenTauTheta.Fill(genTauP4.Theta())  # Theta angle
-        
+        root_histograms["Gen"]["Events"]["TauPt"].Fill(genTauP4.Pt())  # Transverse momentum
+        root_histograms["Gen"]["Events"]["TauVisPt"].Fill(genVisTauP4.Pt())  # Visible transverse momentum
+        root_histograms["Gen"]["Events"]["TauP"].Fill(genTauP4.P())  # Momentum
+        root_histograms["Gen"]["Events"]["TauVisP"].Fill(genVisTauP4.P())  # Visible momentum
+        root_histograms["Gen"]["Events"]["TauVisMass"].Fill(genVisTauP4.M())  # Visible mass
+        root_histograms["Gen"]["Events"]["TauType"].Fill(genTauId)  # Tau decay type
+        root_histograms["Gen"]["Events"]["TauQ"].Fill(genTauQ)  # Tau charge
+        root_histograms["Gen"]["Events"]["TauEta"].Fill(genTauP4.Eta())  # Pseudo-rapidity
+        root_histograms["Gen"]["Events"]["TauTheta"].Fill(genTauP4.Theta())  # Theta angle
+
         if genTauId >= 0:
-            hGenHadronP.Fill(genTauP4.P())  # Hadronic tau momentum
+            root_histograms["Gen"]["Events"]["HadronTauP"].Fill(genTauP4.P())  # Hadronic tau momentum
         if genTauId == 0:
-            hGenTauTheta0.Fill(genTauP4.Theta())
-            hGenTauP0.Fill(genTauP4.P())
-            hGenTauVisP0.Fill(genVisTauP4.P())
+            root_histograms["Gen"]["Events"]["TauTheta0"].Fill(genTauP4.Theta())
+            root_histograms["Gen"]["Events"]["TauP0"].Fill(genTauP4.P())
+            root_histograms["Gen"]["Events"]["TauVisP0"].Fill(genVisTauP4.P())
         elif genTauId == 1:
-            hGenTauTheta1.Fill(genTauP4.Theta())
-            hGenTauP1.Fill(genTauP4.P())
-            hGenTauVisP1.Fill(genVisTauP4.P())
+            root_histograms["Gen"]["Events"]["TauTheta1"].Fill(genTauP4.Theta())
+            root_histograms["Gen"]["Events"]["TauP1"].Fill(genTauP4.P())
+            root_histograms["Gen"]["Events"]["TauVisP1"].Fill(genVisTauP4.P())
         elif genTauId == 2:
-            hGenTauTheta2.Fill(genTauP4.Theta())
-            hGenTauP2.Fill(genTauP4.P())
-            hGenTauVisP2.Fill(genVisTauP4.P())
+            root_histograms["Gen"]["Events"]["TauTheta2"].Fill(genTauP4.Theta())
+            root_histograms["Gen"]["Events"]["TauP2"].Fill(genTauP4.P())
+            root_histograms["Gen"]["Events"]["TauVisP2"].Fill(genVisTauP4.P())
         elif genTauId == 10:
-            hGenTauTheta10.Fill(genTauP4.Theta())
-            hGenTauP10.Fill(genTauP4.P())
-            hGenTauVisP10.Fill(genVisTauP4.P())
-        
-            
-        
-        hGenTauDR.Fill(genTauDR)  # Angle of Tau Constituents
+            root_histograms["Gen"]["Events"]["TauTheta10"].Fill(genTauP4.Theta())
+            root_histograms["Gen"]["Events"]["TauP10"].Fill(genTauP4.P())
+            root_histograms["Gen"]["Events"]["TauVisP10"].Fill(genVisTauP4.P())
+
+        root_histograms["Gen"]["Events"]["TauDR"].Fill(genTauDR)  # Angle of Tau Constituents
         countPionsRun = 0
 
         # print ("all GEN")
@@ -920,11 +733,11 @@ for eventid, event in enumerate(reader.get("events")):
         true_predicted_label["Predicted"].append(recoDM)
         true_predicted_label["PhotonPredicted"].append(recoTauId)
 
-        hMatchedTausPRes.Fill((recoTauP4.P() - genTauP4.P()) / genTauP4.P())
-        hMatchedTausPtRes.Fill((recoTauP4.Pt() - genTauP4.Pt()) / genTauP4.Pt())
+        root_histograms["Matched"]["Resolution"]["TauP"].Fill((recoTauP4.P() - genTauP4.P()) / genTauP4.P())
+        root_histograms["Matched"]["Resolution"]["TauPt"].Fill((recoTauP4.Pt() - genTauP4.Pt()) / genTauP4.Pt())
         # hMatchedTausChargeRes.Fill(abs(recoTauQ) - abs(genTauQ) / abs(genTauQ))
-        hMatchedTausMaxAngleRes.Fill((recoTauDR - genTauDR) / genTauDR)
-        hMatchedTausNCompRes.Fill((recoTauNConsts - genTauNConsts) / genTauNConsts)
+        root_histograms["Matched"]["Resolution"]["TauMaxAngle"].Fill((recoTauDR - genTauDR) / genTauDR)
+        root_histograms["Matched"]["Resolution"]["TauNComp"].Fill((recoTauNConsts - genTauNConsts) / genTauNConsts)
 
         #          print ("Reco?",recoTauP4.P(),recoTauId,recoTauQ,recoTauDR,recoTauNConsts)
 
@@ -963,13 +776,12 @@ for eventid, event in enumerate(reader.get("events")):
                         photon.getMomentum().z,
                         photon.getMass(),
                     )
-                    hMatchedGenPhotonP.Fill(photonP4.P())
-                    hMatchedGenPhotonTheta.Fill(photonP4.Theta())
+                    root_histograms["Matched"]["Events"]["PhotonP"].Fill(photonP4.P())
+                    root_histograms["Matched"]["Events"]["PhotonTheta"].Fill(photonP4.Theta())
             elif abs(const.getPDG()) == 211:  # Pion
-                hMatchedGenPionP.Fill(dauP4.P())
+                root_histograms["Matched"]["Events"]["PionP"].Fill(dauP4.P())
                 if dauP4.P() > 5:
-                
-                    hMatchedGenPionTheta.Fill(dauP4.Theta())
+                    root_histograms["Matched"]["Events"]["PionTheta"].Fill(dauP4.Theta())
                 # If the photon is matched, fill the histogram
 
 
@@ -1006,15 +818,15 @@ for eventid, event in enumerate(reader.get("events")):
 
             logger_pi0mass.debug(f"Evaluating const to get photon with PDGID {const.getPDG()} and charge {const.getCharge()}")
             if const.getCharge() == 0 and const.getPDG() != 22:
-                hRecoNeutralHadronTauP.Fill(constP4.P())
+                root_histograms["Reco"]["Events"]["NeutralHadronTauP"].Fill(constP4.P())
             if const.getPDG() == 22:
                 photonCumulativeP4 += constP4
                 recoTaus_photons[n_photons] = const
                 n_photons += 1
-                hRecoPhotonP.Fill(constP4.P())
-                hRecoPhotonTheta.Fill(constP4.Theta())
+                root_histograms["Reco"]["Events"]["PhotonP"].Fill(constP4.P())
+                root_histograms["Reco"]["Events"]["PhotonTheta"].Fill(constP4.Theta())
             elif abs(const.getPDG()) == 211:  # Pion
-                hRecoPionP.Fill(constP4.P())
+                root_histograms["Reco"]["Events"]["PionP"].Fill(constP4.P())
                 if constP4.P() < minPTauPion:
                     logger_process.warning(f"Encontrado pion con momento menor {constP4.P()}")
                     logger_process.warning(const)
@@ -1025,8 +837,8 @@ for eventid, event in enumerate(reader.get("events")):
                     
                 n_pions += 1
                 if constP4.P() > 5:
-                    hRecoPionTheta.Fill(constP4.Theta())
-            
+                    root_histograms["Reco"]["Events"]["PionTheta"].Fill(constP4.Theta())
+
             elif abs(const.getPDG()) == 2112:  # Neutron
                 n_neutrons += 1
         
@@ -1063,14 +875,14 @@ for eventid, event in enumerate(reader.get("events")):
                             const.getMass(),
                         )
                     if const.getCharge() == 0:
-                        hRecoRhoTwoPhotonDecayP.Fill(constP4.P())
+                        root_histograms["Reco"]["Events"]["RhoTwoPhotonDecayP"].Fill(constP4.P())
                         photonCumP4 += constP4
                     else:
-                        hRecoRhoPiDecayP.Fill(constP4.P())
+                        root_histograms["Reco"]["Events"]["RhoPiDecayP"].Fill(constP4.P())
                         pionP4 = constP4
                         
-                hRecoRhoTwoPhotonDecaySumP.Fill(photonCumP4.P())
-                h2DRecoRhoTwoPhotonDecayPiPhotonSumP.Fill(
+                root_histograms["Reco"]["Events"]["RhoTwoPhotonDecaySumP"].Fill(photonCumP4.P())
+                root_histograms["Reco"]["Events"]["RhoTwoPhotonDecayPiPhotonSumP"].Fill(
                     pionP4.P(), photonCumP4.P()
                 )
                 # Gen level
@@ -1113,13 +925,13 @@ for eventid, event in enumerate(reader.get("events")):
                                     dau.getMomentum().Z(),
                                     dau.getMass(),
                                 )
-                            hGenRhoTwoPhotonDecayP.Fill(photonP.P())
+                            root_histograms["Gen"]["Events"]["RhoTwoPhotonDecayP"].Fill(photonP.P())
                             photonCumP4 += photonP
                     else:
-                        hGenRhoPiDecayP.Fill(constP4.P())
+                        root_histograms["Gen"]["Events"]["RhoPiDecayP"].Fill(constP4.P())
                         pionP4 = constP4
-                hGenRhoTwoPhotonDecaySumP.Fill(photonCumP4.P())
-                h2DGenRhoTwoPhotonDecayPiPhotonSumP.Fill(
+                root_histograms["Gen"]["Events"]["RhoTwoPhotonDecaySumP"].Fill(photonCumP4.P())
+                root_histograms["Gen"]["Events"]["RhoTwoPhotonDecayPiPhotonSumP"].Fill(
                     pionP4.P(), photonCumP4.P()
                 )
             if  recoTauId == 1 and genTauId == 1:
@@ -1142,11 +954,11 @@ for eventid, event in enumerate(reader.get("events")):
                         )
                     if const.getCharge() == 0:
                         photonP = constP4
-                        hRecoRhoOnePhotonDecayPhotonP.Fill(constP4.P())
+                        root_histograms["Reco"]["Events"]["RhoOnePhotonDecayPhotonP"].Fill(constP4.P())
                     else:
-                        hRecoRhoOnePhotonDecayPiP.Fill(constP4.P())
+                        root_histograms["Reco"]["Events"]["RhoOnePhotonDecayPiP"].Fill(constP4.P())
                         pionP4 = constP4
-                h2DRecoRhoOnePhotonDecayPiPhotonP.Fill(pionP4.P(), photonP.P())
+                root_histograms["Reco"]["Events"]["RhoOnePhotonDecayPiPhotonP"].Fill(pionP4.P(), photonP.P())
                 # Gen level
                 photonCumP4 = ROOT.TLorentzVector()
                 photonCumP4.SetXYZM(0, 0, 0, 0)
@@ -1186,17 +998,17 @@ for eventid, event in enumerate(reader.get("events")):
                                     dau.getMomentum().Z(),
                                     dau.getMass(),
                                 )
-                            hGenRhoOnePhotonDecayPhotonP.Fill(photonP.P())
+                            root_histograms["Gen"]["Events"]["RhoOnePhotonDecayPhotonP"].Fill(photonP.P())
                             photonCumP4 += photonP
                             photonsP.append(photonP)
                     else:
-                        hGenRhoOnePhotonDecayPiP.Fill(constP4.P())
+                        root_histograms["Gen"]["Events"]["RhoOnePhotonDecayPiP"].Fill(constP4.P())
                         pionP4 = constP4
                         
-                hGenRhoOnePhotonDecayPhotonSumP.Fill(photonCumP4.P())
-                h2DGenRhoOnePhotonDecayPiPhotonSumP.Fill(pionP4.P(), photonCumP4.P())
+                root_histograms["Gen"]["Events"]["RhoOnePhotonDecayPhotonSumP"].Fill(photonCumP4.P())
+                root_histograms["Gen"]["Events"]["RhoOnePhotonDecayPiPhotonSumP"].Fill(pionP4.P(), photonCumP4.P())
                 ang = myutils.dRAngle(photonsP[0], photonsP[1])
-                hGenRhoOnePhotonDecayPhotonAng.Fill(ang)
+                root_histograms["Gen"]["Events"]["RhoOnePhotonDecayPhotonAng"].Fill(ang)
 
             
             if n_photons == 3 and (genTauId == 2 or genTauId == 1):
@@ -1205,7 +1017,7 @@ for eventid, event in enumerate(reader.get("events")):
                 )
                 pi0Mass_strmass, noMatchedPhotons = pi0Reco.getPi0Mass(recoTaus_photons, strategy = {"mass":-1})
                 if pi0Mass_strmass:
-                    hRecoConstPi0MassFromPhotonMasstr.Fill(pi0Mass_strmass)
+                    root_histograms["Reco"]["Events"]["ConstPi0MassFromPhotonMass"].Fill(pi0Mass_strmass)
                 
                 if noMatchedPhotons:
                     for ide, photon in noMatchedPhotons.items(): 
@@ -1226,12 +1038,12 @@ for eventid, event in enumerate(reader.get("events")):
                                 photon.getMass(),
                             )
                         if genTauId == 2:
-                            hRecoConstlessPhotonPa1strMass.Fill(PhotonP4.P())
-                            hRecoConstlessPhotonPa1strMassZoom.Fill(PhotonP4.P())
-                            
+                            root_histograms["Reco"]["Events"]["ConstlessPhotonPa1strMass"].Fill(PhotonP4.P())
+                            root_histograms["Reco"]["Events"]["ConstlessPhotonPa1strMassZoom"].Fill(PhotonP4.P())
+
                         elif genTauId == 1:
-                            hRecoConstxtraPhotonPrhostrMass.Fill(PhotonP4.P())
-                            hRecoConstxtraPhotonPrhostrMassZoom.Fill(PhotonP4.P())
+                            root_histograms["Reco"]["Events"]["ConstxtraPhotonPrhostrMass"].Fill(PhotonP4.P())
+                            root_histograms["Reco"]["Events"]["ConstxtraPhotonPrhostrMassZoom"].Fill(PhotonP4.P())
                             
                     matched_keys = [key for key in range(3) if key not in noMatchedPhotons.keys()]
                     first_matched_P = ROOT.TLorentzVector()
@@ -1266,13 +1078,13 @@ for eventid, event in enumerate(reader.get("events")):
                         )
                     non_matched_P = PhotonP4
                     # Moment of the photons
-                    hRecoThreePhotonMatchOnestrMassP.Fill(first_matched_P.P())
-                    hRecoThreePhotonMatchTwostrMassP.Fill(second_matched_P.P())
-                    hRecoThreePhotonNoMatchstrMassP.Fill(non_matched_P.P())
-                
+                    root_histograms["Reco"]["Events"]["ThreePhotonMatchOnestrMassP"].Fill(first_matched_P.P())
+                    root_histograms["Reco"]["Events"]["ThreePhotonMatchTwostrMassP"].Fill(second_matched_P.P())
+                    root_histograms["Reco"]["Events"]["ThreePhotonNoMatchstrMassP"].Fill(non_matched_P.P())
+
                 pi0Mass_strdist, noMatchedPhoton = pi0Reco.getPi0Mass(recoTaus_photons, strategy = {"distance":-1})
                 if pi0Mass_strdist:
-                    hRecoConstPi0MassFromPhotonDiststr.Fill(pi0Mass_strdist)
+                    root_histograms["Reco"]["Events"]["ConstPi0MassFromPhotonDist"].Fill(pi0Mass_strdist)
                 if noMatchedPhoton:
                     for ide, photon in noMatchedPhotons.items(): 
                         PhotonP4 = ROOT.TLorentzVector()
@@ -1292,9 +1104,9 @@ for eventid, event in enumerate(reader.get("events")):
                                 photon.getMass(),
                             )
                         if genTauId == 2:
-                            hRecoConstlessPhotonPa1strDist.Fill(PhotonP4.P())
+                            root_histograms["Reco"]["Events"]["ConstlessPhotonPa1strDist"].Fill(PhotonP4.P())
                         elif genTauId == 1:
-                            hRecoConstxtraPhotonPrhostrDist.Fill(PhotonP4.P())
+                            root_histograms["Reco"]["Events"]["ConstxtraPhotonPrhostrDist"].Fill(PhotonP4.P())
                     matched_keys = [key for key in range(3) if key not in noMatchedPhotons.keys()]
                     first_matched_P = ROOT.TLorentzVector()
                     try:
@@ -1328,27 +1140,27 @@ for eventid, event in enumerate(reader.get("events")):
                         )
                     non_matched_P = PhotonP4
                     # Moment of the photons
-                    hRecoThreePhotonMatchOnestrDistP.Fill(first_matched_P.P())
-                    hRecoThreePhotonMatchTwostrDistP.Fill(second_matched_P.P())
-                    hRecoThreePhotonNoMatchstrDistP.Fill(non_matched_P.P())
+                    root_histograms["Reco"]["Events"]["ThreePhotonMatchOnestrDistP"].Fill(first_matched_P.P())
+                    root_histograms["Reco"]["Events"]["ThreePhotonMatchTwostrDistP"].Fill(second_matched_P.P())
+                    root_histograms["Reco"]["Events"]["ThreePhotonNoMatchstrDistP"].Fill(non_matched_P.P())
                             
             elif n_photons == 1 and (genTauId == 0 or genTauId == 1):
                 logger_pi0mass.debug(
                     f"Found 1 photons in the matched reco tau with real Id {genTauId}"
                 )
                 if genTauId == 0:
-                    hRecoConstxtraPhotonPi.Fill(photonCumulativeP4.P())
-                    hRecoConstxtraPhotonPiZoom.Fill(photonCumulativeP4.P())
+                    root_histograms["Reco"]["Events"]["ConstxtraPhotonPi"].Fill(photonCumulativeP4.P())
+                    root_histograms["Reco"]["Events"]["ConstxtraPhotonPiZoom"].Fill(photonCumulativeP4.P())
                 elif genTauId == 1:
-                    hRecoConstlessPhotonPrho.Fill(photonCumulativeP4.P())
-                    hRecoConstlessPhotonPrhoZoom.Fill(photonCumulativeP4.P())
+                    root_histograms["Reco"]["Events"]["ConstlessPhotonPrho"].Fill(photonCumulativeP4.P())
+                    root_histograms["Reco"]["Events"]["ConstlessPhotonPrhoZoom"].Fill(photonCumulativeP4.P())
                     
             
             elif n_photons == 2 and (genTauId == 1):
                 logger_pi0mass.debug(
                     f"Found 2 photons in the matched reco tau with real Id {genTauId}"
                 )
-                hRecoConstPi0Mass.Fill(photonCumulativeP4.M())
+                root_histograms["Reco"]["Events"]["ConstPi0Mass"].Fill(photonCumulativeP4.M())
                 photon1_P4 = ROOT.TLorentzVector()
                 try:
                     photon1_P4.SetXYZM(
@@ -1382,300 +1194,311 @@ for eventid, event in enumerate(reader.get("events")):
                 ang_dist = myutils.dRAngle(
                     photon1_P4, photon2_P4
                 )
-                hRecoConstTwoPhotonAngDist.Fill(ang_dist)
+                root_histograms["Reco"]["Events"]["ConstTwoPhotonAngDist"].Fill(ang_dist)
             
 
 
-        hRecoTauType.Fill(recoTauId)
-        hRecoTauPt.Fill(recoTauP4.Pt())
-        hRecoTauP.Fill(recoTauP4.P())
+        root_histograms["Reco"]["Events"]["TauType"].Fill(recoTauId)
+        root_histograms["Reco"]["Events"]["TauPt"].Fill(recoTauP4.Pt())
+        root_histograms["Reco"]["Events"]["TauP"].Fill(recoTauP4.P())
 
-        hRecoTauMass.Fill(recoTauP4.M())
-        hRecoTauQ.Fill(recoTauQ)
-        hRecoTauEta.Fill(recoTauP4.Eta())
-        hRecoTauTheta.Fill(recoTauP4.Theta())
+        root_histograms["Reco"]["Events"]["TauMass"].Fill(recoTauP4.M())
+        root_histograms["Reco"]["Events"]["TauQ"].Fill(recoTauQ)
+        root_histograms["Reco"]["Events"]["TauEta"].Fill(recoTauP4.Eta())
+        root_histograms["Reco"]["Events"]["TauTheta"].Fill(recoTauP4.Theta())
 
-        hRecoTauDR.Fill(recoTauDR)
+        root_histograms["Reco"]["Events"]["TauDR"].Fill(recoTauDR)
 
-        hMatchedGenTauPt.Fill(genTauP4.Pt())
-        hMatchedGenVisTauPt.Fill(genVisTauP4.Pt())
-        hMatchedGenTauP.Fill(genTauP4.P())
-        hMatchedGenVisTauP.Fill(genVisTauP4.P())
+        root_histograms["Matched"]["Events"]["TauPt"].Fill(genTauP4.Pt())
+        root_histograms["Matched"]["Events"]["TauVisPt"].Fill(genVisTauP4.Pt())
+        root_histograms["Matched"]["Events"]["TauP"].Fill(genTauP4.P())
+        root_histograms["Matched"]["Events"]["TauVisP"].Fill(genVisTauP4.P())
 
-        hMatchedGenVisTauMass.Fill(genVisTauP4.M())
-        hMatchedGenTauType.Fill(genTauId)
-        hMatchedGenTauQ.Fill(genTauQ)
-        hMatchedGenTauEta.Fill(genTauP4.Eta())
-        hMatchedGenTauTheta.Fill(genTauP4.Theta())
+        root_histograms["Matched"]["Events"]["TauVisMass"].Fill(genVisTauP4.M())
+        root_histograms["Matched"]["Events"]["TauType"].Fill(genTauId)
+        root_histograms["Matched"]["Events"]["TauQ"].Fill(genTauQ)
+        root_histograms["Matched"]["Events"]["TauEta"].Fill(genTauP4.Eta())
+        root_histograms["Matched"]["Events"]["TauTheta"].Fill(genTauP4.Theta())
 
-        hMatchedGenTauDR.Fill(genTauDR)
+        root_histograms["Matched"]["Events"]["TauDR"].Fill(genTauDR)
 
-        h2DTauPt.Fill(recoTauP4.Pt(), genVisTauP4.Pt())
-        h2DTauMass.Fill(recoTauP4.M(), genVisTauP4.M())
-        h2DTauType.Fill(recoTauId, genTauId)
-        h2DTauP.Fill(recoTauP4.P(), genVisTauP4.P())
+        root_histograms["GenVSReco"]["Events"]["TauPt"].Fill(recoTauP4.Pt(), genVisTauP4.Pt())
+        root_histograms["GenVSReco"]["Events"]["TauMass"].Fill(recoTauP4.M(), genVisTauP4.M())
+        root_histograms["GenVSReco"]["Events"]["TauType"].Fill(recoTauId, genTauId)
+        root_histograms["GenVSReco"]["Events"]["TauP"].Fill(recoTauP4.P(), genVisTauP4.P())
 
-        h2DTauDR.Fill(recoTauDR, genTauDR)
+        root_histograms["GenVSReco"]["Events"]["TauDR"].Fill(recoTauDR, genTauDR)
 
         if genTauId >=0:
-            hMatchedGenHadronTauP.Fill(genTauP4.P())
+            root_histograms["Matched"]["Events"]["HadronTauP"].Fill(genTauP4.P())
         
         if genTauId == 0:
-            hMatchedGenTauP0.Fill(genTauP4.P())
-            hMatchedGenTauVisP0.Fill(genVisTauP4.P())
-            hMatchedGenTauTheta0.Fill(genTauP4.Theta())
-            hTauThetaRes0.Fill(
+            root_histograms["Matched"]["Events"]["TauP0"].Fill(genTauP4.P())
+            root_histograms["Matched"]["Events"]["TauVisP0"].Fill(genVisTauP4.P())
+            root_histograms["Matched"]["Events"]["TauTheta0"].Fill(genTauP4.Theta())
+            root_histograms["Reco"]["Resolution"]["TauTheta0"].Fill(
                 (recoTauP4.Theta() - genVisTauP4.Theta())
                 / (genVisTauP4.Theta()+1e-10)
             )
-            hTauPRes0.Fill(
-                    (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
-                )
+            root_histograms["Reco"]["Resolution"]["TauP0"].Fill(
+                (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
+            )
             if recoDM == 0:
-                hMatchedTauPRes0.Fill(
+                root_histograms["Matched"]["Resolution"]["TauP0"].Fill(
                     (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
                 )
-                hMatchedTauThetaRes0.Fill(
+                root_histograms["Matched"]["Resolution"]["TauTheta0"].Fill(
                     (recoTauP4.Theta() - genVisTauP4.Theta())
                     / (genVisTauP4.Theta()+1e-10)
                 )
         elif genTauId == 1:
-            hMatchedGenTauP1.Fill(genTauP4.P())
-            hMatchedGenTauVisP1.Fill(genVisTauP4.P())
-            hMatchedGenTauTheta1.Fill(genTauP4.Theta())
-            hTauThetaRes1.Fill(
+            root_histograms["Matched"]["Events"]["TauP1"].Fill(genTauP4.P())
+            root_histograms["Matched"]["Events"]["TauVisP1"].Fill(genVisTauP4.P())
+            root_histograms["Matched"]["Events"]["TauTheta1"].Fill(genTauP4.Theta())
+            root_histograms["Reco"]["Resolution"]["TauTheta1"].Fill(
                 (recoTauP4.Theta() - genVisTauP4.Theta())
                 / (genVisTauP4.Theta()+1e-10)
             )
-            hTauPRes1.Fill(
-                    (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
-                )
+            root_histograms["Reco"]["Resolution"]["TauP1"].Fill(
+                (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
+            )
             if recoDM == 1:
-                hMatchedTauPRes1.Fill(
+                root_histograms["Matched"]["Resolution"]["TauP1"].Fill(
                     (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
                 )
-                hMatchedTauThetaRes1.Fill(
+                root_histograms["Matched"]["Resolution"]["TauTheta1"].Fill(
                     (recoTauP4.Theta() - genVisTauP4.Theta())
                     / (genVisTauP4.Theta()+1e-10)
                 )
         elif genTauId == 2:
-            hMatchedGenTauP2.Fill(genTauP4.P())
-            hMatchedGenTauVisP2.Fill(genVisTauP4.P())
-            hMatchedGenTauTheta2.Fill(genTauP4.Theta())
-            hTauThetaRes2.Fill(
+            root_histograms["Matched"]["Events"]["TauP2"].Fill(genTauP4.P())
+            root_histograms["Matched"]["Events"]["TauVisP2"].Fill(genVisTauP4.P())
+            root_histograms["Matched"]["Events"]["TauTheta2"].Fill(genTauP4.Theta())
+            root_histograms["Reco"]["Resolution"]["TauTheta2"].Fill(
                 (recoTauP4.Theta() - genVisTauP4.Theta())
                 / (genVisTauP4.Theta()+1e-10)
             )
-            hTauPRes2.Fill(
-                    (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
-                )
+            root_histograms["Reco"]["Resolution"]["TauP2"].Fill(
+                (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
+            )
             if recoDM == 2:
-                hMatchedTauPRes2.Fill(
+                root_histograms["Matched"]["Resolution"]["TauP2"].Fill(
                     (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
                 )
-                hMatchedTauThetaRes2.Fill(
+                root_histograms["Matched"]["Resolution"]["TauTheta2"].Fill(
                     (recoTauP4.Theta() - genVisTauP4.Theta())
                     / (genVisTauP4.Theta()+1e-10)
                 )
         elif genTauId == 10:
-            hMatchedGenTauP10.Fill(genTauP4.P())
-            hMatchedGenTauVisP10.Fill(genVisTauP4.P())
-            hMatchedGenTauTheta10.Fill(genTauP4.Theta())
-            hTauThetaRes10.Fill(
+            root_histograms["Matched"]["Events"]["TauP10"].Fill(genTauP4.P())
+            root_histograms["Matched"]["Events"]["TauVisP10"].Fill(genVisTauP4.P())
+            root_histograms["Matched"]["Events"]["TauTheta10"].Fill(genTauP4.Theta())
+            root_histograms["Reco"]["Resolution"]["TauTheta10"].Fill(
                 (recoTauP4.Theta() - genVisTauP4.Theta())
                 / (genVisTauP4.Theta()+1e-10)
             )
-            hTauPRes10.Fill(
+            root_histograms["Reco"]["Resolution"]["TauP10"].Fill(
+                (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
+            )
+            if recoDM == 0:
+                root_histograms["Matched"]["Resolution"]["TauP10"].Fill(
                     (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
                 )
-            if recoDM == 10:
-                hMatchedTauPRes10.Fill(
-                    (recoTauP4.P() - genVisTauP4.P()) / (genVisTauP4.P()+1e-10)
-                )
-                hMatchedTauThetaRes10.Fill(
+                root_histograms["Matched"]["Resolution"]["TauTheta10"].Fill(
                     (recoTauP4.Theta() - genVisTauP4.Theta())
                     / (genVisTauP4.Theta()+1e-10)
                 )
         
         # Fill the histograms for the matched reco tau with gen level information
         if recoDM == 0:
-            hRecoTauTheta0.Fill(recoTauP4.Theta())
-            hRecoTauP0.Fill(recoTauP4.P())
+            root_histograms["Reco"]["Events"]["TauTheta0"].Fill(recoTauP4.Theta())
+            root_histograms["Reco"]["Events"]["TauP0"].Fill(recoTauP4.P())
         elif recoDM == 1:
-            hRecoTauTheta1.Fill(recoTauP4.Theta())
-            hRecoTauP1.Fill(recoTauP4.P())
+            root_histograms["Reco"]["Events"]["TauTheta1"].Fill(recoTauP4.Theta())
+            root_histograms["Reco"]["Events"]["TauP1"].Fill(recoTauP4.P())
         elif recoDM == 2:
-            hRecoTauTheta2.Fill(recoTauP4.Theta())
-            hRecoTauP2.Fill(recoTauP4.P())
+            root_histograms["Reco"]["Events"]["TauTheta2"].Fill(recoTauP4.Theta())
+            root_histograms["Reco"]["Events"]["TauP2"].Fill(recoTauP4.P())
         elif recoDM == 10:
-            hRecoTauTheta10.Fill(recoTauP4.Theta())
-            hRecoTauP10.Fill(recoTauP4.P())
+            root_histograms["Reco"]["Events"]["TauTheta10"].Fill(recoTauP4.Theta())
+            root_histograms["Reco"]["Events"]["TauP10"].Fill(recoTauP4.P())
         
         
         # Resolution plots:
         if genVisTauP4.P() != 0:
-            hResTauPt.Fill((recoTauP4.Pt() - genVisTauP4.Pt()) / genVisTauP4.Pt())
-            hResTauMass.Fill((recoTauP4.M() - genVisTauP4.M()) / genVisTauP4.M())
-            hResTauP.Fill((recoTauP4.P() - genVisTauP4.P()) / genVisTauP4.P())
+            root_histograms["Reco"]["Resolution"]["TauPt"].Fill((recoTauP4.Pt() - genVisTauP4.Pt()) / genVisTauP4.Pt())
+            root_histograms["Reco"]["Resolution"]["TauMass"].Fill((recoTauP4.M() - genVisTauP4.M()) / genVisTauP4.M())
+            root_histograms["Reco"]["Resolution"]["TauP"].Fill((recoTauP4.P() - genVisTauP4.P()) / genVisTauP4.P())
 
     # print ("Taus???",nGenTaus,nTaus)
-    hNTaus.Fill(nRecoTaus)
-    hNTausType.Fill(nTausType)
-    hNGenTausType.Fill(nGenTausType)
-    hNGenTaus.Fill(nGenTausHad)
+    root_histograms["Reco"]["Events"]["NTaus"].Fill(nRecoTaus)
+    root_histograms["Reco"]["Events"]["NTausType"].Fill(nTausType)
+    root_histograms["Gen"]["Events"]["NTausType"].Fill(nGenTausType)
+    root_histograms["Gen"]["Events"]["NTaus"].Fill(nGenTausHad)
 
 
 # Do efficiencies (divide matched gen by all gen)
-hEffiGenPi0Mass = hMatchedGenConstPi0Mass.Clone()
+hEffiGenPi0Mass = root_histograms["Matched"]["Events"]["ConstPi0Mass"].Clone()
 hEffiGenPi0Mass.SetName("hEffiGenPi0Mass")
-hEffiGenPi0Mass.Divide(hGenConstPi0Mass)
+hEffiGenPi0Mass.Divide(root_histograms["Gen"]["Events"]["ConstPi0Mass"])
+root_histograms["Matched"]["Effi"]["Pi0Mass"] = hEffiGenPi0Mass
 
-hEffiGenTauPt = hMatchedGenTauPt.Clone()
+hEffiGenTauPt = root_histograms["Matched"]["Events"]["TauPt"].Clone()
 hEffiGenTauPt.SetName("hEffiGenTauPt")
-hEffiGenTauPt.Divide(hGenTauPt)
+hEffiGenTauPt.Divide(root_histograms["Gen"]["Events"]["TauPt"])
+root_histograms["Matched"]["Effi"]["TauPt"] = hEffiGenTauPt
 
-hEffiGenVisTauPt = hMatchedGenVisTauPt.Clone()
+hEffiGenVisTauPt = root_histograms["Matched"]["Events"]["TauVisPt"].Clone()
 hEffiGenVisTauPt.SetName("hEffiGenVisTauPt")
-hEffiGenVisTauPt.Divide(hGenVisTauPt)
+hEffiGenVisTauPt.Divide(root_histograms["Gen"]["Events"]["TauVisPt"])
+root_histograms["Matched"]["Effi"]["VisTauPt"] = hEffiGenVisTauPt
 
-hEffiGenTauP = hMatchedGenTauP.Clone()
+hEffiGenTauP = root_histograms["Matched"]["Events"]["TauP"].Clone()
 hEffiGenTauP.SetName("hEffiGenTauP")
-hEffiGenTauP.Divide(hGenTauP)
+hEffiGenTauP.Divide(root_histograms["Gen"]["Events"]["TauP"])
+root_histograms["Matched"]["Effi"]["TauP"] = hEffiGenTauP
 
 
-
-hEffiGenVisTauP = hMatchedGenVisTauP.Clone()
+hEffiGenVisTauP = root_histograms["Matched"]["Events"]["TauVisP"].Clone()
 hEffiGenVisTauP.SetName("hEffiGenVisTauP")
-hEffiGenVisTauP.Divide(hGenVisTauP)
+hEffiGenVisTauP.Divide(root_histograms["Gen"]["Events"]["TauVisP"])
+root_histograms["Matched"]["Effi"]["VisTauP"] = hEffiGenVisTauP
 
-hEffiGenVisTauMass = hMatchedGenVisTauMass.Clone()
+hEffiGenVisTauMass = root_histograms["Matched"]["Events"]["TauVisMass"].Clone()
 hEffiGenVisTauMass.SetName("hEffiGenVisTauMass")
-hEffiGenVisTauMass.Divide(hGenVisTauMass)
+hEffiGenVisTauMass.Divide(root_histograms["Gen"]["Events"]["TauVisMass"])
+root_histograms["Matched"]["Effi"]["VisTauMass"] = hEffiGenVisTauMass
 
-hEffiGenTauEta = hMatchedGenTauEta.Clone()
+hEffiGenTauEta = root_histograms["Matched"]["Events"]["TauEta"].Clone()
 hEffiGenTauEta.SetName("hEffiGenTauEta")
-hEffiGenTauEta.Divide(hGenTauEta)
+hEffiGenTauEta.Divide(root_histograms["Gen"]["Events"]["TauEta"])
+root_histograms["Matched"]["Effi"]["TauEta"] = hEffiGenTauEta
 
-hEffiGenTauTheta = hMatchedGenTauTheta.Clone()
+hEffiGenTauTheta = root_histograms["Matched"]["Events"]["TauTheta"].Clone()
 hEffiGenTauTheta.SetName("hEffiGenTauTheta")
-hEffiGenTauTheta.Divide(hGenTauTheta)
+hEffiGenTauTheta.Divide(root_histograms["Gen"]["Events"]["TauTheta"])
+root_histograms["Matched"]["Effi"]["TauTheta"] = hEffiGenTauTheta
 
-hEffiGenTauType = hMatchedGenTauType.Clone()
+hEffiGenTauType = root_histograms["Matched"]["Events"]["TauType"].Clone()
 hEffiGenTauType.SetName("hEffiGenTauType")
-hEffiGenTauType.Divide(hGenTauType)
+hEffiGenTauType.Divide(root_histograms["Gen"]["Events"]["TauType"])
+root_histograms["Matched"]["Effi"]["TauType"] = hEffiGenTauType
 
-hEffiGenPhotonP = hMatchedGenPhotonP.Clone()
+hEffiGenPhotonP = root_histograms["Matched"]["Events"]["PhotonP"].Clone()
 hEffiGenPhotonP.SetName("hEffiGenPhotonP")
-hEffiGenPhotonP.Divide(hGenPhotonP)
+hEffiGenPhotonP.Divide(root_histograms["Gen"]["Events"]["PhotonP"])
+root_histograms["Matched"]["Effi"]["PhotonP"] = hEffiGenPhotonP
 
-hEffiGenPhotonTheta = hMatchedGenPhotonTheta.Clone()
+hEffiGenPhotonTheta = root_histograms["Matched"]["Events"]["PhotonTheta"].Clone()
 hEffiGenPhotonTheta.SetName("hEffiGenPhotonTheta")
-hEffiGenPhotonTheta.Divide(hGenPhotonTheta)
+hEffiGenPhotonTheta.Divide(root_histograms["Gen"]["Events"]["PhotonTheta"])
+root_histograms["Matched"]["Effi"]["PhotonTheta"] = hEffiGenPhotonTheta
 
-hEffiGenPionP = hMatchedGenPionP.Clone()
+hEffiGenPionP = root_histograms["Matched"]["Events"]["PionP"].Clone()
 hEffiGenPionP.SetName("hEffiGenTauPionP")
-hEffiGenPionP.Divide(hGenTauPionP)
+hEffiGenPionP.Divide(root_histograms["Gen"]["Events"]["PionP"])
+root_histograms["Matched"]["Effi"]["PionP"] = hEffiGenPionP
 
-hEffiGenPionTheta = hMatchedGenPionTheta.Clone()
+hEffiGenPionTheta = root_histograms["Matched"]["Events"]["PionTheta"].Clone()
 hEffiGenPionTheta.SetName("hEffiGenTauPionTheta")
-hEffiGenPionTheta.Divide(hGenPionTheta)
+hEffiGenPionTheta.Divide(root_histograms["Gen"]["Events"]["PionTheta"])
+root_histograms["Matched"]["Effi"]["PionTheta"] = hEffiGenPionTheta
 
-hEffiAllPionsP = hMatchedAllPionsP.Clone()
+hEffiAllPionsP = root_histograms["Matched"]["Events"]["AllPionsP"].Clone()
 hEffiAllPionsP.SetName("hEffiGenAllPionsP")
-hEffiAllPionsP.Divide(hGenAllPionsP)
+hEffiAllPionsP.Divide(root_histograms["Gen"]["Events"]["AllPionsP"])
+root_histograms["Matched"]["Effi"]["AllPionsP"] = hEffiAllPionsP
 
-hEffiAllPionsTheta = hMatchedAllPionsTheta.Clone()
+hEffiAllPionsTheta = root_histograms["Matched"]["Events"]["AllPionsTheta"].Clone()
 hEffiAllPionsTheta.SetName("hEffiGenAllPionsTheta")
-hEffiAllPionsTheta.Divide(hGenAllPionsTheta)
+hEffiAllPionsTheta.Divide(root_histograms["Gen"]["Events"]["AllPionsTheta"])
+root_histograms["Matched"]["Effi"]["AllPionsTheta"] = hEffiAllPionsTheta
 
-hMatchedGenHadronTauP.Sumw2()
-hGenHadronP.Sumw2()
-# hEffiGenHadronTauP = hMatchedGenHadronTauP.Clone()
-# hEffiGenHadronTauP.SetName("hEffiGenHadronTauP")
-# hEffiGenHadronTauP.Divide(hMatchedGenHadronTauP, hGenHadronP, 1, 1, "B")
+root_histograms["Matched"]["Events"]["HadronTauP"].Sumw2()
+root_histograms["Gen"]["Events"]["HadronTauP"].Sumw2()
+
 hEffiGenHadronTauP = ROOT.TGraphAsymmErrors()
-hEffiGenHadronTauP.Divide(hMatchedGenHadronTauP, hGenHadronP, "cl=0.683 b(1,1) mode")
+hEffiGenHadronTauP.Divide(root_histograms["Matched"]["Events"]["HadronTauP"], root_histograms["Gen"]["Events"]["HadronTauP"], "cl=0.683 b(1,1) mode")
 hEffiGenHadronTauP.SetName("hEffiGenHadronTauP")
+root_histograms["Matched"]["Effi"]["HadronTauP"] = hEffiGenHadronTauP
 
-hEffiGenAllPionsPCut = hMatchedAllPionsPCut.Clone()
+hEffiGenAllPionsPCut = root_histograms["Matched"]["Events"]["AllPionsPCut"].Clone()
 hEffiGenAllPionsPCut.SetName("hEffiGenAllPionsPCut")
-hEffiGenAllPionsPCut.Divide(hGenAllPionsPCut)
+hEffiGenAllPionsPCut.Divide(root_histograms["Gen"]["Events"]["AllPionsPCut"])
+root_histograms["Matched"]["Effi"]["AllPionsPCut"] = hEffiGenAllPionsPCut
 
-hEffiGenAllPionsPionThetaCut = hMatchedAllGenPionThetaCut.Clone()
+hEffiGenAllPionsPionThetaCut = root_histograms["Matched"]["Events"]["AllPionsThetaCut"].Clone()
 hEffiGenAllPionsPionThetaCut.SetName("hEffiGenAllPionsPionThetaCut")
-hEffiGenAllPionsPionThetaCut.Divide(hGenAllPionsThetaCut)
+hEffiGenAllPionsPionThetaCut.Divide(root_histograms["Gen"]["Events"]["AllPionsThetaCut"])
+root_histograms["Matched"]["Effi"]["AllPionsThetaCut"] = hEffiGenAllPionsPionThetaCut
 
 # Theta angle per decay
-hEffiGenTauTheta0 = hMatchedGenTauTheta0.Clone()
+hEffiGenTauTheta0 = root_histograms["Matched"]["Events"]["TauTheta0"].Clone()
 hEffiGenTauTheta0.SetName("hEffiGenTauTheta0")
-hEffiGenTauTheta0.Divide(hGenTauTheta0)
-hEffiGenTauTheta1 = hMatchedGenTauTheta1.Clone()
+hEffiGenTauTheta0.Divide(root_histograms["Gen"]["Events"]["TauTheta0"])
+root_histograms["Matched"]["Effi"]["TauTheta0"] = hEffiGenTauTheta0
+
+hEffiGenTauTheta1 = root_histograms["Matched"]["Events"]["TauTheta1"].Clone()
 hEffiGenTauTheta1.SetName("hEffiGenTauTheta1")
-hEffiGenTauTheta1.Divide(hGenTauTheta1)
-hEffiGenTauTheta2 = hMatchedGenTauTheta2.Clone()
+hEffiGenTauTheta1.Divide(root_histograms["Gen"]["Events"]["TauTheta1"])
+root_histograms["Matched"]["Effi"]["TauTheta1"] = hEffiGenTauTheta1
+
+hEffiGenTauTheta2 = root_histograms["Matched"]["Events"]["TauTheta2"].Clone()
 hEffiGenTauTheta2.SetName("hEffiGenTauTheta2")
-hEffiGenTauTheta2.Divide(hGenTauTheta2)
-hEffiGenTauTheta10 = hMatchedGenTauTheta10.Clone()
+hEffiGenTauTheta2.Divide(root_histograms["Gen"]["Events"]["TauTheta2"])
+root_histograms["Matched"]["Effi"]["TauTheta2"] = hEffiGenTauTheta2
+
+hEffiGenTauTheta10 = root_histograms["Matched"]["Events"]["TauTheta10"].Clone()
 hEffiGenTauTheta10.SetName("hEffiGenTauTheta10")
-hEffiGenTauTheta10.Divide(hGenTauTheta10)
+hEffiGenTauTheta10.Divide(root_histograms["Gen"]["Events"]["TauTheta10"])
+root_histograms["Matched"]["Effi"]["TauTheta10"] = hEffiGenTauTheta10
 
+root_histograms["Matched"]["Events"]["TauP0"].Sumw2()
+root_histograms["Matched"]["Events"]["TauP1"].Sumw2()
+root_histograms["Matched"]["Events"]["TauP2"].Sumw2()
+root_histograms["Matched"]["Events"]["TauP10"].Sumw2()
+root_histograms["Gen"]["Events"]["TauP0"].Sumw2()
+root_histograms["Gen"]["Events"]["TauP1"].Sumw2()
+root_histograms["Gen"]["Events"]["TauP2"].Sumw2()
+root_histograms["Gen"]["Events"]["TauP10"].Sumw2()
 
-# Momentum per decay
-# hEffiGenTauP0 = ROOT.TEfficiency(hMatchedGenTauP0, hGenTauP0)
-# hEffiGenTauP0.SetName("hEffiGenTau0")
-# hEffiGenTauP1 = ROOT.TEfficiency(hMatchedGenTauP1, hGenTauP1)
-# hEffiGenTauP1.SetName("hEffiGenTau1")
-# hEffiGenTauP2 = ROOT.TEfficiency(hMatchedGenTauP2, hGenTauP2)
-# hEffiGenTauP2.SetName("hEffiGenTau2")
-# hEffiGenTauP10 = ROOT.TEfficiency(hMatchedGenTauP10, hGenTauP10)
-# hEffiGenTauP10.SetName("hEffiGenTau10")
-hMatchedGenTauP0.Sumw2()
-hMatchedGenTauP1.Sumw2()
-hMatchedGenTauP2.Sumw2()
-hMatchedGenTauP10.Sumw2()
-hGenTauP0.Sumw2()
-hGenTauP1.Sumw2()
-hGenTauP2.Sumw2()
-# hGenTauP10.Sumw2()
-# hEffiGenTauP0 = hMatchedGenTauP0.Clone()
-# hEffiGenTauP0.SetName("hEffiGenTauP0")
-# hEffiGenTauP0.Divide(hMatchedGenTauP0, hGenTauP0,1, 1,"B")
-# hEffiGenTauP1 = hMatchedGenTauP1.Clone()
-# hEffiGenTauP1.SetName("hEffiGenTauP1")
-# hEffiGenTauP1.Divide(hMatchedGenTauP1, hGenTauP1,1, 1,"B")
-# hEffiGenTauP2 = hMatchedGenTauP2.Clone()
-# hEffiGenTauP2.SetName("hEffiGenTauP2")
-# hEffiGenTauP2.Divide(hMatchedGenTauP2, hGenTauP2,1,1,"B")
-# hEffiGenTauP10 = hMatchedGenTauP10.Clone()
-# hEffiGenTauP10.SetName("hEffiGenTauP10")
-# hEffiGenTauP10.Divide(hMatchedGenTauP10, hGenTauP10,1,1,"B")
 hEffiGenTauP0 = ROOT.TGraphAsymmErrors()
-hEffiGenTauP0.Divide(hMatchedGenTauP0, hGenTauP0, "cl=0.683 b(1,1) mode")
+hEffiGenTauP0.Divide(root_histograms["Matched"]["Events"]["TauP0"], root_histograms["Gen"]["Events"]["TauP0"], "cl=0.683 b(1,1) mode")
 hEffiGenTauP0.SetName("hEffiGenTauP0")
-hEffiGenTauP1 = ROOT.TGraphAsymmErrors()
-hEffiGenTauP1.Divide(hMatchedGenTauP1, hGenTauP1, "cl=0.683 b(1,1) mode")
-hEffiGenTauP1.SetName("hEffiGenTauP1")
-hEffiGenTauP2 = ROOT.TGraphAsymmErrors()
-hEffiGenTauP2.Divide(hMatchedGenTauP2, hGenTauP2, "cl=0.683 b(1,1) mode")
-hEffiGenTauP2.SetName("hEffiGenTauP2")
-hEffiGenTauP10 = ROOT.TGraphAsymmErrors()
-hEffiGenTauP10.Divide(hMatchedGenTauP10, hGenTauP10, "cl=0.683 b(1,1) mode")
-hEffiGenTauP10.SetName("hEffiGenTauP10")
+root_histograms["Matched"]["Effi"]["TauP0"] = hEffiGenTauP0
 
+hEffiGenTauP1 = ROOT.TGraphAsymmErrors()
+hEffiGenTauP1.Divide(root_histograms["Matched"]["Events"]["TauP1"], root_histograms["Gen"]["Events"]["TauP1"], "cl=0.683 b(1,1) mode")
+hEffiGenTauP1.SetName("hEffiGenTauP1")
+root_histograms["Matched"]["Effi"]["TauP1"] = hEffiGenTauP1
+
+hEffiGenTauP2 = ROOT.TGraphAsymmErrors()
+hEffiGenTauP2.Divide(root_histograms["Matched"]["Events"]["TauP2"], root_histograms["Gen"]["Events"]["TauP2"], "cl=0.683 b(1,1) mode")
+hEffiGenTauP2.SetName("hEffiGenTauP2")
+root_histograms["Matched"]["Effi"]["TauP2"] = hEffiGenTauP2
+
+hEffiGenTauP10 = ROOT.TGraphAsymmErrors()
+hEffiGenTauP10.Divide(root_histograms["Matched"]["Events"]["TauP10"], root_histograms["Gen"]["Events"]["TauP10"], "cl=0.683 b(1,1) mode")
+hEffiGenTauP10.SetName("hEffiGenTauP10")
+root_histograms["Matched"]["Effi"]["TauP10"] = hEffiGenTauP10
 
 # Vis Momentum per decay
-hEffiGenTauVisP0 = hMatchedGenTauVisP0.Clone()
+hEffiGenTauVisP0 = root_histograms["Matched"]["Events"]["TauVisP0"].Clone()
 hEffiGenTauVisP0.SetName("hEffiGenTauVisP0")
-hEffiGenTauVisP0.Divide(hGenTauVisP0)
-hEffiGenTauVisP1 = hMatchedGenTauVisP1.Clone()
+hEffiGenTauVisP0.Divide(root_histograms["Gen"]["Events"]["TauVisP0"])
+root_histograms["Matched"]["Effi"]["TauVisP0"] = hEffiGenTauVisP0
+hEffiGenTauVisP1 = root_histograms["Matched"]["Events"]["TauVisP1"].Clone()
 hEffiGenTauVisP1.SetName("hEffiGenTauVisP1")
-hEffiGenTauVisP1.Divide(hGenTauVisP1)
-hEffiGenTauVisP2 = hMatchedGenTauVisP2.Clone()
+hEffiGenTauVisP1.Divide(root_histograms["Gen"]["Events"]["TauVisP1"])
+root_histograms["Matched"]["Effi"]["TauVisP1"] = hEffiGenTauVisP1
+hEffiGenTauVisP2 = root_histograms["Matched"]["Events"]["TauVisP2"].Clone()
 hEffiGenTauVisP2.SetName("hEffiGenTauVisP2")
-hEffiGenTauVisP2.Divide(hGenTauVisP2)
-hEffiGenTauVisP10 = hMatchedGenTauVisP10.Clone()
+hEffiGenTauVisP2.Divide(root_histograms["Gen"]["Events"]["TauVisP2"])
+root_histograms["Matched"]["Effi"]["TauVisP2"] = hEffiGenTauVisP2
+hEffiGenTauVisP10 = root_histograms["Matched"]["Events"]["TauVisP10"].Clone()
 hEffiGenTauVisP10.SetName("hEffiGenTauVisP10")
-hEffiGenTauVisP10.Divide(hGenTauVisP10)
+hEffiGenTauVisP10.Divide(root_histograms["Gen"]["Events"]["TauVisP10"])
+root_histograms["Matched"]["Effi"]["TauVisP10"] = hEffiGenTauVisP10
 
 
 
@@ -1698,281 +1521,24 @@ unmatched_reco_pions_match_count = unmatched_reco_pions_match_list_df["PDGID"].v
 unmatched_reco_pions_match_count.to_csv(outputpath + "unmatched_reco_pions_match_count.csv", index=True) 
 
 # Check if config["output"]["outputlabels"] is a list
-if type(config["output"]["outputlabels"]) is not list:
-    if config["output"]["outputlabels"] is None:
-        config["output"]["outputlabels"] = []
+if type(run_config["output"]["outputlabels"]) is not list:
+    if run_config["output"]["outputlabels"] is None:
+        run_config["output"]["outputlabels"] = []
     else:
-        config["output"]["outputlabels"] = [config["output"]["outputlabels"]]
-if true_predicted_label_output_file not in config["output"]["outputlabels"]:
-    config["output"]["outputlabels"].append(true_predicted_label_output_file)
+        run_config["output"]["outputlabels"] = [run_config["output"]["outputlabels"]]
+if true_predicted_label_output_file not in run_config["output"]["outputlabels"]:
+    run_config["output"]["outputlabels"].append(true_predicted_label_output_file)
 
 output_config_file = outputpath + "config.yaml"
 with open(output_config_file, "w") as file:
-    yaml.dump(config, file)
+    yaml.dump(run_config, file)
     logger_io.info("Configuration file saved to %s", output_config_file)
 
-outfile = ROOT.TFile(outputpath + fileOutName, "RECREATE")
+outfile = ROOT.TFile(fileOutName, "RECREATE")
 
-
-# Theta
-hGenTauTheta0.Write()
-hGenTauTheta1.Write()
-hGenTauTheta2.Write()
-hGenTauTheta10.Write()
-hMatchedGenTauTheta0.Write()
-hMatchedGenTauTheta1.Write()
-hMatchedGenTauTheta2.Write()
-hMatchedGenTauTheta10.Write()
-hRecoTauTheta0.Write()
-hRecoTauTheta1.Write()
-hRecoTauTheta2.Write()
-hRecoTauTheta10.Write()
-
-hTauThetaRes0.Write()
-hTauThetaRes1.Write()
-hTauThetaRes2.Write()
-hTauThetaRes10.Write()
-
-hMatchedTauThetaRes0.Write()
-hMatchedTauThetaRes1.Write()
-hMatchedTauThetaRes2.Write()
-hMatchedTauThetaRes10.Write()
-
-# P (Momentum)
-hEffiGenHadronTauP.Write()
-hMatchedGenHadronTauP.Write()
-hGenHadronP.Write()
-hGenTauP0.Write() 
-hGenTauP1.Write() 
-hGenTauP2.Write() 
-hGenTauP10.Write() 
-hGenTauVisP0.Write() 
-hGenTauVisP1.Write() 
-hGenTauVisP2.Write() 
-hGenTauVisP10.Write() 
-hMatchedGenTauP0.Write() 
-hMatchedGenTauP1.Write() 
-hMatchedGenTauP2.Write() 
-hMatchedGenTauP10.Write() 
-hMatchedGenTauVisP0.Write() 
-hMatchedGenTauVisP1.Write() 
-hMatchedGenTauVisP2.Write() 
-hMatchedGenTauVisP10.Write()
-
-hRecoTauP0.Write()
-hRecoTauP1.Write()
-hRecoTauP2.Write()
-hRecoTauP10.Write()
-
-
-hEffiGenAllPionsPCut.Write()
-hEffiGenAllPionsPionThetaCut.Write()
-
-hGenPhotonP.Write()
-hMatchedGenPhotonP.Write()
-hRecoPhotonP.Write()
-hGenPhotonTheta.Write()
-hMatchedGenPhotonTheta.Write()
-hRecoPhotonTheta.Write()
-hGenTauPionP.Write()
-hMatchedGenPionP.Write()
-hRecoPionP.Write()
-hGenPionTheta.Write()
-hMatchedGenPionTheta.Write()
-hRecoPionTheta.Write()
-hGenPionP0.Write()
-hGenPionP1.Write()
-hGenPionP2.Write()
-hGenPionP10.Write()
-
-
-hGenAllPionsP.Write()
-hMatchedAllPionsP.Write()
-hGenAllPionsTheta.Write()
-hMatchedAllPionsTheta.Write()
-hEffiAllPionsP.Write()
-hEffiAllPionsTheta.Write()
-
-# Matched pions gen level (2d)
-hMatchedPionsP.Write()
-# Unmatched pions gen level (hist)
-hUnmatchedGenPionsP.Write()
-# Unmatched pions reco level (hist)
+write_histograms_recursive(root_histograms)
 for hist in unmatched_reco_pions_P_per_miss.values():
     hist.Write()
-
-hMatchedPionsTheta.Write()
-hUnmatchedGenPionsTheta.Write()
-hUnmatchedRecoPionsTheta.Write()
-
-# Resolution P
-hTauPRes0.Write()
-hTauPRes1.Write() 
-hTauPRes2.Write()
-hTauPRes10.Write()
-
-hMatchedTauPRes0.Write()
-hMatchedTauPRes1.Write()
-hMatchedTauPRes2.Write()
-hMatchedTauPRes10.Write()
-
-hEffiGenTauTheta0.Write()
-hEffiGenTauTheta1.Write()
-hEffiGenTauTheta2.Write()
-hEffiGenTauTheta10.Write()
-hEffiGenTauP0.Write()
-hEffiGenTauP1.Write()
-hEffiGenTauP2.Write()
-hEffiGenTauP10.Write()
-hEffiGenTauVisP0.Write()
-hEffiGenTauVisP1.Write()
-hEffiGenTauVisP2.Write()
-hEffiGenTauVisP10.Write()
-
-# Neutral Hadrons
-hRecoNeutralHadronP.Write()
-hRecoNeutralHadronTauP.Write()
-
-# Reco Mass and P from different strategies
-hRecoConstPi0MassFromPhotonMasstr.Write()
-hRecoConstPi0MassFromPhotonDiststr.Write()
-hRecoConstlessPhotonPa1strMass.Write()
-hRecoConstxtraPhotonPrhostrMass.Write()
-hRecoConstlessPhotonPa1strDist.Write()
-hRecoConstxtraPhotonPrhostrDist.Write()
-hRecoConstlessPhotonPrho.Write()
-hRecoConstxtraPhotonPi.Write()
-hRecoConstPi0Mass.Write()
-# Hist with zooms in 0,2
-hRecoConstlessPhotonPa1strMassZoom.Write()
-hRecoConstxtraPhotonPrhostrMassZoom.Write()
-hRecoConstlessPhotonPrhoZoom.Write()
-hRecoConstxtraPhotonPiZoom.Write()
-
-
-
-# Matched photons moment (Distance strategy)
-hRecoThreePhotonMatchOnestrDistP.Write()
-hRecoThreePhotonMatchTwostrDistP.Write()
-hRecoThreePhotonNoMatchstrDistP.Write()
-
-# Matched photons moment (Mass strategy)
-hRecoThreePhotonMatchOnestrMassP.Write()
-hRecoThreePhotonMatchTwostrMassP.Write()
-hRecoThreePhotonNoMatchstrMassP.Write()
-
-hRecoConstTwoPhotonAngDist.Write()
-
-
-#  Rho decay Pi P
-hRecoRhoPiDecayP.Write() 
-hGenRhoPiDecayP.Write()
-# Rho decay two photons case P
-hRecoRhoTwoPhotonDecayP.Write()
-hGenRhoTwoPhotonDecayP.Write()
-hRecoRhoTwoPhotonDecaySumP.Write()
-hGenRhoTwoPhotonDecaySumP.Write()
-# Hist of pi P vs sum of photons P
-h2DRecoRhoTwoPhotonDecayPiPhotonSumP.Write()
-h2DGenRhoTwoPhotonDecayPiPhotonSumP.Write()
-
-# Rho False decay (one photon)
-hRecoRhoOnePhotonDecayPiP.Write()
-hGenRhoOnePhotonDecayPiP.Write()
-hRecoRhoOnePhotonDecayPhotonP.Write()
-hGenRhoOnePhotonDecayPhotonP.Write()
-hGenRhoOnePhotonDecayPhotonSumP.Write()
-# Angle between the photons at gen level
-hGenRhoOnePhotonDecayPhotonAng.Write()
-# Hist of pi P vs photon P at reco level:
-h2DRecoRhoOnePhotonDecayPiPhotonP.Write()
-# Hist of pi P vs photon P at gen level:
-h2DGenRhoOnePhotonDecayPiPhotonSumP.Write()
-
-
-hGenConstPi0Mass.Write()
-hEffiGenPi0Mass.Write()
-hMatchedGenConstPi0Mass.Write()
-h2DPi0MassOverNPhoton.Write()
-h2DPionPid.Write()
-
-hGenTauPt.Write()
-hGenVisTauPt.Write()
-hGenTauP.Write()
-hGenVisTauP.Write()
-hGenTauType.Write()
-hGenVisTauMass.Write()
-hGenTauQ.Write()
-hGenTauEta.Write()
-hGenTauTheta.Write()
-
-hGenTauDR.Write()
-
-hMatchedGenTauPt.Write()
-hMatchedGenVisTauPt.Write()
-hMatchedGenTauP.Write()
-hMatchedGenVisTauP.Write()
-
-hMatchedGenTauType.Write()
-hMatchedGenVisTauMass.Write()
-hMatchedGenTauQ.Write()
-hMatchedGenTauEta.Write()
-hMatchedGenTauTheta.Write()
-
-hMatchedGenTauDR.Write()
-
-
-hEffiGenTauPt.Write()
-hEffiGenVisTauPt.Write()
-hEffiGenTauP.Write()
-hEffiGenVisTauP.Write()
-
-hEffiGenTauType.Write()
-hEffiGenVisTauMass.Write()
-hEffiGenTauEta.Write()
-hEffiGenTauTheta.Write()
-
-hEffiGenPhotonP.Write()
-hEffiGenPhotonTheta.Write()
-hEffiGenPionP.Write()
-hEffiGenPionTheta.Write()
-
-
-hRecoTauPt.Write()
-hRecoTauP.Write()
-
-hRecoTauType.Write()
-hRecoTauMass.Write()
-hRecoTauQ.Write()
-hRecoTauEta.Write()
-hRecoTauTheta.Write()
-
-hRecoTauDR.Write()
-
-h2DTauPt.Write()
-h2DTauP.Write()
-
-h2DTauMass.Write()
-h2DTauType.Write()
-
-h2DTauDR.Write()
-
-hResTauPt.Write()
-hResTauP.Write()
-
-hResTauMass.Write()
-
-hNTaus.Write()
-hNGenTaus.Write()
-
-hNTausType.Write()
-hNGenTausType.Write()
-
-hMatchedTausPRes.Write()
-hMatchedTausPtRes.Write()
-hMatchedTausChargeRes.Write()
-hMatchedTausMaxAngleRes.Write()
-hMatchedTausNCompRes.Write()
 
 logger_io.info("Output file %s", outputpath + fileOutName)
 logger_io.info("End of job")
