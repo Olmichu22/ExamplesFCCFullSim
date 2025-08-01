@@ -148,7 +148,8 @@ def load_yaml_config(config_file, default_config):
 
 def setup_analysis_config(
     default_config: str = "config/default/taurecolong.yaml",
-    output_base: str = "Results/TauReco/"
+    output_base: str = "Results/TauReco/",
+    parser_hook=None,
 ):
     """
     Encapsula la configuración de argumentos, cargas de configuración,
@@ -210,6 +211,9 @@ def setup_analysis_config(
         help="Use this flag to test the PFOs in same files as GATr.",
     )
 
+    if parser_hook is not None:
+        parser_hook(parser)
+
     args = parser.parse_args()
 
     # Load config
@@ -234,12 +238,15 @@ def setup_analysis_config(
     config["general"]["outfile"] = outfile
 
     # Build strings
-    dr = cuts["dRMax"]
-    tph = cuts["TauPhotonPCut"]
-    tpi = cuts["TauPionPCut"]
-    npe = cuts["NeutronCut"]
-    gpc = cuts["generalPCut"]
-    mdr = cuts["MatchedGenMinDR"]
+    def _first(val):
+        return val[0] if isinstance(val, list) else val
+
+    dr = _first(cuts["dRMax"])
+    tph = _first(cuts["TauPhotonPCut"])
+    tpi = _first(cuts["TauPionPCut"])
+    npe = _first(cuts["NeutronCut"])
+    gpc = _first(cuts["generalPCut"])
+    mdr = _first(cuts["MatchedGenMinDR"])
 
     suffix = f"_{dr}_tph{tph}_tpi{tpi}_n{npe}_g{gpc}"
     decay_str = f"decay{select_decay}" + suffix
