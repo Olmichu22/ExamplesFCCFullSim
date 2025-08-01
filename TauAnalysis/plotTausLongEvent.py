@@ -23,112 +23,40 @@ from modules import myutils
 import logging
 
 
-import argparse
+def extend_parser(parser):
+    parser.add_argument("--nfile", type=int, default=1, help="Id of simulation file")
+    parser.add_argument("--eventid", type=int, default=0, help="Event ID to analyze")
 
-# ------------------------------------------------------------------------
-# Argument parser setup
-parser = argparse.ArgumentParser(
-    description="Configure the analysis",
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-)
-parser.add_argument("-f", "--sample")
-parser.add_argument("-o", "--outfile")
-parser.add_argument("-d", "--decay", type=int)  # GEN
-parser.add_argument(
-    "-p", "--TauPhotonPCut", type=float
-)  
-parser.add_argument("-i", "--TauPionPCut", type=float)
-parser.add_argument("-R", "--dRMax", type=float)
-parser.add_argument("-n", "--NeutronCut", type=float)
-parser.add_argument("-g", "--generalPCut", type=float)
-parser.add_argument("-r", "--MatchedGenMinDR", type=float)
-parser.add_argument(
-    "-m",
-    "--matchedCM",
-    default="True",
-    type=str,
-    help="Use only matched taus to compute confusion matrix.",
-)
-parser.add_argument(
-    "-t",
-    "--test",
-    type=str,
-    help="Run in test mode with limited number of files",
-)
-parser.add_argument(
-    "-c", "--config", type=str, help="Configuration file"
-)
-parser.add_argument(
-    "-v",
-    "--verbose",
-    action="count",
-    default=0,
-    help="Increase verbosity level: -v for INFO, -vv for DEBUG",
-)
 
-parser.add_argument(
-    "--gatr-result",
-    type=str,
-    help="Path to GATR result for the analysis.",
-)
-
-parser.add_argument(
-    "--test-pfo",
-    action="store_true",
-    help="Use this flag to test the PFOs in same files as GATr.")
-
-parser.add_argument("--nfile", type=int, default=1, help="Id of simulation file")
-parser.add_argument("--eventid", type=int, default=0, help="Event ID to analyze")
-
-args = parser.parse_args()
-
-# ----------------------------------------------------------------------------
-# Load config (necessary for set up the logger)
+outputbasepath = "Event_info/TauReco/"
 default_config = "config/default/taurecolong.yaml"
-config = myutils.load_yaml_config(args.config, default_config)
 
+general_configs = myutils.setup_analysis_config(
+    default_config,
+    outputbasepath,
+    parser_hook=extend_parser,
+)
 
-# Cut Configuration
-config["cuts"]["dRMax"] = args.dRMax if args.dRMax != None else config["cuts"]["dRMax"]
-config["cuts"]["TauPhotonPCut"] = (
-    args.TauPhotonPCut
-    if args.TauPhotonPCut != None
-    else config["cuts"]["TauPhotonPCut"]
-)
-config["cuts"]["TauPionPCut"] = (
-    args.TauPionPCut if args.TauPionPCut != None else config["cuts"]["TauPionPCut"]
-)
-config["cuts"]["NeutronCut"] = (
-    args.NeutronCut if args.NeutronCut != None else config["cuts"]["NeutronCut"]
-)
-config["cuts"]["MatchedGenMinDR"] = (
-    args.MatchedGenMinDR
-    if args.MatchedGenMinDR != None
-    else config["cuts"]["MatchedGenMinDR"]
-)
-config["cuts"]["generalPCut"] = (
-    args.generalPCut if args.generalPCut != None else config["cuts"]["generalPCut"]
-)
-dRMax = config["cuts"]["dRMax"]
-minPTauPhoton = config["cuts"]["TauPhotonPCut"]
-minPTauPion = config["cuts"]["TauPionPCut"]
-PNeutron = config["cuts"]["NeutronCut"]
-dRMatch = config["cuts"]["MatchedGenMinDR"]
-generalPCut = config["cuts"]["generalPCut"]
+args = general_configs["args"]
+config = general_configs["config"]
+loggers = general_configs["loggers"]
+logger_config = loggers["config"]
+logger_io = loggers["io"]
+logger_process = loggers["processing"]
+logger_pi0mass = loggers["pi0mass"]
+selectDecay = general_configs["decay"]
 
-# We can use same config but different decay mode
-# Priority is given to the decay mode in the command line
-if args.decay not in config["general"]["decay"] and args.decay != None:
-    config["general"]["decay"].append(args.decay)
-    selectDecay = args.decay
-else:
-    selectDecay = args.decay if args.decay != None else config["general"]["decay"][0]
+def _first(val):
+    return val[0] if isinstance(val, list) else val
 
-config["general"]["outfile"] = (
-    args.outfile if args.outfile != None else config["general"]["outfile"]
-)
+dRMax = _first(config["cuts"]["dRMax"])
+minPTauPhoton = _first(config["cuts"]["TauPhotonPCut"])
+minPTauPion = _first(config["cuts"]["TauPionPCut"])
+PNeutron = _first(config["cuts"]["NeutronCut"])
+dRMatch = _first(config["cuts"]["MatchedGenMinDR"])
+generalPCut = _first(config["cuts"]["generalPCut"])
+
 outfile = config["general"]["outfile"]
-
 
 # Output Configuration
 outputbasepath = "Event_info/TauReco/"

@@ -15,70 +15,39 @@ import pickle
 from modules import tauReco 
 from modules import myutils 
 
-import argparse
-parser = argparse.ArgumentParser(description="Configure the analysis",
-                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("-f", "--sample")
-parser.add_argument("-o", "--outfile")
-parser.add_argument("-d", "--decay", type=int)  # GEN
-parser.add_argument(
-    "-V",
-    "--value",
-    type=str,
-    help="Value to modify. It has to be one of the available cuts: NeutronCut, TauPhotonPCut, TauPionPCut, dRMax, MatchedGenMinDR, generalPCut",
-)
-parser.add_argument(
-    "-p", "--TauPhotonPCut", type=float
-)  
+def extend_parser(parser):
+    parser.add_argument(
+        "-V",
+        "--value",
+        type=str,
+        help="Value to modify. It has to be one of the available cuts: NeutronCut, TauPhotonPCut, TauPionPCut, dRMax, MatchedGenMinDR, generalPCut",
+    )
+    parser.add_argument(
+        "-l", "--range", nargs="+", type=float,
+        help="Range of the value to modify: min, max, step"
+    )
 
-parser.add_argument("-i", "--TauPionPCut", nargs ="+", type=float)
-parser.add_argument("-R", "--dRMax", nargs ="+", type=float)
-parser.add_argument("-n", "--NeutronCut", nargs ="+", type=float)
-parser.add_argument("-g", "--generalPCut", nargs ="+", type=float)
-parser.add_argument("-r", "--MatchedGenMinDR", nargs ="+", type=float)
-
-parser.add_argument("-l", "--range", nargs="+", type=float, help="Range of the value to modify: min, max, step")
-parser.add_argument(
-    "-m",
-    "--matchedCM",
-    default="True",
-    type=str,
-    help="Use only matched taus to compute confusion matrix.",
-)
-parser.add_argument(
-    "-t",
-    "--test",
-    default="True",
-    type=str,
-    help="Run in test mode with limited number of files",
-)
-parser.add_argument(
-    "-c", "--config", type=str, help="Configuration file"
-)
-parser.add_argument(
-    "-v",
-    "--verbose",
-    action="count",
-    default=0,
-    help="Increase verbosity level: -v for INFO, -vv for DEBUG",
-)
-parser.add_argument(
-    "--gatr-result",
-    type=str,
-    help="Path to GATR result for the analysis.",
-)
-
-args = parser.parse_args()
 
 outputbasepath = "Results/Experiments/"
+default_config = "config/default/cutexperiment.yaml"
+
+general_configs = myutils.setup_analysis_config(
+    default_config,
+    outputbasepath,
+    parser_hook=extend_parser,
+)
+
+args = general_configs["args"]
+config = general_configs["config"]
+loggers = general_configs["loggers"]
+logger_config = loggers["config"]
+logger_io = loggers["io"]
+logger_process = loggers["processing"]
+
 values = ["NeutronCut", "TauPhotonPCut", "TauPionPCut", "dRMax", "MatchedGenMinDR", "generalPCut"]
 
-# Load Config File
-default_config = "config/default/cutexperiment.yaml"
-config = myutils.load_yaml_config(args.config, default_config)
-
 # Set User Config (if any)
-config["experiment"] = args.value if args.value is not None else config["experiment"]
+config["experiment"] = args.value if args.value is not None else config.get("experiment")
 
 if config["experiment"] not in values:
     raise Exception(
@@ -86,26 +55,34 @@ if config["experiment"] not in values:
     )
 
 
-for key in config["cuts"]:
-  if key == config["experiment"]:
-    if args.range is not None and len(args.range) != 3:
-        raise Exception(
-            f"Invalid range format. Expected format: min, max, step. Got {len(args.range)} values."
-        )
-    if args.range is not None:    
-      config["cuts"][key] = np.arange(args.range[0], args.range[1], args.range[2]).tolist()
+for key in list(config["cuts"].keys()):
+    if key == config["experiment"]:
+        if args.range is not None:
+            if len(args.range) != 3:
+                raise Exception(
+                    f"Invalid range format. Expected format: min, max, step. Got {len(args.range)} values."
+                )
+            config["cuts"][key] = np.arange(args.range[0], args.range[1], args.range[2]).tolist()
+        else:
+            val = config["cuts"][key]
+            if not isinstance(val, list):
+                config["cuts"][key] = [val]
     else:
-      config["cuts"][key] = getattr(args, key) if getattr(args, key) is not None else config["cuts"][key]
-  else:
-    config["cuts"][key] = getattr(args, key)[0] if getattr(args, key) is not None else config["cuts"][key][0]
+        val = config["cuts"][key]
+        if isinstance(val, list):
+            val = val[0]
+        config["cuts"][key] = val
 
 
-dRMax = config["cuts"]["dRMax"]
-minPTauPhoton = config["cuts"]["TauPhotonPCut"]
-minPTauPion = config["cuts"]["TauPionPCut"]
-PNeutron = config["cuts"]["NeutronCut"]
-dRMatch = config["cuts"]["MatchedGenMinDR"]
-generalPCut = config["cuts"]["generalPCut"]
+def _first(val):
+    return val[0] if isinstance(val, list) else val
+
+dRMax = _first(config["cuts"]["dRMax"])
+minPTauPhoton = _first(config["cuts"]["TauPhotonPCut"])
+minPTauPion = _first(config["cuts"]["TauPionPCut"])
+PNeutron = _first(config["cuts"]["NeutronCut"])
+dRMatch = _first(config["cuts"]["MatchedGenMinDR"])
+generalPCut = _first(config["cuts"]["generalPCut"])
 
 
 exp_str = ""
@@ -116,7 +93,6 @@ for key, value in config["cuts"].items():
         exp_str += f"{key}{value}_"
 cut_string = f"_{exp_str[:-1]}"
 
-config["general"]["decay"] = args.decay if args.decay != None else config["general"]["decay"]
 selectDecay = config["general"]["decay"]
 
 decayString = f"decay{selectDecay}" + cut_string
@@ -157,9 +133,6 @@ logging.basicConfig(
     level=log_level,
     format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
     handlers=handlers)
-logger_config = logging.getLogger("config")
-logger_io = logging.getLogger("io")
-logger_process = logging.getLogger("processing")
 
 logger_config.info("Logging handler initialized.")
 
