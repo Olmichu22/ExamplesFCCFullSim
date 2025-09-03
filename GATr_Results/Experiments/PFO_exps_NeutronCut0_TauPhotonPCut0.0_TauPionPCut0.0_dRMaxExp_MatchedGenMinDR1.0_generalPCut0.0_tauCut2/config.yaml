@@ -1,0 +1,36 @@
+cuts:
+  MatchedGenMinDR: 1.0
+  NeutronCut: 0
+  TauPhotonPCut: 0.0
+  TauPionPCut: 0.0
+  dRMax:
+  - 2.0
+  - 2.5
+  - 3.0
+  - 3.5
+  - 4.0
+  - 4.5
+  - 5.0
+  - 5.5
+  generalPCut: 0.0
+  tauCut: 2
+experiment: dRMax
+general:
+  decay:
+  - -777
+  matchedCM: 'True'
+  outfile: exps
+  sample: ZTauTau_SMPol_25Sept_MuonFix
+  test: 'False'
+output:
+  outputfile: PFO_expsdecayAll_NeutronCut0_TauPhotonPCut0.0_TauPionPCut0.0_dRMaxExp_MatchedGenMinDR1.0_generalPCut0.0_tauCut2.root
+  outputlabels:
+  - GATr_Results/Experiments/PFO_exps_NeutronCut0_TauPhotonPCut0.0_TauPionPCut0.0_dRMaxExp_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/true_predicted_label_decayAll_dRMax_2.0.csv
+  - GATr_Results/Experiments/PFO_exps_NeutronCut0_TauPhotonPCut0.0_TauPionPCut0.0_dRMaxExp_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/true_predicted_label_decayAll_dRMax_2.5.csv
+  - GATr_Results/Experiments/PFO_exps_NeutronCut0_TauPhotonPCut0.0_TauPionPCut0.0_dRMaxExp_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/true_predicted_label_decayAll_dRMax_3.0.csv
+  - GATr_Results/Experiments/PFO_exps_NeutronCut0_TauPhotonPCut0.0_TauPionPCut0.0_dRMaxExp_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/true_predicted_label_decayAll_dRMax_3.5.csv
+  - GATr_Results/Experiments/PFO_exps_NeutronCut0_TauPhotonPCut0.0_TauPionPCut0.0_dRMaxExp_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/true_predicted_label_decayAll_dRMax_4.0.csv
+  - GATr_Results/Experiments/PFO_exps_NeutronCut0_TauPhotonPCut0.0_TauPionPCut0.0_dRMaxExp_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/true_predicted_label_decayAll_dRMax_4.5.csv
+  - GATr_Results/Experiments/PFO_exps_NeutronCut0_TauPhotonPCut0.0_TauPionPCut0.0_dRMaxExp_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/true_predicted_label_decayAll_dRMax_5.0.csv
+  - GATr_Results/Experiments/PFO_exps_NeutronCut0_TauPhotonPCut0.0_TauPionPCut0.0_dRMaxExp_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/true_predicted_label_decayAll_dRMax_5.5.csv
+  outputpath: GATr_Results/Experiments/PFO_exps_NeutronCut0_TauPhotonPCut0.0_TauPionPCut0.0_dRMaxExp_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/

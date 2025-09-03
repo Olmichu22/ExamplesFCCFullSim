@@ -13,8 +13,8 @@ import logging
 import copy
 import pickle
 from modules import tauReco 
-from modules import myutils 
-
+from modules import myutils
+from modules import ParticleObjects, electronReco, muonReco, myutils, pi0Reco, tauReco
 def extend_parser(parser):
     parser.add_argument(
         "-V",
@@ -35,14 +35,16 @@ general_configs = myutils.setup_analysis_config(
     default_config,
     outputbasepath,
     parser_hook=extend_parser,
+    exp = True
 )
 
 args = general_configs["args"]
 config = general_configs["config"]
-loggers = general_configs["loggers"]
-logger_config = loggers["config"]
-logger_io = loggers["io"]
-logger_process = loggers["processing"]
+# loggers = general_configs["loggers"]
+# logger_config = loggers["config"]
+# logger_io = loggers["io"]
+# logger_process = loggers["processing"]
+# logger_config.info("Logging handler initialized.")
 
 values = ["NeutronCut", "TauPhotonPCut", "TauPionPCut", "dRMax", "MatchedGenMinDR", "generalPCut"]
 
@@ -93,8 +95,7 @@ for key, value in config["cuts"].items():
         exp_str += f"{key}{value}_"
 cut_string = f"_{exp_str[:-1]}"
 
-selectDecay = config["general"]["decay"]
-
+selectDecay = general_configs["decay"]
 decayString = f"decay{selectDecay}" + cut_string
 if selectDecay == -777:
     decayString = "decayAll" + cut_string
@@ -102,39 +103,46 @@ if selectDecay == -777:
 config["general"]["outfile"] = (
     args.outfile if args.outfile != None else config["general"]["outfile"]
 )
-outfile = config["general"]["outfile"]   
-
+outfile = config["general"]["outfile"]
+if args.test_pfo:
+    outfile = "PFO_" + outfile   
 
 fileOutName = outfile + decayString + ".root"
 
 outputpath = outputbasepath + outfile + cut_string + "/"
 if args.gatr_result is not None:
     outputpath = "GATr_" + outputpath
+    
 if not os.path.exists(outputpath):
     os.makedirs(outputpath)
 
 # Once set the output path, we can set the logger
-if args.verbose == 0:
-    log_level = logging.WARNING  # Only warnings and errors
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(outputpath + "/" + "exp.log", mode="w"),
-    ]
-elif args.verbose == 1:
-    log_level = logging.INFO  # Informational messages
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(outputpath + "/" + "exp.log", mode="w"),
-    ]
+lvl = logging.WARNING if args.verbose == 0 else logging.INFO if args.verbose == 1 else logging.DEBUG
+handlers = []
+if args.verbose < 2:
+    handlers = [logging.StreamHandler(sys.stdout), logging.FileHandler(os.path.join(outputpath, "exp.log"), mode="w")]
+elif args.verbose == 2:
+    sh = logging.StreamHandler(sys.stdout); sh.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(os.path.join(outputpath, "exp.log"), mode="w"); fh.setLevel(logging.DEBUG)
+    handlers = [sh, fh]
 else:
-    log_level = logging.DEBUG  # Debug messages for -vv or higher
-    handlers=[logging.FileHandler(outputpath + "/" + "exp.log", mode="w")]
-logging.basicConfig(
-    level=log_level,
-    format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
-    handlers=handlers)
+    handlers = [logging.FileHandler(os.path.join(outputpath, "exp.log"), mode="w")]
 
+logging.basicConfig(
+    level=lvl,
+    format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
+    handlers=handlers
+)
+
+logger_config = logging.getLogger("config")
+logger_io = logging.getLogger("io")
+logger_process = logging.getLogger("processing")
 logger_config.info("Logging handler initialized.")
+loggers = {
+    "config": logger_config,
+    "io": logger_io,
+    "processing": logger_process
+}
 
 # Finish Configuration
 config["general"]["sample"] = args.sample if args.sample!= None else config["general"]["sample"]
@@ -165,74 +173,7 @@ nfiles=len(os.listdir(dir_path))
 
 gatr_results_path = args.gatr_result
 
-if gatr_results_path is not None:
-    if not os.path.exists(gatr_results_path):
-        logger_io.error("GATr results path %s does not exist.", gatr_results_path)
-        sys.exit(1)
-    else:
-        logger_io.info("Using GATr results from %s", gatr_results_path)
-    # abrimos archivo configuracion yml
-    mlpf_config = pd.read_csv(gatr_results_path)
-    filenames = []
-    n_predictions = 0
-    mlpf_results = {}
-    for row in mlpf_config.iterrows():
-        mlpf_predictions_path = row[1]["prediction_file"]
-        simulation_path = row[1]["simulation_file"]
-        my_file = Path(simulation_path)
-        logger_io.debug("Reading file %s", simulation_path)
-        if my_file.is_file():
-            root_file = myutils.open_root_file(simulation_path)
-            if not root_file or root_file.IsZombie():
-                logger_io.warning("File %s is a zombie or could not be opened.", simulation_path)
-                continue
-            filenames.append(simulation_path)
-        
-        with open(mlpf_predictions_path, "rb") as f:
-            mlpf_preds_i = pickle.load(f)
-        if len(mlpf_preds_i) != 1000:
-            logger_io.warning("Expected 1000 predictions, but got %d", len(mlpf_preds_i))
-            logger_io.warning("File %s will be skipped.", simulation_path)
-            filenames.remove(simulation_path)
-            continue
-        logger_io.debug("Read %d GATr results", len(mlpf_preds_i))
-            
-        for key, value in mlpf_preds_i.items():
-            mlpf_results[n_predictions] = value
-            n_predictions += 1
-            
-    logger_io.info("Total predictions loaded: %d", n_predictions)
-        
-else:
-    # Simulation files
-    path = "/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
-    file = "out_reco_edm4hep_edm4hep"
-    filenames = []
-    dir_path = path + "/" + sample
-
-    nfiles = len(os.listdir(dir_path))
-
-    nfiles = 1000
-    if test == True:
-        nfiles = 2
-
-    if gatr_results_path is not None:
-        print(len(gatr_results))
-        nfiles = len(gatr_results)//1000
-
-    logger_io.info("Reading files from %s", dir_path)
-    for i in range(1, nfiles + 1):
-        filename = dir_path + "/" + file + "_{}.root".format(i)
-        logger_io.debug("Reading file %s", filename)
-        my_file = Path(filename)
-        if my_file.is_file():
-            root_file = myutils.open_root_file(filename)
-            if not root_file or root_file.IsZombie():
-                logger_io.warning("File %s is a zombie or could not be opened.", filename)
-                continue
-            filenames.append(filename)
-
-
+filenames, mlpf_results = myutils.get_root_trees_path(sample, gatr_results_path, loggers, test_arg)
 
 true_predicted_label_sample = {"GenID":[],"True":[], "Predicted":[], "PhotonPredicted":[]}
 
@@ -275,23 +216,46 @@ for exp, exp_value in enumerate(config["cuts"][config["experiment"]]):
         "\n".join("GenTau %d: %s" % (i, tau) for i, tau in genTaus.items()),
         )
         logger_process.debug("Running tau reconstruction with parameters: %s", experiment_parameters)
-        if gatr_results_path is not None:
-            recoTaus = tauReco.findAllTaus(mlpf_results[eventid],
+        if gatr_results_path is not None and not general_configs["args"].test_pfo:
+            logger_io.debug("Using GATr results for tau reconstruction")
+            particles = mlpf_results.get(eventid, {})
+            recoTau = tauReco.findAllTaus(particles,
                                     experiment_parameters["dRMax"],
                                     experiment_parameters["TauPhotonPCut"],
                                     experiment_parameters["TauPionPCut"],
                                     experiment_parameters["NeutronCut"],
                                     experiment_parameters["generalPCut"],
                                     charge_condition=False)
+            recoElectrons = electronReco.findAllElectrons(particles, experiment_parameters["generalPCut"])
+            recoMuons = muonReco.findAllMuons(particles, experiment_parameters["generalPCut"])
         else:
-            recoTaus = tauReco.findAllTaus(pfos,
+            logger_io.debug("Using Pandora results for tau reconstruction")
+            recoTau = tauReco.findAllTaus(pfos,
                                 experiment_parameters["dRMax"],
                                 experiment_parameters["TauPhotonPCut"],
                                 experiment_parameters["TauPionPCut"],
                                 experiment_parameters["NeutronCut"],
                                 experiment_parameters["generalPCut"])
+            recoElectrons = electronReco.findAllElectrons(pfos,
+                                                          experiment_parameters["generalPCut"])
+            recoMuons = muonReco.findAllMuons(pfos,
+                                              experiment_parameters["generalPCut"])
+        nRecoTaus = len(recoTau)
+        nRecoElectrons = len(recoElectrons)
+        nRecoMuons = len(recoMuons)
 
-        nRecoTaus=len(recoTaus)
+        recoTaus = {}
+        pidx = 0
+        for taui in range(nRecoTaus):
+            recoTaus[pidx] = recoTau[taui]
+            pidx += 1
+        for elei in range(nRecoElectrons):
+            recoTaus[pidx] = recoElectrons[elei]
+            pidx += 1
+        for mui in range(nRecoMuons):
+            recoTaus[pidx] = recoMuons[mui]
+            pidx += 1
+        nRecoTaus = len(recoTaus)
         logger_process.debug(
           "Found %d reconstructed taus. Details:\n%s",
           nRecoTaus,
@@ -317,22 +281,22 @@ for exp, exp_value in enumerate(config["cuts"][config["experiment"]]):
                 maxDRMatch=experiment_parameters["MatchedGenMinDR"],
                 selectDecay=selectDecay,
             )
-            if not matched_cm:
-                true_predicted_label["GenID"].append(str(eventid) + str(i))
-                true_predicted_label["True"].append(genTauId)
+            # if not matched_cm:
+            true_predicted_label["GenID"].append(str(eventid) + str(i))
+            true_predicted_label["True"].append(genTauId)
 
             if findMatch == -1:
                 logger_process.debug("No match found for gen tau %s", genTaus[i])
-                if not matched_cm:
-                    # true_predicted_label["Predicted"].append(-1)
-                    true_predicted_label["Predicted"].append(-2)
-                    true_predicted_label["PhotonPredicted"].append(-2)
+                # if not matched_cm:
+                #     # true_predicted_label["Predicted"].append(-1)
+                true_predicted_label["Predicted"].append(-2)
+                true_predicted_label["PhotonPredicted"].append(-2)
                 continue
 
             logger_process.debug("Found matched tau. Details:\n%s", recoTaus[findMatch])
-            if matched_cm:
-                true_predicted_label["GenID"].append(str(eventid) + str(i))
-                true_predicted_label["True"].append(genTauId)
+            # if matched_cm:
+            #     true_predicted_label["GenID"].append(str(eventid) + str(i))
+            #     true_predicted_label["True"].append(genTauId)
 
             recoTauId = recoTaus[findMatch].getID()
             recoDM = recoTauId

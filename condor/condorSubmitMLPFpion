@@ -1,0 +1,10 @@
+executable             = /nfs/cms/arqolmo/ExamplesFCCFullSim/condor/condorExecutable.sh
+request_cpus           = 1
+#
+output                 = /nfs/cms/arqolmo/ExamplesFCCFullSim/condor/logs/job_mlpf_pion.out
+log                    = /nfs/cms/arqolmo/ExamplesFCCFullSim/condor/logs/job_mlpf_pion.log
+error                  = /nfs/cms/arqolmo/ExamplesFCCFullSim/condor/logs/job_mlpf_pion.err
+arguments              = python /nfs/cms/arqolmo/ExamplesFCCFullSim/TauAnalysis/cutExperiment.py -c /nfs/cms/arqolmo/ExamplesFCCFullSim/config/default/cutexperiment.yaml -V TauPionPCut -l 0 5.2 0.02 -v --gatr-result /nfs/cms/arqolmo/ExamplesFCCFullSim/tau_trained_mlpf_mapping.csv
+max_retries            = 1
+
+queue

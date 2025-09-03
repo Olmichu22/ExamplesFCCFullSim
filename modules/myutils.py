@@ -150,6 +150,7 @@ def setup_analysis_config(
     default_config: str = "config/default/taurecolong.yaml",
     output_base: str = "Results/TauReco/",
     parser_hook=None,
+    exp = False,
 ):
     """
     Encapsula la configuración de argumentos, cargas de configuración,
@@ -274,30 +275,36 @@ def setup_analysis_config(
         config["output"]["outputfile"] = [file_out]
     config["output"]["outputpath"] = path
 
-    # Logging
-    lvl = logging.WARNING if args.verbose == 0 else logging.INFO if args.verbose == 1 else logging.DEBUG
-    handlers = []
-    if args.verbose < 2:
-        handlers = [logging.StreamHandler(sys.stdout), logging.FileHandler(os.path.join(path, "app.log"), mode="w")]
-    elif args.verbose == 2:
-        sh = logging.StreamHandler(sys.stdout); sh.setLevel(logging.DEBUG)
-        fh = logging.FileHandler(os.path.join(path, "app.log"), mode="w"); fh.setLevel(logging.DEBUG)
-        handlers = [sh, fh]
+    if not exp:
+        # Logging
+        lvl = logging.WARNING if args.verbose == 0 else logging.INFO if args.verbose == 1 else logging.DEBUG
+        handlers = []
+        if args.verbose < 2:
+            handlers = [logging.StreamHandler(sys.stdout), logging.FileHandler(os.path.join(path, "app.log"), mode="w")]
+        elif args.verbose == 2:
+            sh = logging.StreamHandler(sys.stdout); sh.setLevel(logging.DEBUG)
+            fh = logging.FileHandler(os.path.join(path, "app.log"), mode="w"); fh.setLevel(logging.DEBUG)
+            handlers = [sh, fh]
+        else:
+            handlers = [logging.FileHandler(os.path.join(path, "app.log"), mode="w")]
+
+        logging.basicConfig(
+            level=lvl,
+            format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
+            handlers=handlers
+        )
+
+        loggers = {
+            "config": logging.getLogger("config"),
+            "io": logging.getLogger("io"),
+            "processing": logging.getLogger("processing"),
+            "pi0mass": logging.getLogger("pi0mass")
+        }
+        loggers["config"].info("Configuration loaded!")
+        loggers["config"].info("Configuration:\n%s", pprint.pformat(config, indent=4))
+
     else:
-        handlers = [logging.FileHandler(os.path.join(path, "app.log"), mode="w")]
-
-    logging.basicConfig(
-        level=lvl,
-        format="%(asctime)s, %(levelname)s, [%(name)s] - %(message)s",
-        handlers=handlers
-    )
-
-    loggers = {
-        "config": logging.getLogger("config"),
-        "io": logging.getLogger("io"),
-        "processing": logging.getLogger("processing"),
-        "pi0mass": logging.getLogger("pi0mass")
-    }
+        loggers = {}
 
     # General args to config
     for key in ["sample", "matchedCM", "test"]:
@@ -307,9 +314,7 @@ def setup_analysis_config(
     matched_cm = True if config["general"]["matchedCM"] == "True" else False
     test_mode = True if config["general"]["test"] == "True" else False
 
-    loggers["config"].info("Configuration loaded!")
-    loggers["config"].info("Configuration:\n%s", pprint.pformat(config, indent=4))
-
+    
     return {
         "args": args,
         "config": config,
@@ -320,7 +325,8 @@ def setup_analysis_config(
         "flags": {
             "matched_cm": matched_cm,
             "test": test_mode
-        }
+        },
+        "decay_str": decay_str
     }
 
 
@@ -339,7 +345,10 @@ def get_root_trees_path(sample, gatr_results_path, loggers, test):
         filenames = []
         n_files = 0
         n_preds = 1
-        for row in mlpf_config.iterrows():
+        for i, row in enumerate(mlpf_config.iterrows()):
+            if test == True and i > 0:
+                break
+            
             mlpf_predictions_path = row[1]["prediction_file"]
             simulation_path = row[1]["simulation_file"]
             my_file = Path(simulation_path)

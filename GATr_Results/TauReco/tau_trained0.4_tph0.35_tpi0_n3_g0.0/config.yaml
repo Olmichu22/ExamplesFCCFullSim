@@ -10,12 +10,12 @@ general:
   decay:
   - -777
   matchedCM: 'True'
-  outfile: effis
+  outfile: tau_trained
   sample: ZTauTau_SMPol_25Sept_MuonFix
   test: 'False'
 output:
   outputfile:
-  - effisdecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+  - tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
   outputlabels:
-  - GATr_Results/TauReco/PFO_effis0.4_tph0.35_tpi0_n3_g0.0/true_predicted_label_decayAll.csv
-  outputpath: GATr_Results/TauReco/PFO_effis0.4_tph0.35_tpi0_n3_g0.0/
+  - GATr_Results/TauReco/tau_trained0.4_tph0.35_tpi0_n3_g0.0/true_predicted_label_decayAll.csv
+  outputpath: GATr_Results/TauReco/tau_trained0.4_tph0.35_tpi0_n3_g0.0/

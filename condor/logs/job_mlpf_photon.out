@@ -1,0 +1,1051 @@
+AlmaLinux/RockyLinux/RHEL 9 detected
+Setting up the Key4hep software stack release 2024-10-03 from CVMFS
+Use the following command to reproduce the current environment: 
+
+        source /cvmfs/sw.hsf.org/key4hep/setup.sh -r 2024-10-03
+
+If you have any issues, comments or requests, open an issue at https://github.com/key4hep/key4hep-spack/issues
+Tip: A new -d flag can be used to access debug builds, otherwise the default is the optimized build
+-rw-r--r-- 1 arqolmo xv 6584 Aug  5 16:59 /nfs/cms/arqolmo/ExamplesFCCFullSim/tau_trained_mlpf_mapping.csv
+2025-08-18 12:01:44,904, INFO, [config] - Logging handler initialized.
+2025-08-18 12:01:44,904, INFO, [config] - Configuration loaded!
+2025-08-18 12:01:44,904, INFO, [config] - Configuration:
+{   'cuts': {   'MatchedGenMinDR': 1.0,
+                'NeutronCut': 3,
+                'TauPhotonPCut': [   0.0,
+                                     0.05,
+                                     0.1,
+                                     0.15000000000000002,
+                                     0.2,
+                                     0.25,
+                                     0.30000000000000004,
+                                     0.35000000000000003,
+                                     0.4,
+                                     0.45,
+                                     0.5,
+                                     0.55,
+                                     0.6000000000000001,
+                                     0.65,
+                                     0.7000000000000001,
+                                     0.75,
+                                     0.8,
+                                     0.8500000000000001,
+                                     0.9,
+                                     0.9500000000000001,
+                                     1.0,
+                                     1.05,
+                                     1.1,
+                                     1.1500000000000001,
+                                     1.2000000000000002,
+                                     1.25,
+                                     1.3,
+                                     1.35,
+                                     1.4000000000000001,
+                                     1.4500000000000002],
+                'TauPionPCut': 0.0,
+                'dRMax': 0.4,
+                'generalPCut': 0.0,
+                'tauCut': 2},
+    'experiment': 'TauPhotonPCut',
+    'general': {   'decay': [-777],
+                   'matchedCM': 'True',
+                   'outfile': 'exps',
+                   'sample': 'ZTauTau_SMPol_25Sept_MuonFix',
+                   'test': 'False'},
+    'output': {   'outputfile': 'PFO_expsdecayAll_NeutronCut3_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0_tauCut2.root',
+                  'outputlabels': None,
+                  'outputpath': 'GATr_Results/Experiments/PFO_exps_NeutronCut3_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/'}}
+2025-08-18 12:01:45,062, INFO, [io] - Using GATr results from /nfs/cms/arqolmo/ExamplesFCCFullSim/tau_trained_mlpf_mapping.csv
+2025-08-18 12:01:48,494, INFO, [io] - Total predictions loaded: 29953
+2025-08-18 12:01:48,496, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.0, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:01:48,496, INFO, [io] - Found 30 files
+2025-08-18 12:01:51,337, INFO, [processing] - Processing event 0 of experiment 1 out of 30
+2025-08-18 12:02:00,867, INFO, [processing] - Processing event 1000 of experiment 1 out of 30
+2025-08-18 12:02:05,942, INFO, [processing] - Processing event 2000 of experiment 1 out of 30
+2025-08-18 12:02:11,591, INFO, [processing] - Processing event 3000 of experiment 1 out of 30
+2025-08-18 12:02:17,952, INFO, [processing] - Processing event 4000 of experiment 1 out of 30
+2025-08-18 12:02:23,939, INFO, [processing] - Processing event 5000 of experiment 1 out of 30
+2025-08-18 12:02:29,329, INFO, [processing] - Processing event 6000 of experiment 1 out of 30
+2025-08-18 12:02:34,822, INFO, [processing] - Processing event 7000 of experiment 1 out of 30
+2025-08-18 12:02:40,306, INFO, [processing] - Processing event 8000 of experiment 1 out of 30
+2025-08-18 12:02:46,249, INFO, [processing] - Processing event 9000 of experiment 1 out of 30
+2025-08-18 12:02:51,978, INFO, [processing] - Processing event 10000 of experiment 1 out of 30
+2025-08-18 12:02:58,218, INFO, [processing] - Processing event 11000 of experiment 1 out of 30
+2025-08-18 12:03:04,172, INFO, [processing] - Processing event 12000 of experiment 1 out of 30
+2025-08-18 12:03:09,603, INFO, [processing] - Processing event 13000 of experiment 1 out of 30
+2025-08-18 12:03:15,528, INFO, [processing] - Processing event 14000 of experiment 1 out of 30
+2025-08-18 12:03:20,654, INFO, [processing] - Processing event 15000 of experiment 1 out of 30
+2025-08-18 12:03:25,873, INFO, [processing] - Processing event 16000 of experiment 1 out of 30
+2025-08-18 12:03:31,542, INFO, [processing] - Processing event 17000 of experiment 1 out of 30
+2025-08-18 12:03:37,037, INFO, [processing] - Processing event 18000 of experiment 1 out of 30
+2025-08-18 12:03:42,012, INFO, [processing] - Processing event 19000 of experiment 1 out of 30
+2025-08-18 12:03:47,271, INFO, [processing] - Processing event 20000 of experiment 1 out of 30
+2025-08-18 12:03:52,861, INFO, [processing] - Processing event 21000 of experiment 1 out of 30
+2025-08-18 12:03:57,935, INFO, [processing] - Processing event 22000 of experiment 1 out of 30
+2025-08-18 12:04:03,531, INFO, [processing] - Processing event 23000 of experiment 1 out of 30
+2025-08-18 12:04:08,439, INFO, [processing] - Processing event 24000 of experiment 1 out of 30
+2025-08-18 12:04:13,923, INFO, [processing] - Processing event 25000 of experiment 1 out of 30
+2025-08-18 12:04:19,014, INFO, [processing] - Processing event 26000 of experiment 1 out of 30
+2025-08-18 12:04:24,435, INFO, [processing] - Processing event 27000 of experiment 1 out of 30
+2025-08-18 12:04:29,862, INFO, [processing] - Processing event 28000 of experiment 1 out of 30
+2025-08-18 12:04:35,221, INFO, [processing] - Processing event 29000 of experiment 1 out of 30
+2025-08-18 12:04:40,460, INFO, [processing] - Found 30000 events
+2025-08-18 12:04:40,627, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.05, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:04:40,628, INFO, [io] - Found 30 files
+2025-08-18 12:04:41,771, INFO, [processing] - Processing event 0 of experiment 2 out of 30
+2025-08-18 12:04:46,879, INFO, [processing] - Processing event 1000 of experiment 2 out of 30
+2025-08-18 12:04:51,095, INFO, [processing] - Processing event 2000 of experiment 2 out of 30
+2025-08-18 12:04:55,492, INFO, [processing] - Processing event 3000 of experiment 2 out of 30
+2025-08-18 12:04:59,970, INFO, [processing] - Processing event 4000 of experiment 2 out of 30
+2025-08-18 12:05:04,331, INFO, [processing] - Processing event 5000 of experiment 2 out of 30
+2025-08-18 12:05:09,016, INFO, [processing] - Processing event 6000 of experiment 2 out of 30
+2025-08-18 12:05:13,810, INFO, [processing] - Processing event 7000 of experiment 2 out of 30
+2025-08-18 12:05:18,887, INFO, [processing] - Processing event 8000 of experiment 2 out of 30
+2025-08-18 12:05:23,535, INFO, [processing] - Processing event 9000 of experiment 2 out of 30
+2025-08-18 12:05:28,370, INFO, [processing] - Processing event 10000 of experiment 2 out of 30
+2025-08-18 12:05:32,965, INFO, [processing] - Processing event 11000 of experiment 2 out of 30
+2025-08-18 12:05:38,570, INFO, [processing] - Processing event 12000 of experiment 2 out of 30
+2025-08-18 12:05:43,539, INFO, [processing] - Processing event 13000 of experiment 2 out of 30
+2025-08-18 12:05:48,128, INFO, [processing] - Processing event 14000 of experiment 2 out of 30
+2025-08-18 12:05:53,049, INFO, [processing] - Processing event 15000 of experiment 2 out of 30
+2025-08-18 12:05:57,593, INFO, [processing] - Processing event 16000 of experiment 2 out of 30
+2025-08-18 12:06:02,806, INFO, [processing] - Processing event 17000 of experiment 2 out of 30
+2025-08-18 12:06:07,394, INFO, [processing] - Processing event 18000 of experiment 2 out of 30
+2025-08-18 12:06:12,999, INFO, [processing] - Processing event 19000 of experiment 2 out of 30
+2025-08-18 12:06:18,172, INFO, [processing] - Processing event 20000 of experiment 2 out of 30
+2025-08-18 12:06:23,344, INFO, [processing] - Processing event 21000 of experiment 2 out of 30
+2025-08-18 12:06:28,378, INFO, [processing] - Processing event 22000 of experiment 2 out of 30
+2025-08-18 12:06:34,100, INFO, [processing] - Processing event 23000 of experiment 2 out of 30
+2025-08-18 12:06:38,837, INFO, [processing] - Processing event 24000 of experiment 2 out of 30
+2025-08-18 12:06:43,499, INFO, [processing] - Processing event 25000 of experiment 2 out of 30
+2025-08-18 12:06:47,898, INFO, [processing] - Processing event 26000 of experiment 2 out of 30
+2025-08-18 12:06:52,776, INFO, [processing] - Processing event 27000 of experiment 2 out of 30
+2025-08-18 12:06:57,476, INFO, [processing] - Processing event 28000 of experiment 2 out of 30
+2025-08-18 12:07:01,818, INFO, [processing] - Processing event 29000 of experiment 2 out of 30
+2025-08-18 12:07:06,884, INFO, [processing] - Found 30000 events
+2025-08-18 12:07:07,048, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.1, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:07:07,050, INFO, [io] - Found 30 files
+2025-08-18 12:07:08,109, INFO, [processing] - Processing event 0 of experiment 3 out of 30
+2025-08-18 12:07:12,673, INFO, [processing] - Processing event 1000 of experiment 3 out of 30
+2025-08-18 12:07:16,998, INFO, [processing] - Processing event 2000 of experiment 3 out of 30
+2025-08-18 12:07:21,405, INFO, [processing] - Processing event 3000 of experiment 3 out of 30
+2025-08-18 12:07:26,112, INFO, [processing] - Processing event 4000 of experiment 3 out of 30
+2025-08-18 12:07:30,127, INFO, [processing] - Processing event 5000 of experiment 3 out of 30
+2025-08-18 12:07:34,300, INFO, [processing] - Processing event 6000 of experiment 3 out of 30
+2025-08-18 12:07:38,411, INFO, [processing] - Processing event 7000 of experiment 3 out of 30
+2025-08-18 12:07:42,481, INFO, [processing] - Processing event 8000 of experiment 3 out of 30
+2025-08-18 12:07:46,852, INFO, [processing] - Processing event 9000 of experiment 3 out of 30
+2025-08-18 12:07:51,127, INFO, [processing] - Processing event 10000 of experiment 3 out of 30
+2025-08-18 12:07:55,969, INFO, [processing] - Processing event 11000 of experiment 3 out of 30
+2025-08-18 12:08:00,584, INFO, [processing] - Processing event 12000 of experiment 3 out of 30
+2025-08-18 12:08:04,885, INFO, [processing] - Processing event 13000 of experiment 3 out of 30
+2025-08-18 12:08:09,736, INFO, [processing] - Processing event 14000 of experiment 3 out of 30
+2025-08-18 12:08:14,532, INFO, [processing] - Processing event 15000 of experiment 3 out of 30
+2025-08-18 12:08:19,685, INFO, [processing] - Processing event 16000 of experiment 3 out of 30
+2025-08-18 12:08:24,823, INFO, [processing] - Processing event 17000 of experiment 3 out of 30
+2025-08-18 12:08:30,090, INFO, [processing] - Processing event 18000 of experiment 3 out of 30
+2025-08-18 12:08:35,215, INFO, [processing] - Processing event 19000 of experiment 3 out of 30
+2025-08-18 12:08:39,824, INFO, [processing] - Processing event 20000 of experiment 3 out of 30
+2025-08-18 12:08:44,649, INFO, [processing] - Processing event 21000 of experiment 3 out of 30
+2025-08-18 12:08:49,454, INFO, [processing] - Processing event 22000 of experiment 3 out of 30
+2025-08-18 12:08:54,410, INFO, [processing] - Processing event 23000 of experiment 3 out of 30
+2025-08-18 12:08:59,154, INFO, [processing] - Processing event 24000 of experiment 3 out of 30
+2025-08-18 12:09:04,089, INFO, [processing] - Processing event 25000 of experiment 3 out of 30
+2025-08-18 12:09:08,401, INFO, [processing] - Processing event 26000 of experiment 3 out of 30
+2025-08-18 12:09:12,478, INFO, [processing] - Processing event 27000 of experiment 3 out of 30
+2025-08-18 12:09:16,632, INFO, [processing] - Processing event 28000 of experiment 3 out of 30
+2025-08-18 12:09:20,870, INFO, [processing] - Processing event 29000 of experiment 3 out of 30
+2025-08-18 12:09:25,202, INFO, [processing] - Found 30000 events
+2025-08-18 12:09:25,367, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.15000000000000002, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:09:25,368, INFO, [io] - Found 30 files
+2025-08-18 12:09:26,617, INFO, [processing] - Processing event 0 of experiment 4 out of 30
+2025-08-18 12:09:31,017, INFO, [processing] - Processing event 1000 of experiment 4 out of 30
+2025-08-18 12:09:35,205, INFO, [processing] - Processing event 2000 of experiment 4 out of 30
+2025-08-18 12:09:39,352, INFO, [processing] - Processing event 3000 of experiment 4 out of 30
+2025-08-18 12:09:44,059, INFO, [processing] - Processing event 4000 of experiment 4 out of 30
+2025-08-18 12:09:48,257, INFO, [processing] - Processing event 5000 of experiment 4 out of 30
+2025-08-18 12:09:52,364, INFO, [processing] - Processing event 6000 of experiment 4 out of 30
+2025-08-18 12:09:56,564, INFO, [processing] - Processing event 7000 of experiment 4 out of 30
+2025-08-18 12:10:00,822, INFO, [processing] - Processing event 8000 of experiment 4 out of 30
+2025-08-18 12:10:04,877, INFO, [processing] - Processing event 9000 of experiment 4 out of 30
+2025-08-18 12:10:08,722, INFO, [processing] - Processing event 10000 of experiment 4 out of 30
+2025-08-18 12:10:12,935, INFO, [processing] - Processing event 11000 of experiment 4 out of 30
+2025-08-18 12:10:17,090, INFO, [processing] - Processing event 12000 of experiment 4 out of 30
+2025-08-18 12:10:20,964, INFO, [processing] - Processing event 13000 of experiment 4 out of 30
+2025-08-18 12:10:25,005, INFO, [processing] - Processing event 14000 of experiment 4 out of 30
+2025-08-18 12:10:29,092, INFO, [processing] - Processing event 15000 of experiment 4 out of 30
+2025-08-18 12:10:33,087, INFO, [processing] - Processing event 16000 of experiment 4 out of 30
+2025-08-18 12:10:37,313, INFO, [processing] - Processing event 17000 of experiment 4 out of 30
+2025-08-18 12:10:41,287, INFO, [processing] - Processing event 18000 of experiment 4 out of 30
+2025-08-18 12:10:45,173, INFO, [processing] - Processing event 19000 of experiment 4 out of 30
+2025-08-18 12:10:49,086, INFO, [processing] - Processing event 20000 of experiment 4 out of 30
+2025-08-18 12:10:53,182, INFO, [processing] - Processing event 21000 of experiment 4 out of 30
+2025-08-18 12:10:57,077, INFO, [processing] - Processing event 22000 of experiment 4 out of 30
+2025-08-18 12:11:01,100, INFO, [processing] - Processing event 23000 of experiment 4 out of 30
+2025-08-18 12:11:05,096, INFO, [processing] - Processing event 24000 of experiment 4 out of 30
+2025-08-18 12:11:09,218, INFO, [processing] - Processing event 25000 of experiment 4 out of 30
+2025-08-18 12:11:13,147, INFO, [processing] - Processing event 26000 of experiment 4 out of 30
+2025-08-18 12:11:17,346, INFO, [processing] - Processing event 27000 of experiment 4 out of 30
+2025-08-18 12:11:21,311, INFO, [processing] - Processing event 28000 of experiment 4 out of 30
+2025-08-18 12:11:25,318, INFO, [processing] - Processing event 29000 of experiment 4 out of 30
+2025-08-18 12:11:29,372, INFO, [processing] - Found 30000 events
+2025-08-18 12:11:29,517, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.2, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:11:29,518, INFO, [io] - Found 30 files
+2025-08-18 12:11:30,593, INFO, [processing] - Processing event 0 of experiment 5 out of 30
+2025-08-18 12:11:34,593, INFO, [processing] - Processing event 1000 of experiment 5 out of 30
+2025-08-18 12:11:38,474, INFO, [processing] - Processing event 2000 of experiment 5 out of 30
+2025-08-18 12:11:42,434, INFO, [processing] - Processing event 3000 of experiment 5 out of 30
+2025-08-18 12:11:46,601, INFO, [processing] - Processing event 4000 of experiment 5 out of 30
+2025-08-18 12:11:50,563, INFO, [processing] - Processing event 5000 of experiment 5 out of 30
+2025-08-18 12:11:54,675, INFO, [processing] - Processing event 6000 of experiment 5 out of 30
+2025-08-18 12:11:59,111, INFO, [processing] - Processing event 7000 of experiment 5 out of 30
+2025-08-18 12:12:03,078, INFO, [processing] - Processing event 8000 of experiment 5 out of 30
+2025-08-18 12:12:07,712, INFO, [processing] - Processing event 9000 of experiment 5 out of 30
+2025-08-18 12:12:12,033, INFO, [processing] - Processing event 10000 of experiment 5 out of 30
+2025-08-18 12:12:16,307, INFO, [processing] - Processing event 11000 of experiment 5 out of 30
+2025-08-18 12:12:20,805, INFO, [processing] - Processing event 12000 of experiment 5 out of 30
+2025-08-18 12:12:24,858, INFO, [processing] - Processing event 13000 of experiment 5 out of 30
+2025-08-18 12:12:29,215, INFO, [processing] - Processing event 14000 of experiment 5 out of 30
+2025-08-18 12:12:33,340, INFO, [processing] - Processing event 15000 of experiment 5 out of 30
+2025-08-18 12:12:37,514, INFO, [processing] - Processing event 16000 of experiment 5 out of 30
+2025-08-18 12:12:41,775, INFO, [processing] - Processing event 17000 of experiment 5 out of 30
+2025-08-18 12:12:45,702, INFO, [processing] - Processing event 18000 of experiment 5 out of 30
+2025-08-18 12:12:49,607, INFO, [processing] - Processing event 19000 of experiment 5 out of 30
+2025-08-18 12:12:53,680, INFO, [processing] - Processing event 20000 of experiment 5 out of 30
+2025-08-18 12:12:58,415, INFO, [processing] - Processing event 21000 of experiment 5 out of 30
+2025-08-18 12:13:02,333, INFO, [processing] - Processing event 22000 of experiment 5 out of 30
+2025-08-18 12:13:06,285, INFO, [processing] - Processing event 23000 of experiment 5 out of 30
+2025-08-18 12:13:10,252, INFO, [processing] - Processing event 24000 of experiment 5 out of 30
+2025-08-18 12:13:14,240, INFO, [processing] - Processing event 25000 of experiment 5 out of 30
+2025-08-18 12:13:18,104, INFO, [processing] - Processing event 26000 of experiment 5 out of 30
+2025-08-18 12:13:21,906, INFO, [processing] - Processing event 27000 of experiment 5 out of 30
+2025-08-18 12:13:25,809, INFO, [processing] - Processing event 28000 of experiment 5 out of 30
+2025-08-18 12:13:29,869, INFO, [processing] - Processing event 29000 of experiment 5 out of 30
+2025-08-18 12:13:33,977, INFO, [processing] - Found 30000 events
+2025-08-18 12:13:34,124, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.25, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:13:34,125, INFO, [io] - Found 30 files
+2025-08-18 12:13:35,047, INFO, [processing] - Processing event 0 of experiment 6 out of 30
+2025-08-18 12:13:39,145, INFO, [processing] - Processing event 1000 of experiment 6 out of 30
+2025-08-18 12:13:43,677, INFO, [processing] - Processing event 2000 of experiment 6 out of 30
+2025-08-18 12:13:47,784, INFO, [processing] - Processing event 3000 of experiment 6 out of 30
+2025-08-18 12:13:52,328, INFO, [processing] - Processing event 4000 of experiment 6 out of 30
+2025-08-18 12:13:56,479, INFO, [processing] - Processing event 5000 of experiment 6 out of 30
+2025-08-18 12:14:00,835, INFO, [processing] - Processing event 6000 of experiment 6 out of 30
+2025-08-18 12:14:04,856, INFO, [processing] - Processing event 7000 of experiment 6 out of 30
+2025-08-18 12:14:08,923, INFO, [processing] - Processing event 8000 of experiment 6 out of 30
+2025-08-18 12:14:12,884, INFO, [processing] - Processing event 9000 of experiment 6 out of 30
+2025-08-18 12:14:16,642, INFO, [processing] - Processing event 10000 of experiment 6 out of 30
+2025-08-18 12:14:20,730, INFO, [processing] - Processing event 11000 of experiment 6 out of 30
+2025-08-18 12:14:24,723, INFO, [processing] - Processing event 12000 of experiment 6 out of 30
+2025-08-18 12:14:28,808, INFO, [processing] - Processing event 13000 of experiment 6 out of 30
+2025-08-18 12:14:32,763, INFO, [processing] - Processing event 14000 of experiment 6 out of 30
+2025-08-18 12:14:36,641, INFO, [processing] - Processing event 15000 of experiment 6 out of 30
+2025-08-18 12:14:40,418, INFO, [processing] - Processing event 16000 of experiment 6 out of 30
+2025-08-18 12:14:44,435, INFO, [processing] - Processing event 17000 of experiment 6 out of 30
+2025-08-18 12:14:48,467, INFO, [processing] - Processing event 18000 of experiment 6 out of 30
+2025-08-18 12:14:52,458, INFO, [processing] - Processing event 19000 of experiment 6 out of 30
+2025-08-18 12:14:56,431, INFO, [processing] - Processing event 20000 of experiment 6 out of 30
+2025-08-18 12:15:00,450, INFO, [processing] - Processing event 21000 of experiment 6 out of 30
+2025-08-18 12:15:04,351, INFO, [processing] - Processing event 22000 of experiment 6 out of 30
+2025-08-18 12:15:08,347, INFO, [processing] - Processing event 23000 of experiment 6 out of 30
+2025-08-18 12:15:12,124, INFO, [processing] - Processing event 24000 of experiment 6 out of 30
+2025-08-18 12:15:16,125, INFO, [processing] - Processing event 25000 of experiment 6 out of 30
+2025-08-18 12:15:20,008, INFO, [processing] - Processing event 26000 of experiment 6 out of 30
+2025-08-18 12:15:24,030, INFO, [processing] - Processing event 27000 of experiment 6 out of 30
+2025-08-18 12:15:27,925, INFO, [processing] - Processing event 28000 of experiment 6 out of 30
+2025-08-18 12:15:31,910, INFO, [processing] - Processing event 29000 of experiment 6 out of 30
+2025-08-18 12:15:35,960, INFO, [processing] - Found 30000 events
+2025-08-18 12:15:36,126, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.30000000000000004, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:15:36,128, INFO, [io] - Found 30 files
+2025-08-18 12:15:37,084, INFO, [processing] - Processing event 0 of experiment 7 out of 30
+2025-08-18 12:15:41,120, INFO, [processing] - Processing event 1000 of experiment 7 out of 30
+2025-08-18 12:15:45,224, INFO, [processing] - Processing event 2000 of experiment 7 out of 30
+2025-08-18 12:15:49,104, INFO, [processing] - Processing event 3000 of experiment 7 out of 30
+2025-08-18 12:15:53,092, INFO, [processing] - Processing event 4000 of experiment 7 out of 30
+2025-08-18 12:15:56,920, INFO, [processing] - Processing event 5000 of experiment 7 out of 30
+2025-08-18 12:16:00,703, INFO, [processing] - Processing event 6000 of experiment 7 out of 30
+2025-08-18 12:16:04,564, INFO, [processing] - Processing event 7000 of experiment 7 out of 30
+2025-08-18 12:16:08,502, INFO, [processing] - Processing event 8000 of experiment 7 out of 30
+2025-08-18 12:16:12,480, INFO, [processing] - Processing event 9000 of experiment 7 out of 30
+2025-08-18 12:16:16,649, INFO, [processing] - Processing event 10000 of experiment 7 out of 30
+2025-08-18 12:16:21,098, INFO, [processing] - Processing event 11000 of experiment 7 out of 30
+2025-08-18 12:16:25,361, INFO, [processing] - Processing event 12000 of experiment 7 out of 30
+2025-08-18 12:16:29,770, INFO, [processing] - Processing event 13000 of experiment 7 out of 30
+2025-08-18 12:16:34,431, INFO, [processing] - Processing event 14000 of experiment 7 out of 30
+2025-08-18 12:16:39,087, INFO, [processing] - Processing event 15000 of experiment 7 out of 30
+2025-08-18 12:16:43,722, INFO, [processing] - Processing event 16000 of experiment 7 out of 30
+2025-08-18 12:16:47,803, INFO, [processing] - Processing event 17000 of experiment 7 out of 30
+2025-08-18 12:16:52,518, INFO, [processing] - Processing event 18000 of experiment 7 out of 30
+2025-08-18 12:16:56,467, INFO, [processing] - Processing event 19000 of experiment 7 out of 30
+2025-08-18 12:17:00,397, INFO, [processing] - Processing event 20000 of experiment 7 out of 30
+2025-08-18 12:17:04,406, INFO, [processing] - Processing event 21000 of experiment 7 out of 30
+2025-08-18 12:17:08,279, INFO, [processing] - Processing event 22000 of experiment 7 out of 30
+2025-08-18 12:17:12,412, INFO, [processing] - Processing event 23000 of experiment 7 out of 30
+2025-08-18 12:17:16,775, INFO, [processing] - Processing event 24000 of experiment 7 out of 30
+2025-08-18 12:17:20,919, INFO, [processing] - Processing event 25000 of experiment 7 out of 30
+2025-08-18 12:17:24,839, INFO, [processing] - Processing event 26000 of experiment 7 out of 30
+2025-08-18 12:17:28,568, INFO, [processing] - Processing event 27000 of experiment 7 out of 30
+2025-08-18 12:17:32,527, INFO, [processing] - Processing event 28000 of experiment 7 out of 30
+2025-08-18 12:17:36,484, INFO, [processing] - Processing event 29000 of experiment 7 out of 30
+2025-08-18 12:17:40,724, INFO, [processing] - Found 30000 events
+2025-08-18 12:17:40,887, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.35000000000000003, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:17:40,888, INFO, [io] - Found 30 files
+2025-08-18 12:17:41,785, INFO, [processing] - Processing event 0 of experiment 8 out of 30
+2025-08-18 12:17:45,846, INFO, [processing] - Processing event 1000 of experiment 8 out of 30
+2025-08-18 12:17:49,651, INFO, [processing] - Processing event 2000 of experiment 8 out of 30
+2025-08-18 12:17:53,459, INFO, [processing] - Processing event 3000 of experiment 8 out of 30
+2025-08-18 12:17:57,653, INFO, [processing] - Processing event 4000 of experiment 8 out of 30
+2025-08-18 12:18:01,462, INFO, [processing] - Processing event 5000 of experiment 8 out of 30
+2025-08-18 12:18:05,295, INFO, [processing] - Processing event 6000 of experiment 8 out of 30
+2025-08-18 12:18:09,139, INFO, [processing] - Processing event 7000 of experiment 8 out of 30
+2025-08-18 12:18:12,881, INFO, [processing] - Processing event 8000 of experiment 8 out of 30
+2025-08-18 12:18:16,771, INFO, [processing] - Processing event 9000 of experiment 8 out of 30
+2025-08-18 12:18:20,569, INFO, [processing] - Processing event 10000 of experiment 8 out of 30
+2025-08-18 12:18:24,453, INFO, [processing] - Processing event 11000 of experiment 8 out of 30
+2025-08-18 12:18:28,491, INFO, [processing] - Processing event 12000 of experiment 8 out of 30
+2025-08-18 12:18:32,476, INFO, [processing] - Processing event 13000 of experiment 8 out of 30
+2025-08-18 12:18:36,450, INFO, [processing] - Processing event 14000 of experiment 8 out of 30
+2025-08-18 12:18:40,301, INFO, [processing] - Processing event 15000 of experiment 8 out of 30
+2025-08-18 12:18:44,268, INFO, [processing] - Processing event 16000 of experiment 8 out of 30
+2025-08-18 12:18:48,479, INFO, [processing] - Processing event 17000 of experiment 8 out of 30
+2025-08-18 12:18:52,563, INFO, [processing] - Processing event 18000 of experiment 8 out of 30
+2025-08-18 12:18:56,434, INFO, [processing] - Processing event 19000 of experiment 8 out of 30
+2025-08-18 12:19:00,679, INFO, [processing] - Processing event 20000 of experiment 8 out of 30
+2025-08-18 12:19:05,106, INFO, [processing] - Processing event 21000 of experiment 8 out of 30
+2025-08-18 12:19:09,272, INFO, [processing] - Processing event 22000 of experiment 8 out of 30
+2025-08-18 12:19:13,340, INFO, [processing] - Processing event 23000 of experiment 8 out of 30
+2025-08-18 12:19:17,252, INFO, [processing] - Processing event 24000 of experiment 8 out of 30
+2025-08-18 12:19:21,376, INFO, [processing] - Processing event 25000 of experiment 8 out of 30
+2025-08-18 12:19:25,270, INFO, [processing] - Processing event 26000 of experiment 8 out of 30
+2025-08-18 12:19:29,221, INFO, [processing] - Processing event 27000 of experiment 8 out of 30
+2025-08-18 12:19:33,344, INFO, [processing] - Processing event 28000 of experiment 8 out of 30
+2025-08-18 12:19:37,537, INFO, [processing] - Processing event 29000 of experiment 8 out of 30
+2025-08-18 12:19:41,585, INFO, [processing] - Found 30000 events
+2025-08-18 12:19:41,729, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.4, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:19:41,730, INFO, [io] - Found 30 files
+2025-08-18 12:19:42,646, INFO, [processing] - Processing event 0 of experiment 9 out of 30
+2025-08-18 12:19:46,672, INFO, [processing] - Processing event 1000 of experiment 9 out of 30
+2025-08-18 12:19:50,524, INFO, [processing] - Processing event 2000 of experiment 9 out of 30
+2025-08-18 12:19:54,357, INFO, [processing] - Processing event 3000 of experiment 9 out of 30
+2025-08-18 12:19:58,346, INFO, [processing] - Processing event 4000 of experiment 9 out of 30
+2025-08-18 12:20:02,070, INFO, [processing] - Processing event 5000 of experiment 9 out of 30
+2025-08-18 12:20:05,936, INFO, [processing] - Processing event 6000 of experiment 9 out of 30
+2025-08-18 12:20:09,805, INFO, [processing] - Processing event 7000 of experiment 9 out of 30
+2025-08-18 12:20:13,622, INFO, [processing] - Processing event 8000 of experiment 9 out of 30
+2025-08-18 12:20:17,557, INFO, [processing] - Processing event 9000 of experiment 9 out of 30
+2025-08-18 12:20:21,450, INFO, [processing] - Processing event 10000 of experiment 9 out of 30
+2025-08-18 12:20:25,450, INFO, [processing] - Processing event 11000 of experiment 9 out of 30
+2025-08-18 12:20:29,445, INFO, [processing] - Processing event 12000 of experiment 9 out of 30
+2025-08-18 12:20:33,176, INFO, [processing] - Processing event 13000 of experiment 9 out of 30
+2025-08-18 12:20:37,083, INFO, [processing] - Processing event 14000 of experiment 9 out of 30
+2025-08-18 12:20:40,876, INFO, [processing] - Processing event 15000 of experiment 9 out of 30
+2025-08-18 12:20:44,626, INFO, [processing] - Processing event 16000 of experiment 9 out of 30
+2025-08-18 12:20:48,662, INFO, [processing] - Processing event 17000 of experiment 9 out of 30
+2025-08-18 12:20:52,644, INFO, [processing] - Processing event 18000 of experiment 9 out of 30
+2025-08-18 12:20:56,481, INFO, [processing] - Processing event 19000 of experiment 9 out of 30
+2025-08-18 12:21:00,426, INFO, [processing] - Processing event 20000 of experiment 9 out of 30
+2025-08-18 12:21:04,621, INFO, [processing] - Processing event 21000 of experiment 9 out of 30
+2025-08-18 12:21:08,574, INFO, [processing] - Processing event 22000 of experiment 9 out of 30
+2025-08-18 12:21:12,379, INFO, [processing] - Processing event 23000 of experiment 9 out of 30
+2025-08-18 12:21:16,113, INFO, [processing] - Processing event 24000 of experiment 9 out of 30
+2025-08-18 12:21:20,043, INFO, [processing] - Processing event 25000 of experiment 9 out of 30
+2025-08-18 12:21:23,752, INFO, [processing] - Processing event 26000 of experiment 9 out of 30
+2025-08-18 12:21:27,552, INFO, [processing] - Processing event 27000 of experiment 9 out of 30
+2025-08-18 12:21:31,439, INFO, [processing] - Processing event 28000 of experiment 9 out of 30
+2025-08-18 12:21:35,457, INFO, [processing] - Processing event 29000 of experiment 9 out of 30
+2025-08-18 12:21:40,354, INFO, [processing] - Found 30000 events
+2025-08-18 12:21:40,508, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.45, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:21:40,509, INFO, [io] - Found 30 files
+2025-08-18 12:21:41,382, INFO, [processing] - Processing event 0 of experiment 10 out of 30
+2025-08-18 12:21:45,306, INFO, [processing] - Processing event 1000 of experiment 10 out of 30
+2025-08-18 12:21:49,184, INFO, [processing] - Processing event 2000 of experiment 10 out of 30
+2025-08-18 12:21:52,903, INFO, [processing] - Processing event 3000 of experiment 10 out of 30
+2025-08-18 12:21:56,784, INFO, [processing] - Processing event 4000 of experiment 10 out of 30
+2025-08-18 12:22:00,517, INFO, [processing] - Processing event 5000 of experiment 10 out of 30
+2025-08-18 12:22:04,602, INFO, [processing] - Processing event 6000 of experiment 10 out of 30
+2025-08-18 12:22:08,555, INFO, [processing] - Processing event 7000 of experiment 10 out of 30
+2025-08-18 12:22:12,490, INFO, [processing] - Processing event 8000 of experiment 10 out of 30
+2025-08-18 12:22:16,369, INFO, [processing] - Processing event 9000 of experiment 10 out of 30
+2025-08-18 12:22:20,147, INFO, [processing] - Processing event 10000 of experiment 10 out of 30
+2025-08-18 12:22:23,923, INFO, [processing] - Processing event 11000 of experiment 10 out of 30
+2025-08-18 12:22:28,199, INFO, [processing] - Processing event 12000 of experiment 10 out of 30
+2025-08-18 12:22:32,054, INFO, [processing] - Processing event 13000 of experiment 10 out of 30
+2025-08-18 12:22:36,026, INFO, [processing] - Processing event 14000 of experiment 10 out of 30
+2025-08-18 12:22:39,853, INFO, [processing] - Processing event 15000 of experiment 10 out of 30
+2025-08-18 12:22:43,683, INFO, [processing] - Processing event 16000 of experiment 10 out of 30
+2025-08-18 12:22:47,788, INFO, [processing] - Processing event 17000 of experiment 10 out of 30
+2025-08-18 12:22:51,771, INFO, [processing] - Processing event 18000 of experiment 10 out of 30
+2025-08-18 12:22:55,548, INFO, [processing] - Processing event 19000 of experiment 10 out of 30
+2025-08-18 12:22:59,342, INFO, [processing] - Processing event 20000 of experiment 10 out of 30
+2025-08-18 12:23:03,257, INFO, [processing] - Processing event 21000 of experiment 10 out of 30
+2025-08-18 12:23:06,946, INFO, [processing] - Processing event 22000 of experiment 10 out of 30
+2025-08-18 12:23:10,783, INFO, [processing] - Processing event 23000 of experiment 10 out of 30
+2025-08-18 12:23:14,483, INFO, [processing] - Processing event 24000 of experiment 10 out of 30
+2025-08-18 12:23:18,346, INFO, [processing] - Processing event 25000 of experiment 10 out of 30
+2025-08-18 12:23:22,060, INFO, [processing] - Processing event 26000 of experiment 10 out of 30
+2025-08-18 12:23:25,784, INFO, [processing] - Processing event 27000 of experiment 10 out of 30
+2025-08-18 12:23:29,526, INFO, [processing] - Processing event 28000 of experiment 10 out of 30
+2025-08-18 12:23:33,339, INFO, [processing] - Processing event 29000 of experiment 10 out of 30
+2025-08-18 12:23:37,227, INFO, [processing] - Found 30000 events
+2025-08-18 12:23:37,372, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.5, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:23:37,373, INFO, [io] - Found 30 files
+2025-08-18 12:23:38,257, INFO, [processing] - Processing event 0 of experiment 11 out of 30
+2025-08-18 12:23:42,402, INFO, [processing] - Processing event 1000 of experiment 11 out of 30
+2025-08-18 12:23:46,279, INFO, [processing] - Processing event 2000 of experiment 11 out of 30
+2025-08-18 12:23:50,047, INFO, [processing] - Processing event 3000 of experiment 11 out of 30
+2025-08-18 12:23:54,070, INFO, [processing] - Processing event 4000 of experiment 11 out of 30
+2025-08-18 12:23:57,848, INFO, [processing] - Processing event 5000 of experiment 11 out of 30
+2025-08-18 12:24:01,765, INFO, [processing] - Processing event 6000 of experiment 11 out of 30
+2025-08-18 12:24:05,712, INFO, [processing] - Processing event 7000 of experiment 11 out of 30
+2025-08-18 12:24:09,516, INFO, [processing] - Processing event 8000 of experiment 11 out of 30
+2025-08-18 12:24:13,396, INFO, [processing] - Processing event 9000 of experiment 11 out of 30
+2025-08-18 12:24:17,186, INFO, [processing] - Processing event 10000 of experiment 11 out of 30
+2025-08-18 12:24:21,150, INFO, [processing] - Processing event 11000 of experiment 11 out of 30
+2025-08-18 12:24:25,176, INFO, [processing] - Processing event 12000 of experiment 11 out of 30
+2025-08-18 12:24:28,863, INFO, [processing] - Processing event 13000 of experiment 11 out of 30
+2025-08-18 12:24:32,811, INFO, [processing] - Processing event 14000 of experiment 11 out of 30
+2025-08-18 12:24:36,723, INFO, [processing] - Processing event 15000 of experiment 11 out of 30
+2025-08-18 12:24:40,566, INFO, [processing] - Processing event 16000 of experiment 11 out of 30
+2025-08-18 12:24:44,637, INFO, [processing] - Processing event 17000 of experiment 11 out of 30
+2025-08-18 12:24:48,551, INFO, [processing] - Processing event 18000 of experiment 11 out of 30
+2025-08-18 12:24:52,401, INFO, [processing] - Processing event 19000 of experiment 11 out of 30
+2025-08-18 12:24:56,210, INFO, [processing] - Processing event 20000 of experiment 11 out of 30
+2025-08-18 12:25:00,043, INFO, [processing] - Processing event 21000 of experiment 11 out of 30
+2025-08-18 12:25:03,875, INFO, [processing] - Processing event 22000 of experiment 11 out of 30
+2025-08-18 12:25:07,845, INFO, [processing] - Processing event 23000 of experiment 11 out of 30
+2025-08-18 12:25:11,690, INFO, [processing] - Processing event 24000 of experiment 11 out of 30
+2025-08-18 12:25:15,660, INFO, [processing] - Processing event 25000 of experiment 11 out of 30
+2025-08-18 12:25:19,515, INFO, [processing] - Processing event 26000 of experiment 11 out of 30
+2025-08-18 12:25:23,700, INFO, [processing] - Processing event 27000 of experiment 11 out of 30
+2025-08-18 12:25:27,917, INFO, [processing] - Processing event 28000 of experiment 11 out of 30
+2025-08-18 12:25:32,113, INFO, [processing] - Processing event 29000 of experiment 11 out of 30
+2025-08-18 12:25:36,043, INFO, [processing] - Found 30000 events
+2025-08-18 12:25:36,186, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.55, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:25:36,187, INFO, [io] - Found 30 files
+2025-08-18 12:25:37,158, INFO, [processing] - Processing event 0 of experiment 12 out of 30
+2025-08-18 12:25:41,140, INFO, [processing] - Processing event 1000 of experiment 12 out of 30
+2025-08-18 12:25:45,020, INFO, [processing] - Processing event 2000 of experiment 12 out of 30
+2025-08-18 12:25:48,901, INFO, [processing] - Processing event 3000 of experiment 12 out of 30
+2025-08-18 12:25:52,774, INFO, [processing] - Processing event 4000 of experiment 12 out of 30
+2025-08-18 12:25:56,498, INFO, [processing] - Processing event 5000 of experiment 12 out of 30
+2025-08-18 12:26:00,261, INFO, [processing] - Processing event 6000 of experiment 12 out of 30
+2025-08-18 12:26:04,196, INFO, [processing] - Processing event 7000 of experiment 12 out of 30
+2025-08-18 12:26:07,911, INFO, [processing] - Processing event 8000 of experiment 12 out of 30
+2025-08-18 12:26:11,678, INFO, [processing] - Processing event 9000 of experiment 12 out of 30
+2025-08-18 12:26:15,376, INFO, [processing] - Processing event 10000 of experiment 12 out of 30
+2025-08-18 12:26:19,159, INFO, [processing] - Processing event 11000 of experiment 12 out of 30
+2025-08-18 12:26:23,011, INFO, [processing] - Processing event 12000 of experiment 12 out of 30
+2025-08-18 12:26:26,655, INFO, [processing] - Processing event 13000 of experiment 12 out of 30
+2025-08-18 12:26:30,504, INFO, [processing] - Processing event 14000 of experiment 12 out of 30
+2025-08-18 12:26:34,292, INFO, [processing] - Processing event 15000 of experiment 12 out of 30
+2025-08-18 12:26:38,211, INFO, [processing] - Processing event 16000 of experiment 12 out of 30
+2025-08-18 12:26:42,173, INFO, [processing] - Processing event 17000 of experiment 12 out of 30
+2025-08-18 12:26:46,140, INFO, [processing] - Processing event 18000 of experiment 12 out of 30
+2025-08-18 12:26:49,873, INFO, [processing] - Processing event 19000 of experiment 12 out of 30
+2025-08-18 12:26:53,658, INFO, [processing] - Processing event 20000 of experiment 12 out of 30
+2025-08-18 12:26:57,570, INFO, [processing] - Processing event 21000 of experiment 12 out of 30
+2025-08-18 12:27:01,281, INFO, [processing] - Processing event 22000 of experiment 12 out of 30
+2025-08-18 12:27:05,162, INFO, [processing] - Processing event 23000 of experiment 12 out of 30
+2025-08-18 12:27:08,960, INFO, [processing] - Processing event 24000 of experiment 12 out of 30
+2025-08-18 12:27:12,892, INFO, [processing] - Processing event 25000 of experiment 12 out of 30
+2025-08-18 12:27:16,637, INFO, [processing] - Processing event 26000 of experiment 12 out of 30
+2025-08-18 12:27:20,334, INFO, [processing] - Processing event 27000 of experiment 12 out of 30
+2025-08-18 12:27:24,088, INFO, [processing] - Processing event 28000 of experiment 12 out of 30
+2025-08-18 12:27:27,885, INFO, [processing] - Processing event 29000 of experiment 12 out of 30
+2025-08-18 12:27:31,679, INFO, [processing] - Found 30000 events
+2025-08-18 12:27:31,826, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.6000000000000001, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:27:31,827, INFO, [io] - Found 30 files
+2025-08-18 12:27:32,785, INFO, [processing] - Processing event 0 of experiment 13 out of 30
+2025-08-18 12:27:38,402, INFO, [processing] - Processing event 1000 of experiment 13 out of 30
+2025-08-18 12:27:42,566, INFO, [processing] - Processing event 2000 of experiment 13 out of 30
+2025-08-18 12:27:46,297, INFO, [processing] - Processing event 3000 of experiment 13 out of 30
+2025-08-18 12:27:50,185, INFO, [processing] - Processing event 4000 of experiment 13 out of 30
+2025-08-18 12:27:53,861, INFO, [processing] - Processing event 5000 of experiment 13 out of 30
+2025-08-18 12:27:57,612, INFO, [processing] - Processing event 6000 of experiment 13 out of 30
+2025-08-18 12:28:01,409, INFO, [processing] - Processing event 7000 of experiment 13 out of 30
+2025-08-18 12:28:05,156, INFO, [processing] - Processing event 8000 of experiment 13 out of 30
+2025-08-18 12:28:08,924, INFO, [processing] - Processing event 9000 of experiment 13 out of 30
+2025-08-18 12:28:12,608, INFO, [processing] - Processing event 10000 of experiment 13 out of 30
+2025-08-18 12:28:16,403, INFO, [processing] - Processing event 11000 of experiment 13 out of 30
+2025-08-18 12:28:20,252, INFO, [processing] - Processing event 12000 of experiment 13 out of 30
+2025-08-18 12:28:23,939, INFO, [processing] - Processing event 13000 of experiment 13 out of 30
+2025-08-18 12:28:27,730, INFO, [processing] - Processing event 14000 of experiment 13 out of 30
+2025-08-18 12:28:31,460, INFO, [processing] - Processing event 15000 of experiment 13 out of 30
+2025-08-18 12:28:35,207, INFO, [processing] - Processing event 16000 of experiment 13 out of 30
+2025-08-18 12:28:39,154, INFO, [processing] - Processing event 17000 of experiment 13 out of 30
+2025-08-18 12:28:42,965, INFO, [processing] - Processing event 18000 of experiment 13 out of 30
+2025-08-18 12:28:46,684, INFO, [processing] - Processing event 19000 of experiment 13 out of 30
+2025-08-18 12:28:50,475, INFO, [processing] - Processing event 20000 of experiment 13 out of 30
+2025-08-18 12:28:54,383, INFO, [processing] - Processing event 21000 of experiment 13 out of 30
+2025-08-18 12:28:58,479, INFO, [processing] - Processing event 22000 of experiment 13 out of 30
+2025-08-18 12:29:02,758, INFO, [processing] - Processing event 23000 of experiment 13 out of 30
+2025-08-18 12:29:06,632, INFO, [processing] - Processing event 24000 of experiment 13 out of 30
+2025-08-18 12:29:10,491, INFO, [processing] - Processing event 25000 of experiment 13 out of 30
+2025-08-18 12:29:14,194, INFO, [processing] - Processing event 26000 of experiment 13 out of 30
+2025-08-18 12:29:17,896, INFO, [processing] - Processing event 27000 of experiment 13 out of 30
+2025-08-18 12:29:21,680, INFO, [processing] - Processing event 28000 of experiment 13 out of 30
+2025-08-18 12:29:25,494, INFO, [processing] - Processing event 29000 of experiment 13 out of 30
+2025-08-18 12:29:29,404, INFO, [processing] - Found 30000 events
+2025-08-18 12:29:29,553, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.65, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:29:29,554, INFO, [io] - Found 30 files
+2025-08-18 12:29:30,396, INFO, [processing] - Processing event 0 of experiment 14 out of 30
+2025-08-18 12:29:34,322, INFO, [processing] - Processing event 1000 of experiment 14 out of 30
+2025-08-18 12:29:38,074, INFO, [processing] - Processing event 2000 of experiment 14 out of 30
+2025-08-18 12:29:41,758, INFO, [processing] - Processing event 3000 of experiment 14 out of 30
+2025-08-18 12:29:45,604, INFO, [processing] - Processing event 4000 of experiment 14 out of 30
+2025-08-18 12:29:49,262, INFO, [processing] - Processing event 5000 of experiment 14 out of 30
+2025-08-18 12:29:53,087, INFO, [processing] - Processing event 6000 of experiment 14 out of 30
+2025-08-18 12:29:56,923, INFO, [processing] - Processing event 7000 of experiment 14 out of 30
+2025-08-18 12:30:00,656, INFO, [processing] - Processing event 8000 of experiment 14 out of 30
+2025-08-18 12:30:04,476, INFO, [processing] - Processing event 9000 of experiment 14 out of 30
+2025-08-18 12:30:08,151, INFO, [processing] - Processing event 10000 of experiment 14 out of 30
+2025-08-18 12:30:12,014, INFO, [processing] - Processing event 11000 of experiment 14 out of 30
+2025-08-18 12:30:15,912, INFO, [processing] - Processing event 12000 of experiment 14 out of 30
+2025-08-18 12:30:19,571, INFO, [processing] - Processing event 13000 of experiment 14 out of 30
+2025-08-18 12:30:23,374, INFO, [processing] - Processing event 14000 of experiment 14 out of 30
+2025-08-18 12:30:27,125, INFO, [processing] - Processing event 15000 of experiment 14 out of 30
+2025-08-18 12:30:30,913, INFO, [processing] - Processing event 16000 of experiment 14 out of 30
+2025-08-18 12:30:34,866, INFO, [processing] - Processing event 17000 of experiment 14 out of 30
+2025-08-18 12:30:38,710, INFO, [processing] - Processing event 18000 of experiment 14 out of 30
+2025-08-18 12:30:42,615, INFO, [processing] - Processing event 19000 of experiment 14 out of 30
+2025-08-18 12:30:46,556, INFO, [processing] - Processing event 20000 of experiment 14 out of 30
+2025-08-18 12:30:50,449, INFO, [processing] - Processing event 21000 of experiment 14 out of 30
+2025-08-18 12:30:54,070, INFO, [processing] - Processing event 22000 of experiment 14 out of 30
+2025-08-18 12:30:57,844, INFO, [processing] - Processing event 23000 of experiment 14 out of 30
+2025-08-18 12:31:01,602, INFO, [processing] - Processing event 24000 of experiment 14 out of 30
+2025-08-18 12:31:05,678, INFO, [processing] - Processing event 25000 of experiment 14 out of 30
+2025-08-18 12:31:09,769, INFO, [processing] - Processing event 26000 of experiment 14 out of 30
+2025-08-18 12:31:13,690, INFO, [processing] - Processing event 27000 of experiment 14 out of 30
+2025-08-18 12:31:17,853, INFO, [processing] - Processing event 28000 of experiment 14 out of 30
+2025-08-18 12:31:22,057, INFO, [processing] - Processing event 29000 of experiment 14 out of 30
+2025-08-18 12:31:25,962, INFO, [processing] - Found 30000 events
+2025-08-18 12:31:26,106, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.7000000000000001, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:31:26,107, INFO, [io] - Found 30 files
+2025-08-18 12:31:26,953, INFO, [processing] - Processing event 0 of experiment 15 out of 30
+2025-08-18 12:31:30,867, INFO, [processing] - Processing event 1000 of experiment 15 out of 30
+2025-08-18 12:31:34,608, INFO, [processing] - Processing event 2000 of experiment 15 out of 30
+2025-08-18 12:31:38,281, INFO, [processing] - Processing event 3000 of experiment 15 out of 30
+2025-08-18 12:31:42,116, INFO, [processing] - Processing event 4000 of experiment 15 out of 30
+2025-08-18 12:31:45,733, INFO, [processing] - Processing event 5000 of experiment 15 out of 30
+2025-08-18 12:31:49,281, INFO, [processing] - Processing event 6000 of experiment 15 out of 30
+2025-08-18 12:31:52,843, INFO, [processing] - Processing event 7000 of experiment 15 out of 30
+2025-08-18 12:31:56,339, INFO, [processing] - Processing event 8000 of experiment 15 out of 30
+2025-08-18 12:31:59,885, INFO, [processing] - Processing event 9000 of experiment 15 out of 30
+2025-08-18 12:32:03,394, INFO, [processing] - Processing event 10000 of experiment 15 out of 30
+2025-08-18 12:32:07,061, INFO, [processing] - Processing event 11000 of experiment 15 out of 30
+2025-08-18 12:32:10,769, INFO, [processing] - Processing event 12000 of experiment 15 out of 30
+2025-08-18 12:32:14,336, INFO, [processing] - Processing event 13000 of experiment 15 out of 30
+2025-08-18 12:32:18,173, INFO, [processing] - Processing event 14000 of experiment 15 out of 30
+2025-08-18 12:32:22,508, INFO, [processing] - Processing event 15000 of experiment 15 out of 30
+2025-08-18 12:32:26,126, INFO, [processing] - Processing event 16000 of experiment 15 out of 30
+2025-08-18 12:32:29,897, INFO, [processing] - Processing event 17000 of experiment 15 out of 30
+2025-08-18 12:32:33,655, INFO, [processing] - Processing event 18000 of experiment 15 out of 30
+2025-08-18 12:32:37,509, INFO, [processing] - Processing event 19000 of experiment 15 out of 30
+2025-08-18 12:32:41,167, INFO, [processing] - Processing event 20000 of experiment 15 out of 30
+2025-08-18 12:32:44,965, INFO, [processing] - Processing event 21000 of experiment 15 out of 30
+2025-08-18 12:32:48,682, INFO, [processing] - Processing event 22000 of experiment 15 out of 30
+2025-08-18 12:32:52,444, INFO, [processing] - Processing event 23000 of experiment 15 out of 30
+2025-08-18 12:32:56,276, INFO, [processing] - Processing event 24000 of experiment 15 out of 30
+2025-08-18 12:33:00,359, INFO, [processing] - Processing event 25000 of experiment 15 out of 30
+2025-08-18 12:33:04,682, INFO, [processing] - Processing event 26000 of experiment 15 out of 30
+2025-08-18 12:33:08,674, INFO, [processing] - Processing event 27000 of experiment 15 out of 30
+2025-08-18 12:33:12,572, INFO, [processing] - Processing event 28000 of experiment 15 out of 30
+2025-08-18 12:33:17,294, INFO, [processing] - Processing event 29000 of experiment 15 out of 30
+2025-08-18 12:33:21,226, INFO, [processing] - Found 30000 events
+2025-08-18 12:33:21,375, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.75, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:33:21,376, INFO, [io] - Found 30 files
+2025-08-18 12:33:22,458, INFO, [processing] - Processing event 0 of experiment 16 out of 30
+2025-08-18 12:33:26,381, INFO, [processing] - Processing event 1000 of experiment 16 out of 30
+2025-08-18 12:33:29,938, INFO, [processing] - Processing event 2000 of experiment 16 out of 30
+2025-08-18 12:33:33,408, INFO, [processing] - Processing event 3000 of experiment 16 out of 30
+2025-08-18 12:33:37,274, INFO, [processing] - Processing event 4000 of experiment 16 out of 30
+2025-08-18 12:33:41,083, INFO, [processing] - Processing event 5000 of experiment 16 out of 30
+2025-08-18 12:33:44,829, INFO, [processing] - Processing event 6000 of experiment 16 out of 30
+2025-08-18 12:33:48,643, INFO, [processing] - Processing event 7000 of experiment 16 out of 30
+2025-08-18 12:33:52,503, INFO, [processing] - Processing event 8000 of experiment 16 out of 30
+2025-08-18 12:33:57,225, INFO, [processing] - Processing event 9000 of experiment 16 out of 30
+2025-08-18 12:34:00,884, INFO, [processing] - Processing event 10000 of experiment 16 out of 30
+2025-08-18 12:34:05,055, INFO, [processing] - Processing event 11000 of experiment 16 out of 30
+2025-08-18 12:34:08,793, INFO, [processing] - Processing event 12000 of experiment 16 out of 30
+2025-08-18 12:34:12,391, INFO, [processing] - Processing event 13000 of experiment 16 out of 30
+2025-08-18 12:34:16,318, INFO, [processing] - Processing event 14000 of experiment 16 out of 30
+2025-08-18 12:34:21,780, INFO, [processing] - Processing event 15000 of experiment 16 out of 30
+2025-08-18 12:34:26,786, INFO, [processing] - Processing event 16000 of experiment 16 out of 30
+2025-08-18 12:34:30,693, INFO, [processing] - Processing event 17000 of experiment 16 out of 30
+2025-08-18 12:34:34,764, INFO, [processing] - Processing event 18000 of experiment 16 out of 30
+2025-08-18 12:34:38,539, INFO, [processing] - Processing event 19000 of experiment 16 out of 30
+2025-08-18 12:34:42,374, INFO, [processing] - Processing event 20000 of experiment 16 out of 30
+2025-08-18 12:34:46,211, INFO, [processing] - Processing event 21000 of experiment 16 out of 30
+2025-08-18 12:34:50,156, INFO, [processing] - Processing event 22000 of experiment 16 out of 30
+2025-08-18 12:34:54,335, INFO, [processing] - Processing event 23000 of experiment 16 out of 30
+2025-08-18 12:34:59,854, INFO, [processing] - Processing event 24000 of experiment 16 out of 30
+2025-08-18 12:35:03,793, INFO, [processing] - Processing event 25000 of experiment 16 out of 30
+2025-08-18 12:35:07,370, INFO, [processing] - Processing event 26000 of experiment 16 out of 30
+2025-08-18 12:35:10,903, INFO, [processing] - Processing event 27000 of experiment 16 out of 30
+2025-08-18 12:35:14,530, INFO, [processing] - Processing event 28000 of experiment 16 out of 30
+2025-08-18 12:35:18,217, INFO, [processing] - Processing event 29000 of experiment 16 out of 30
+2025-08-18 12:35:21,903, INFO, [processing] - Found 30000 events
+2025-08-18 12:35:22,038, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.8, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:35:22,039, INFO, [io] - Found 30 files
+2025-08-18 12:35:22,839, INFO, [processing] - Processing event 0 of experiment 17 out of 30
+2025-08-18 12:35:26,633, INFO, [processing] - Processing event 1000 of experiment 17 out of 30
+2025-08-18 12:35:30,287, INFO, [processing] - Processing event 2000 of experiment 17 out of 30
+2025-08-18 12:35:33,798, INFO, [processing] - Processing event 3000 of experiment 17 out of 30
+2025-08-18 12:35:37,532, INFO, [processing] - Processing event 4000 of experiment 17 out of 30
+2025-08-18 12:35:41,031, INFO, [processing] - Processing event 5000 of experiment 17 out of 30
+2025-08-18 12:35:44,623, INFO, [processing] - Processing event 6000 of experiment 17 out of 30
+2025-08-18 12:35:48,240, INFO, [processing] - Processing event 7000 of experiment 17 out of 30
+2025-08-18 12:35:51,746, INFO, [processing] - Processing event 8000 of experiment 17 out of 30
+2025-08-18 12:35:55,281, INFO, [processing] - Processing event 9000 of experiment 17 out of 30
+2025-08-18 12:35:58,774, INFO, [processing] - Processing event 10000 of experiment 17 out of 30
+2025-08-18 12:36:02,447, INFO, [processing] - Processing event 11000 of experiment 17 out of 30
+2025-08-18 12:36:06,102, INFO, [processing] - Processing event 12000 of experiment 17 out of 30
+2025-08-18 12:36:09,564, INFO, [processing] - Processing event 13000 of experiment 17 out of 30
+2025-08-18 12:36:13,225, INFO, [processing] - Processing event 14000 of experiment 17 out of 30
+2025-08-18 12:36:17,049, INFO, [processing] - Processing event 15000 of experiment 17 out of 30
+2025-08-18 12:36:20,695, INFO, [processing] - Processing event 16000 of experiment 17 out of 30
+2025-08-18 12:36:24,822, INFO, [processing] - Processing event 17000 of experiment 17 out of 30
+2025-08-18 12:36:28,569, INFO, [processing] - Processing event 18000 of experiment 17 out of 30
+2025-08-18 12:36:32,201, INFO, [processing] - Processing event 19000 of experiment 17 out of 30
+2025-08-18 12:36:35,907, INFO, [processing] - Processing event 20000 of experiment 17 out of 30
+2025-08-18 12:36:39,697, INFO, [processing] - Processing event 21000 of experiment 17 out of 30
+2025-08-18 12:36:43,291, INFO, [processing] - Processing event 22000 of experiment 17 out of 30
+2025-08-18 12:36:46,950, INFO, [processing] - Processing event 23000 of experiment 17 out of 30
+2025-08-18 12:36:50,600, INFO, [processing] - Processing event 24000 of experiment 17 out of 30
+2025-08-18 12:36:54,392, INFO, [processing] - Processing event 25000 of experiment 17 out of 30
+2025-08-18 12:36:58,105, INFO, [processing] - Processing event 26000 of experiment 17 out of 30
+2025-08-18 12:37:01,906, INFO, [processing] - Processing event 27000 of experiment 17 out of 30
+2025-08-18 12:37:06,038, INFO, [processing] - Processing event 28000 of experiment 17 out of 30
+2025-08-18 12:37:10,038, INFO, [processing] - Processing event 29000 of experiment 17 out of 30
+2025-08-18 12:37:14,081, INFO, [processing] - Found 30000 events
+2025-08-18 12:37:14,238, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.8500000000000001, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:37:14,239, INFO, [io] - Found 30 files
+2025-08-18 12:37:15,143, INFO, [processing] - Processing event 0 of experiment 18 out of 30
+2025-08-18 12:37:19,097, INFO, [processing] - Processing event 1000 of experiment 18 out of 30
+2025-08-18 12:37:22,880, INFO, [processing] - Processing event 2000 of experiment 18 out of 30
+2025-08-18 12:37:26,534, INFO, [processing] - Processing event 3000 of experiment 18 out of 30
+2025-08-18 12:37:30,248, INFO, [processing] - Processing event 4000 of experiment 18 out of 30
+2025-08-18 12:37:33,843, INFO, [processing] - Processing event 5000 of experiment 18 out of 30
+2025-08-18 12:37:37,469, INFO, [processing] - Processing event 6000 of experiment 18 out of 30
+2025-08-18 12:37:41,122, INFO, [processing] - Processing event 7000 of experiment 18 out of 30
+2025-08-18 12:37:44,842, INFO, [processing] - Processing event 8000 of experiment 18 out of 30
+2025-08-18 12:37:48,488, INFO, [processing] - Processing event 9000 of experiment 18 out of 30
+2025-08-18 12:37:52,108, INFO, [processing] - Processing event 10000 of experiment 18 out of 30
+2025-08-18 12:37:55,931, INFO, [processing] - Processing event 11000 of experiment 18 out of 30
+2025-08-18 12:37:59,742, INFO, [processing] - Processing event 12000 of experiment 18 out of 30
+2025-08-18 12:38:03,472, INFO, [processing] - Processing event 13000 of experiment 18 out of 30
+2025-08-18 12:38:07,234, INFO, [processing] - Processing event 14000 of experiment 18 out of 30
+2025-08-18 12:38:11,027, INFO, [processing] - Processing event 15000 of experiment 18 out of 30
+2025-08-18 12:38:14,819, INFO, [processing] - Processing event 16000 of experiment 18 out of 30
+2025-08-18 12:38:18,883, INFO, [processing] - Processing event 17000 of experiment 18 out of 30
+2025-08-18 12:38:22,963, INFO, [processing] - Processing event 18000 of experiment 18 out of 30
+2025-08-18 12:38:27,057, INFO, [processing] - Processing event 19000 of experiment 18 out of 30
+2025-08-18 12:38:31,151, INFO, [processing] - Processing event 20000 of experiment 18 out of 30
+2025-08-18 12:38:35,160, INFO, [processing] - Processing event 21000 of experiment 18 out of 30
+2025-08-18 12:38:39,042, INFO, [processing] - Processing event 22000 of experiment 18 out of 30
+2025-08-18 12:38:43,029, INFO, [processing] - Processing event 23000 of experiment 18 out of 30
+2025-08-18 12:38:46,984, INFO, [processing] - Processing event 24000 of experiment 18 out of 30
+2025-08-18 12:38:51,108, INFO, [processing] - Processing event 25000 of experiment 18 out of 30
+2025-08-18 12:38:55,045, INFO, [processing] - Processing event 26000 of experiment 18 out of 30
+2025-08-18 12:38:59,118, INFO, [processing] - Processing event 27000 of experiment 18 out of 30
+2025-08-18 12:39:03,266, INFO, [processing] - Processing event 28000 of experiment 18 out of 30
+2025-08-18 12:39:07,567, INFO, [processing] - Processing event 29000 of experiment 18 out of 30
+2025-08-18 12:39:11,772, INFO, [processing] - Found 30000 events
+2025-08-18 12:39:11,941, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.9, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:39:11,943, INFO, [io] - Found 30 files
+2025-08-18 12:39:12,937, INFO, [processing] - Processing event 0 of experiment 19 out of 30
+2025-08-18 12:39:17,154, INFO, [processing] - Processing event 1000 of experiment 19 out of 30
+2025-08-18 12:39:21,153, INFO, [processing] - Processing event 2000 of experiment 19 out of 30
+2025-08-18 12:39:25,255, INFO, [processing] - Processing event 3000 of experiment 19 out of 30
+2025-08-18 12:39:29,285, INFO, [processing] - Processing event 4000 of experiment 19 out of 30
+2025-08-18 12:39:32,988, INFO, [processing] - Processing event 5000 of experiment 19 out of 30
+2025-08-18 12:39:36,769, INFO, [processing] - Processing event 6000 of experiment 19 out of 30
+2025-08-18 12:39:40,536, INFO, [processing] - Processing event 7000 of experiment 19 out of 30
+2025-08-18 12:39:44,299, INFO, [processing] - Processing event 8000 of experiment 19 out of 30
+2025-08-18 12:39:48,161, INFO, [processing] - Processing event 9000 of experiment 19 out of 30
+2025-08-18 12:39:51,782, INFO, [processing] - Processing event 10000 of experiment 19 out of 30
+2025-08-18 12:39:55,508, INFO, [processing] - Processing event 11000 of experiment 19 out of 30
+2025-08-18 12:39:59,381, INFO, [processing] - Processing event 12000 of experiment 19 out of 30
+2025-08-18 12:40:02,942, INFO, [processing] - Processing event 13000 of experiment 19 out of 30
+2025-08-18 12:40:06,623, INFO, [processing] - Processing event 14000 of experiment 19 out of 30
+2025-08-18 12:40:10,290, INFO, [processing] - Processing event 15000 of experiment 19 out of 30
+2025-08-18 12:40:13,989, INFO, [processing] - Processing event 16000 of experiment 19 out of 30
+2025-08-18 12:40:17,956, INFO, [processing] - Processing event 17000 of experiment 19 out of 30
+2025-08-18 12:40:21,727, INFO, [processing] - Processing event 18000 of experiment 19 out of 30
+2025-08-18 12:40:25,404, INFO, [processing] - Processing event 19000 of experiment 19 out of 30
+2025-08-18 12:40:29,088, INFO, [processing] - Processing event 20000 of experiment 19 out of 30
+2025-08-18 12:40:32,873, INFO, [processing] - Processing event 21000 of experiment 19 out of 30
+2025-08-18 12:40:36,470, INFO, [processing] - Processing event 22000 of experiment 19 out of 30
+2025-08-18 12:40:40,175, INFO, [processing] - Processing event 23000 of experiment 19 out of 30
+2025-08-18 12:40:43,799, INFO, [processing] - Processing event 24000 of experiment 19 out of 30
+2025-08-18 12:40:47,614, INFO, [processing] - Processing event 25000 of experiment 19 out of 30
+2025-08-18 12:40:51,207, INFO, [processing] - Processing event 26000 of experiment 19 out of 30
+2025-08-18 12:40:54,789, INFO, [processing] - Processing event 27000 of experiment 19 out of 30
+2025-08-18 12:40:58,577, INFO, [processing] - Processing event 28000 of experiment 19 out of 30
+2025-08-18 12:41:02,620, INFO, [processing] - Processing event 29000 of experiment 19 out of 30
+2025-08-18 12:41:06,665, INFO, [processing] - Found 30000 events
+2025-08-18 12:41:06,820, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 0.9500000000000001, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:41:06,821, INFO, [io] - Found 30 files
+2025-08-18 12:41:07,643, INFO, [processing] - Processing event 0 of experiment 20 out of 30
+2025-08-18 12:41:11,624, INFO, [processing] - Processing event 1000 of experiment 20 out of 30
+2025-08-18 12:41:15,451, INFO, [processing] - Processing event 2000 of experiment 20 out of 30
+2025-08-18 12:41:19,317, INFO, [processing] - Processing event 3000 of experiment 20 out of 30
+2025-08-18 12:41:23,299, INFO, [processing] - Processing event 4000 of experiment 20 out of 30
+2025-08-18 12:41:27,038, INFO, [processing] - Processing event 5000 of experiment 20 out of 30
+2025-08-18 12:41:30,835, INFO, [processing] - Processing event 6000 of experiment 20 out of 30
+2025-08-18 12:41:34,684, INFO, [processing] - Processing event 7000 of experiment 20 out of 30
+2025-08-18 12:41:38,418, INFO, [processing] - Processing event 8000 of experiment 20 out of 30
+2025-08-18 12:41:42,240, INFO, [processing] - Processing event 9000 of experiment 20 out of 30
+2025-08-18 12:41:45,995, INFO, [processing] - Processing event 10000 of experiment 20 out of 30
+2025-08-18 12:41:49,842, INFO, [processing] - Processing event 11000 of experiment 20 out of 30
+2025-08-18 12:41:53,716, INFO, [processing] - Processing event 12000 of experiment 20 out of 30
+2025-08-18 12:41:57,428, INFO, [processing] - Processing event 13000 of experiment 20 out of 30
+2025-08-18 12:42:01,256, INFO, [processing] - Processing event 14000 of experiment 20 out of 30
+2025-08-18 12:42:05,180, INFO, [processing] - Processing event 15000 of experiment 20 out of 30
+2025-08-18 12:42:09,092, INFO, [processing] - Processing event 16000 of experiment 20 out of 30
+2025-08-18 12:42:13,513, INFO, [processing] - Processing event 17000 of experiment 20 out of 30
+2025-08-18 12:42:17,358, INFO, [processing] - Processing event 18000 of experiment 20 out of 30
+2025-08-18 12:42:21,097, INFO, [processing] - Processing event 19000 of experiment 20 out of 30
+2025-08-18 12:42:24,832, INFO, [processing] - Processing event 20000 of experiment 20 out of 30
+2025-08-18 12:42:28,684, INFO, [processing] - Processing event 21000 of experiment 20 out of 30
+2025-08-18 12:42:32,401, INFO, [processing] - Processing event 22000 of experiment 20 out of 30
+2025-08-18 12:42:36,190, INFO, [processing] - Processing event 23000 of experiment 20 out of 30
+2025-08-18 12:42:39,893, INFO, [processing] - Processing event 24000 of experiment 20 out of 30
+2025-08-18 12:42:43,753, INFO, [processing] - Processing event 25000 of experiment 20 out of 30
+2025-08-18 12:42:47,330, INFO, [processing] - Processing event 26000 of experiment 20 out of 30
+2025-08-18 12:42:50,902, INFO, [processing] - Processing event 27000 of experiment 20 out of 30
+2025-08-18 12:42:54,519, INFO, [processing] - Processing event 28000 of experiment 20 out of 30
+2025-08-18 12:42:58,260, INFO, [processing] - Processing event 29000 of experiment 20 out of 30
+2025-08-18 12:43:02,136, INFO, [processing] - Found 30000 events
+2025-08-18 12:43:02,287, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 1.0, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:43:02,288, INFO, [io] - Found 30 files
+2025-08-18 12:43:03,119, INFO, [processing] - Processing event 0 of experiment 21 out of 30
+2025-08-18 12:43:06,929, INFO, [processing] - Processing event 1000 of experiment 21 out of 30
+2025-08-18 12:43:10,568, INFO, [processing] - Processing event 2000 of experiment 21 out of 30
+2025-08-18 12:43:14,184, INFO, [processing] - Processing event 3000 of experiment 21 out of 30
+2025-08-18 12:43:18,034, INFO, [processing] - Processing event 4000 of experiment 21 out of 30
+2025-08-18 12:43:21,632, INFO, [processing] - Processing event 5000 of experiment 21 out of 30
+2025-08-18 12:43:25,300, INFO, [processing] - Processing event 6000 of experiment 21 out of 30
+2025-08-18 12:43:28,968, INFO, [processing] - Processing event 7000 of experiment 21 out of 30
+2025-08-18 12:43:32,524, INFO, [processing] - Processing event 8000 of experiment 21 out of 30
+2025-08-18 12:43:36,096, INFO, [processing] - Processing event 9000 of experiment 21 out of 30
+2025-08-18 12:43:39,637, INFO, [processing] - Processing event 10000 of experiment 21 out of 30
+2025-08-18 12:43:43,389, INFO, [processing] - Processing event 11000 of experiment 21 out of 30
+2025-08-18 12:43:47,245, INFO, [processing] - Processing event 12000 of experiment 21 out of 30
+2025-08-18 12:43:50,757, INFO, [processing] - Processing event 13000 of experiment 21 out of 30
+2025-08-18 12:43:54,406, INFO, [processing] - Processing event 14000 of experiment 21 out of 30
+2025-08-18 12:43:59,996, INFO, [processing] - Processing event 15000 of experiment 21 out of 30
+2025-08-18 12:44:03,751, INFO, [processing] - Processing event 16000 of experiment 21 out of 30
+2025-08-18 12:44:07,558, INFO, [processing] - Processing event 17000 of experiment 21 out of 30
+2025-08-18 12:44:11,331, INFO, [processing] - Processing event 18000 of experiment 21 out of 30
+2025-08-18 12:44:14,949, INFO, [processing] - Processing event 19000 of experiment 21 out of 30
+2025-08-18 12:44:18,670, INFO, [processing] - Processing event 20000 of experiment 21 out of 30
+2025-08-18 12:44:22,548, INFO, [processing] - Processing event 21000 of experiment 21 out of 30
+2025-08-18 12:44:26,259, INFO, [processing] - Processing event 22000 of experiment 21 out of 30
+2025-08-18 12:44:30,059, INFO, [processing] - Processing event 23000 of experiment 21 out of 30
+2025-08-18 12:44:33,581, INFO, [processing] - Processing event 24000 of experiment 21 out of 30
+2025-08-18 12:44:37,323, INFO, [processing] - Processing event 25000 of experiment 21 out of 30
+2025-08-18 12:44:40,973, INFO, [processing] - Processing event 26000 of experiment 21 out of 30
+2025-08-18 12:44:44,744, INFO, [processing] - Processing event 27000 of experiment 21 out of 30
+2025-08-18 12:44:48,462, INFO, [processing] - Processing event 28000 of experiment 21 out of 30
+2025-08-18 12:44:52,313, INFO, [processing] - Processing event 29000 of experiment 21 out of 30
+2025-08-18 12:44:56,241, INFO, [processing] - Found 30000 events
+2025-08-18 12:44:56,424, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 1.05, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:44:56,426, INFO, [io] - Found 30 files
+2025-08-18 12:44:57,199, INFO, [processing] - Processing event 0 of experiment 22 out of 30
+2025-08-18 12:45:00,961, INFO, [processing] - Processing event 1000 of experiment 22 out of 30
+2025-08-18 12:45:04,907, INFO, [processing] - Processing event 2000 of experiment 22 out of 30
+2025-08-18 12:45:08,627, INFO, [processing] - Processing event 3000 of experiment 22 out of 30
+2025-08-18 12:45:12,346, INFO, [processing] - Processing event 4000 of experiment 22 out of 30
+2025-08-18 12:45:15,702, INFO, [processing] - Processing event 5000 of experiment 22 out of 30
+2025-08-18 12:45:19,072, INFO, [processing] - Processing event 6000 of experiment 22 out of 30
+2025-08-18 12:45:22,251, INFO, [processing] - Processing event 7000 of experiment 22 out of 30
+2025-08-18 12:45:25,381, INFO, [processing] - Processing event 8000 of experiment 22 out of 30
+2025-08-18 12:45:28,575, INFO, [processing] - Processing event 9000 of experiment 22 out of 30
+2025-08-18 12:45:32,144, INFO, [processing] - Processing event 10000 of experiment 22 out of 30
+2025-08-18 12:45:36,075, INFO, [processing] - Processing event 11000 of experiment 22 out of 30
+2025-08-18 12:45:39,625, INFO, [processing] - Processing event 12000 of experiment 22 out of 30
+2025-08-18 12:45:43,209, INFO, [processing] - Processing event 13000 of experiment 22 out of 30
+2025-08-18 12:45:46,854, INFO, [processing] - Processing event 14000 of experiment 22 out of 30
+2025-08-18 12:45:50,643, INFO, [processing] - Processing event 15000 of experiment 22 out of 30
+2025-08-18 12:45:54,183, INFO, [processing] - Processing event 16000 of experiment 22 out of 30
+2025-08-18 12:45:58,251, INFO, [processing] - Processing event 17000 of experiment 22 out of 30
+2025-08-18 12:46:02,394, INFO, [processing] - Processing event 18000 of experiment 22 out of 30
+2025-08-18 12:46:07,634, INFO, [processing] - Processing event 19000 of experiment 22 out of 30
+2025-08-18 12:46:11,762, INFO, [processing] - Processing event 20000 of experiment 22 out of 30
+2025-08-18 12:46:15,828, INFO, [processing] - Processing event 21000 of experiment 22 out of 30
+2025-08-18 12:46:20,058, INFO, [processing] - Processing event 22000 of experiment 22 out of 30
+2025-08-18 12:46:24,160, INFO, [processing] - Processing event 23000 of experiment 22 out of 30
+2025-08-18 12:46:27,999, INFO, [processing] - Processing event 24000 of experiment 22 out of 30
+2025-08-18 12:46:31,985, INFO, [processing] - Processing event 25000 of experiment 22 out of 30
+2025-08-18 12:46:35,694, INFO, [processing] - Processing event 26000 of experiment 22 out of 30
+2025-08-18 12:46:39,712, INFO, [processing] - Processing event 27000 of experiment 22 out of 30
+2025-08-18 12:46:45,379, INFO, [processing] - Processing event 28000 of experiment 22 out of 30
+2025-08-18 12:46:49,490, INFO, [processing] - Processing event 29000 of experiment 22 out of 30
+2025-08-18 12:46:52,876, INFO, [processing] - Found 30000 events
+2025-08-18 12:46:53,404, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 1.1, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:46:53,405, INFO, [io] - Found 30 files
+2025-08-18 12:46:54,387, INFO, [processing] - Processing event 0 of experiment 23 out of 30
+2025-08-18 12:46:57,947, INFO, [processing] - Processing event 1000 of experiment 23 out of 30
+2025-08-18 12:47:01,212, INFO, [processing] - Processing event 2000 of experiment 23 out of 30
+2025-08-18 12:47:04,523, INFO, [processing] - Processing event 3000 of experiment 23 out of 30
+2025-08-18 12:47:07,869, INFO, [processing] - Processing event 4000 of experiment 23 out of 30
+2025-08-18 12:47:11,237, INFO, [processing] - Processing event 5000 of experiment 23 out of 30
+2025-08-18 12:47:14,654, INFO, [processing] - Processing event 6000 of experiment 23 out of 30
+2025-08-18 12:47:18,094, INFO, [processing] - Processing event 7000 of experiment 23 out of 30
+2025-08-18 12:47:21,872, INFO, [processing] - Processing event 8000 of experiment 23 out of 30
+2025-08-18 12:47:26,374, INFO, [processing] - Processing event 9000 of experiment 23 out of 30
+2025-08-18 12:47:29,907, INFO, [processing] - Processing event 10000 of experiment 23 out of 30
+2025-08-18 12:47:34,307, INFO, [processing] - Processing event 11000 of experiment 23 out of 30
+2025-08-18 12:47:38,013, INFO, [processing] - Processing event 12000 of experiment 23 out of 30
+2025-08-18 12:47:41,236, INFO, [processing] - Processing event 13000 of experiment 23 out of 30
+2025-08-18 12:47:44,678, INFO, [processing] - Processing event 14000 of experiment 23 out of 30
+2025-08-18 12:47:47,970, INFO, [processing] - Processing event 15000 of experiment 23 out of 30
+2025-08-18 12:47:51,264, INFO, [processing] - Processing event 16000 of experiment 23 out of 30
+2025-08-18 12:47:54,655, INFO, [processing] - Processing event 17000 of experiment 23 out of 30
+2025-08-18 12:47:58,104, INFO, [processing] - Processing event 18000 of experiment 23 out of 30
+2025-08-18 12:48:01,506, INFO, [processing] - Processing event 19000 of experiment 23 out of 30
+2025-08-18 12:48:04,967, INFO, [processing] - Processing event 20000 of experiment 23 out of 30
+2025-08-18 12:48:08,666, INFO, [processing] - Processing event 21000 of experiment 23 out of 30
+2025-08-18 12:48:12,252, INFO, [processing] - Processing event 22000 of experiment 23 out of 30
+2025-08-18 12:48:15,516, INFO, [processing] - Processing event 23000 of experiment 23 out of 30
+2025-08-18 12:48:19,028, INFO, [processing] - Processing event 24000 of experiment 23 out of 30
+2025-08-18 12:48:22,436, INFO, [processing] - Processing event 25000 of experiment 23 out of 30
+2025-08-18 12:48:25,853, INFO, [processing] - Processing event 26000 of experiment 23 out of 30
+2025-08-18 12:48:29,230, INFO, [processing] - Processing event 27000 of experiment 23 out of 30
+2025-08-18 12:48:32,694, INFO, [processing] - Processing event 28000 of experiment 23 out of 30
+2025-08-18 12:48:36,277, INFO, [processing] - Processing event 29000 of experiment 23 out of 30
+2025-08-18 12:48:39,810, INFO, [processing] - Found 30000 events
+2025-08-18 12:48:39,949, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 1.1500000000000001, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:48:39,950, INFO, [io] - Found 30 files
+2025-08-18 12:48:40,643, INFO, [processing] - Processing event 0 of experiment 24 out of 30
+2025-08-18 12:48:44,274, INFO, [processing] - Processing event 1000 of experiment 24 out of 30
+2025-08-18 12:48:47,645, INFO, [processing] - Processing event 2000 of experiment 24 out of 30
+2025-08-18 12:48:50,956, INFO, [processing] - Processing event 3000 of experiment 24 out of 30
+2025-08-18 12:48:54,510, INFO, [processing] - Processing event 4000 of experiment 24 out of 30
+2025-08-18 12:48:57,782, INFO, [processing] - Processing event 5000 of experiment 24 out of 30
+2025-08-18 12:49:01,098, INFO, [processing] - Processing event 6000 of experiment 24 out of 30
+2025-08-18 12:49:04,445, INFO, [processing] - Processing event 7000 of experiment 24 out of 30
+2025-08-18 12:49:07,692, INFO, [processing] - Processing event 8000 of experiment 24 out of 30
+2025-08-18 12:49:10,975, INFO, [processing] - Processing event 9000 of experiment 24 out of 30
+2025-08-18 12:49:14,174, INFO, [processing] - Processing event 10000 of experiment 24 out of 30
+2025-08-18 12:49:17,444, INFO, [processing] - Processing event 11000 of experiment 24 out of 30
+2025-08-18 12:49:20,766, INFO, [processing] - Processing event 12000 of experiment 24 out of 30
+2025-08-18 12:49:23,975, INFO, [processing] - Processing event 13000 of experiment 24 out of 30
+2025-08-18 12:49:27,368, INFO, [processing] - Processing event 14000 of experiment 24 out of 30
+2025-08-18 12:49:30,604, INFO, [processing] - Processing event 15000 of experiment 24 out of 30
+2025-08-18 12:49:33,849, INFO, [processing] - Processing event 16000 of experiment 24 out of 30
+2025-08-18 12:49:37,336, INFO, [processing] - Processing event 17000 of experiment 24 out of 30
+2025-08-18 12:49:40,692, INFO, [processing] - Processing event 18000 of experiment 24 out of 30
+2025-08-18 12:49:44,035, INFO, [processing] - Processing event 19000 of experiment 24 out of 30
+2025-08-18 12:49:47,371, INFO, [processing] - Processing event 20000 of experiment 24 out of 30
+2025-08-18 12:49:50,703, INFO, [processing] - Processing event 21000 of experiment 24 out of 30
+2025-08-18 12:49:54,175, INFO, [processing] - Processing event 22000 of experiment 24 out of 30
+2025-08-18 12:49:57,724, INFO, [processing] - Processing event 23000 of experiment 24 out of 30
+2025-08-18 12:50:01,228, INFO, [processing] - Processing event 24000 of experiment 24 out of 30
+2025-08-18 12:50:04,970, INFO, [processing] - Processing event 25000 of experiment 24 out of 30
+2025-08-18 12:50:08,455, INFO, [processing] - Processing event 26000 of experiment 24 out of 30
+2025-08-18 12:50:12,149, INFO, [processing] - Processing event 27000 of experiment 24 out of 30
+2025-08-18 12:50:15,799, INFO, [processing] - Processing event 28000 of experiment 24 out of 30
+2025-08-18 12:50:19,533, INFO, [processing] - Processing event 29000 of experiment 24 out of 30
+2025-08-18 12:50:23,196, INFO, [processing] - Found 30000 events
+2025-08-18 12:50:23,347, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 1.2000000000000002, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:50:23,348, INFO, [io] - Found 30 files
+2025-08-18 12:50:24,023, INFO, [processing] - Processing event 0 of experiment 25 out of 30
+2025-08-18 12:50:27,671, INFO, [processing] - Processing event 1000 of experiment 25 out of 30
+2025-08-18 12:50:31,216, INFO, [processing] - Processing event 2000 of experiment 25 out of 30
+2025-08-18 12:50:34,746, INFO, [processing] - Processing event 3000 of experiment 25 out of 30
+2025-08-18 12:50:38,358, INFO, [processing] - Processing event 4000 of experiment 25 out of 30
+2025-08-18 12:50:41,830, INFO, [processing] - Processing event 5000 of experiment 25 out of 30
+2025-08-18 12:50:45,553, INFO, [processing] - Processing event 6000 of experiment 25 out of 30
+2025-08-18 12:50:49,244, INFO, [processing] - Processing event 7000 of experiment 25 out of 30
+2025-08-18 12:50:52,866, INFO, [processing] - Processing event 8000 of experiment 25 out of 30
+2025-08-18 12:50:56,628, INFO, [processing] - Processing event 9000 of experiment 25 out of 30
+2025-08-18 12:51:00,225, INFO, [processing] - Processing event 10000 of experiment 25 out of 30
+2025-08-18 12:51:03,929, INFO, [processing] - Processing event 11000 of experiment 25 out of 30
+2025-08-18 12:51:07,374, INFO, [processing] - Processing event 12000 of experiment 25 out of 30
+2025-08-18 12:51:10,624, INFO, [processing] - Processing event 13000 of experiment 25 out of 30
+2025-08-18 12:51:13,932, INFO, [processing] - Processing event 14000 of experiment 25 out of 30
+2025-08-18 12:51:17,182, INFO, [processing] - Processing event 15000 of experiment 25 out of 30
+2025-08-18 12:51:20,457, INFO, [processing] - Processing event 16000 of experiment 25 out of 30
+2025-08-18 12:51:23,903, INFO, [processing] - Processing event 17000 of experiment 25 out of 30
+2025-08-18 12:51:27,293, INFO, [processing] - Processing event 18000 of experiment 25 out of 30
+2025-08-18 12:51:30,502, INFO, [processing] - Processing event 19000 of experiment 25 out of 30
+2025-08-18 12:51:33,836, INFO, [processing] - Processing event 20000 of experiment 25 out of 30
+2025-08-18 12:51:37,177, INFO, [processing] - Processing event 21000 of experiment 25 out of 30
+2025-08-18 12:51:40,391, INFO, [processing] - Processing event 22000 of experiment 25 out of 30
+2025-08-18 12:51:43,749, INFO, [processing] - Processing event 23000 of experiment 25 out of 30
+2025-08-18 12:51:47,058, INFO, [processing] - Processing event 24000 of experiment 25 out of 30
+2025-08-18 12:51:50,598, INFO, [processing] - Processing event 25000 of experiment 25 out of 30
+2025-08-18 12:51:53,988, INFO, [processing] - Processing event 26000 of experiment 25 out of 30
+2025-08-18 12:51:57,512, INFO, [processing] - Processing event 27000 of experiment 25 out of 30
+2025-08-18 12:52:00,994, INFO, [processing] - Processing event 28000 of experiment 25 out of 30
+2025-08-18 12:52:04,733, INFO, [processing] - Processing event 29000 of experiment 25 out of 30
+2025-08-18 12:52:08,357, INFO, [processing] - Found 30000 events
+2025-08-18 12:52:08,494, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 1.25, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:52:08,495, INFO, [io] - Found 30 files
+2025-08-18 12:52:09,259, INFO, [processing] - Processing event 0 of experiment 26 out of 30
+2025-08-18 12:52:12,965, INFO, [processing] - Processing event 1000 of experiment 26 out of 30
+2025-08-18 12:52:16,573, INFO, [processing] - Processing event 2000 of experiment 26 out of 30
+2025-08-18 12:52:20,120, INFO, [processing] - Processing event 3000 of experiment 26 out of 30
+2025-08-18 12:52:24,037, INFO, [processing] - Processing event 4000 of experiment 26 out of 30
+2025-08-18 12:52:27,662, INFO, [processing] - Processing event 5000 of experiment 26 out of 30
+2025-08-18 12:52:31,621, INFO, [processing] - Processing event 6000 of experiment 26 out of 30
+2025-08-18 12:52:35,470, INFO, [processing] - Processing event 7000 of experiment 26 out of 30
+2025-08-18 12:52:39,060, INFO, [processing] - Processing event 8000 of experiment 26 out of 30
+2025-08-18 12:52:42,645, INFO, [processing] - Processing event 9000 of experiment 26 out of 30
+2025-08-18 12:52:46,029, INFO, [processing] - Processing event 10000 of experiment 26 out of 30
+2025-08-18 12:52:49,657, INFO, [processing] - Processing event 11000 of experiment 26 out of 30
+2025-08-18 12:52:53,404, INFO, [processing] - Processing event 12000 of experiment 26 out of 30
+2025-08-18 12:52:56,823, INFO, [processing] - Processing event 13000 of experiment 26 out of 30
+2025-08-18 12:53:00,406, INFO, [processing] - Processing event 14000 of experiment 26 out of 30
+2025-08-18 12:53:04,014, INFO, [processing] - Processing event 15000 of experiment 26 out of 30
+2025-08-18 12:53:07,424, INFO, [processing] - Processing event 16000 of experiment 26 out of 30
+2025-08-18 12:53:10,934, INFO, [processing] - Processing event 17000 of experiment 26 out of 30
+2025-08-18 12:53:14,415, INFO, [processing] - Processing event 18000 of experiment 26 out of 30
+2025-08-18 12:53:17,908, INFO, [processing] - Processing event 19000 of experiment 26 out of 30
+2025-08-18 12:53:21,304, INFO, [processing] - Processing event 20000 of experiment 26 out of 30
+2025-08-18 12:53:24,746, INFO, [processing] - Processing event 21000 of experiment 26 out of 30
+2025-08-18 12:53:28,218, INFO, [processing] - Processing event 22000 of experiment 26 out of 30
+2025-08-18 12:53:31,642, INFO, [processing] - Processing event 23000 of experiment 26 out of 30
+2025-08-18 12:53:34,838, INFO, [processing] - Processing event 24000 of experiment 26 out of 30
+2025-08-18 12:53:38,186, INFO, [processing] - Processing event 25000 of experiment 26 out of 30
+2025-08-18 12:53:41,355, INFO, [processing] - Processing event 26000 of experiment 26 out of 30
+2025-08-18 12:53:44,727, INFO, [processing] - Processing event 27000 of experiment 26 out of 30
+2025-08-18 12:53:48,068, INFO, [processing] - Processing event 28000 of experiment 26 out of 30
+2025-08-18 12:53:51,377, INFO, [processing] - Processing event 29000 of experiment 26 out of 30
+2025-08-18 12:53:54,602, INFO, [processing] - Found 30000 events
+2025-08-18 12:53:54,746, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 1.3, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:53:54,747, INFO, [io] - Found 30 files
+2025-08-18 12:53:55,418, INFO, [processing] - Processing event 0 of experiment 27 out of 30
+2025-08-18 12:53:58,950, INFO, [processing] - Processing event 1000 of experiment 27 out of 30
+2025-08-18 12:54:02,627, INFO, [processing] - Processing event 2000 of experiment 27 out of 30
+2025-08-18 12:54:06,105, INFO, [processing] - Processing event 3000 of experiment 27 out of 30
+2025-08-18 12:54:09,868, INFO, [processing] - Processing event 4000 of experiment 27 out of 30
+2025-08-18 12:54:13,477, INFO, [processing] - Processing event 5000 of experiment 27 out of 30
+2025-08-18 12:54:17,227, INFO, [processing] - Processing event 6000 of experiment 27 out of 30
+2025-08-18 12:54:20,814, INFO, [processing] - Processing event 7000 of experiment 27 out of 30
+2025-08-18 12:54:24,372, INFO, [processing] - Processing event 8000 of experiment 27 out of 30
+2025-08-18 12:54:28,056, INFO, [processing] - Processing event 9000 of experiment 27 out of 30
+2025-08-18 12:54:31,614, INFO, [processing] - Processing event 10000 of experiment 27 out of 30
+2025-08-18 12:54:37,508, INFO, [processing] - Processing event 11000 of experiment 27 out of 30
+2025-08-18 12:54:41,109, INFO, [processing] - Processing event 12000 of experiment 27 out of 30
+2025-08-18 12:54:44,396, INFO, [processing] - Processing event 13000 of experiment 27 out of 30
+2025-08-18 12:54:47,966, INFO, [processing] - Processing event 14000 of experiment 27 out of 30
+2025-08-18 12:54:51,551, INFO, [processing] - Processing event 15000 of experiment 27 out of 30
+2025-08-18 12:54:55,016, INFO, [processing] - Processing event 16000 of experiment 27 out of 30
+2025-08-18 12:54:58,450, INFO, [processing] - Processing event 17000 of experiment 27 out of 30
+2025-08-18 12:55:01,832, INFO, [processing] - Processing event 18000 of experiment 27 out of 30
+2025-08-18 12:55:05,234, INFO, [processing] - Processing event 19000 of experiment 27 out of 30
+2025-08-18 12:55:08,783, INFO, [processing] - Processing event 20000 of experiment 27 out of 30
+2025-08-18 12:55:12,350, INFO, [processing] - Processing event 21000 of experiment 27 out of 30
+2025-08-18 12:55:15,886, INFO, [processing] - Processing event 22000 of experiment 27 out of 30
+2025-08-18 12:55:19,372, INFO, [processing] - Processing event 23000 of experiment 27 out of 30
+2025-08-18 12:55:22,901, INFO, [processing] - Processing event 24000 of experiment 27 out of 30
+2025-08-18 12:55:26,583, INFO, [processing] - Processing event 25000 of experiment 27 out of 30
+2025-08-18 12:55:29,832, INFO, [processing] - Processing event 26000 of experiment 27 out of 30
+2025-08-18 12:55:33,055, INFO, [processing] - Processing event 27000 of experiment 27 out of 30
+2025-08-18 12:55:36,294, INFO, [processing] - Processing event 28000 of experiment 27 out of 30
+2025-08-18 12:55:39,773, INFO, [processing] - Processing event 29000 of experiment 27 out of 30
+2025-08-18 12:55:43,387, INFO, [processing] - Found 30000 events
+2025-08-18 12:55:43,536, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 1.35, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:55:43,537, INFO, [io] - Found 30 files
+2025-08-18 12:55:44,281, INFO, [processing] - Processing event 0 of experiment 28 out of 30
+2025-08-18 12:55:47,866, INFO, [processing] - Processing event 1000 of experiment 28 out of 30
+2025-08-18 12:55:51,203, INFO, [processing] - Processing event 2000 of experiment 28 out of 30
+2025-08-18 12:55:54,670, INFO, [processing] - Processing event 3000 of experiment 28 out of 30
+2025-08-18 12:55:58,298, INFO, [processing] - Processing event 4000 of experiment 28 out of 30
+2025-08-18 12:56:01,541, INFO, [processing] - Processing event 5000 of experiment 28 out of 30
+2025-08-18 12:56:04,966, INFO, [processing] - Processing event 6000 of experiment 28 out of 30
+2025-08-18 12:56:08,407, INFO, [processing] - Processing event 7000 of experiment 28 out of 30
+2025-08-18 12:56:11,652, INFO, [processing] - Processing event 8000 of experiment 28 out of 30
+2025-08-18 12:56:15,093, INFO, [processing] - Processing event 9000 of experiment 28 out of 30
+2025-08-18 12:56:18,315, INFO, [processing] - Processing event 10000 of experiment 28 out of 30
+2025-08-18 12:56:21,658, INFO, [processing] - Processing event 11000 of experiment 28 out of 30
+2025-08-18 12:56:25,079, INFO, [processing] - Processing event 12000 of experiment 28 out of 30
+2025-08-18 12:56:28,401, INFO, [processing] - Processing event 13000 of experiment 28 out of 30
+2025-08-18 12:56:31,857, INFO, [processing] - Processing event 14000 of experiment 28 out of 30
+2025-08-18 12:56:35,497, INFO, [processing] - Processing event 15000 of experiment 28 out of 30
+2025-08-18 12:56:38,961, INFO, [processing] - Processing event 16000 of experiment 28 out of 30
+2025-08-18 12:56:42,780, INFO, [processing] - Processing event 17000 of experiment 28 out of 30
+2025-08-18 12:56:46,416, INFO, [processing] - Processing event 18000 of experiment 28 out of 30
+2025-08-18 12:56:49,892, INFO, [processing] - Processing event 19000 of experiment 28 out of 30
+2025-08-18 12:56:53,355, INFO, [processing] - Processing event 20000 of experiment 28 out of 30
+2025-08-18 12:56:56,930, INFO, [processing] - Processing event 21000 of experiment 28 out of 30
+2025-08-18 12:57:00,427, INFO, [processing] - Processing event 22000 of experiment 28 out of 30
+2025-08-18 12:57:03,981, INFO, [processing] - Processing event 23000 of experiment 28 out of 30
+2025-08-18 12:57:07,318, INFO, [processing] - Processing event 24000 of experiment 28 out of 30
+2025-08-18 12:57:10,791, INFO, [processing] - Processing event 25000 of experiment 28 out of 30
+2025-08-18 12:57:14,122, INFO, [processing] - Processing event 26000 of experiment 28 out of 30
+2025-08-18 12:57:17,435, INFO, [processing] - Processing event 27000 of experiment 28 out of 30
+2025-08-18 12:57:20,977, INFO, [processing] - Processing event 28000 of experiment 28 out of 30
+2025-08-18 12:57:24,616, INFO, [processing] - Processing event 29000 of experiment 28 out of 30
+2025-08-18 12:57:28,345, INFO, [processing] - Found 30000 events
+2025-08-18 12:57:28,517, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 1.4000000000000001, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:57:28,518, INFO, [io] - Found 30 files
+2025-08-18 12:57:29,270, INFO, [processing] - Processing event 0 of experiment 29 out of 30
+2025-08-18 12:57:32,822, INFO, [processing] - Processing event 1000 of experiment 29 out of 30
+2025-08-18 12:57:36,107, INFO, [processing] - Processing event 2000 of experiment 29 out of 30
+2025-08-18 12:57:39,176, INFO, [processing] - Processing event 3000 of experiment 29 out of 30
+2025-08-18 12:57:42,450, INFO, [processing] - Processing event 4000 of experiment 29 out of 30
+2025-08-18 12:57:45,536, INFO, [processing] - Processing event 5000 of experiment 29 out of 30
+2025-08-18 12:57:48,740, INFO, [processing] - Processing event 6000 of experiment 29 out of 30
+2025-08-18 12:57:51,941, INFO, [processing] - Processing event 7000 of experiment 29 out of 30
+2025-08-18 12:57:55,104, INFO, [processing] - Processing event 8000 of experiment 29 out of 30
+2025-08-18 12:57:58,372, INFO, [processing] - Processing event 9000 of experiment 29 out of 30
+2025-08-18 12:58:01,518, INFO, [processing] - Processing event 10000 of experiment 29 out of 30
+2025-08-18 12:58:04,989, INFO, [processing] - Processing event 11000 of experiment 29 out of 30
+2025-08-18 12:58:08,290, INFO, [processing] - Processing event 12000 of experiment 29 out of 30
+2025-08-18 12:58:11,452, INFO, [processing] - Processing event 13000 of experiment 29 out of 30
+2025-08-18 12:58:14,716, INFO, [processing] - Processing event 14000 of experiment 29 out of 30
+2025-08-18 12:58:17,945, INFO, [processing] - Processing event 15000 of experiment 29 out of 30
+2025-08-18 12:58:21,229, INFO, [processing] - Processing event 16000 of experiment 29 out of 30
+2025-08-18 12:58:24,516, INFO, [processing] - Processing event 17000 of experiment 29 out of 30
+2025-08-18 12:58:27,746, INFO, [processing] - Processing event 18000 of experiment 29 out of 30
+2025-08-18 12:58:30,973, INFO, [processing] - Processing event 19000 of experiment 29 out of 30
+2025-08-18 12:58:34,219, INFO, [processing] - Processing event 20000 of experiment 29 out of 30
+2025-08-18 12:58:37,580, INFO, [processing] - Processing event 21000 of experiment 29 out of 30
+2025-08-18 12:58:40,754, INFO, [processing] - Processing event 22000 of experiment 29 out of 30
+2025-08-18 12:58:43,999, INFO, [processing] - Processing event 23000 of experiment 29 out of 30
+2025-08-18 12:58:47,070, INFO, [processing] - Processing event 24000 of experiment 29 out of 30
+2025-08-18 12:58:50,325, INFO, [processing] - Processing event 25000 of experiment 29 out of 30
+2025-08-18 12:58:53,424, INFO, [processing] - Processing event 26000 of experiment 29 out of 30
+2025-08-18 12:58:56,589, INFO, [processing] - Processing event 27000 of experiment 29 out of 30
+2025-08-18 12:58:59,910, INFO, [processing] - Processing event 28000 of experiment 29 out of 30
+2025-08-18 12:59:03,287, INFO, [processing] - Processing event 29000 of experiment 29 out of 30
+2025-08-18 12:59:06,536, INFO, [processing] - Found 30000 events
+2025-08-18 12:59:06,683, INFO, [processing] - Running experiment with parameters: {'NeutronCut': 3, 'TauPhotonPCut': 1.4500000000000002, 'TauPionPCut': 0.0, 'dRMax': 0.4, 'MatchedGenMinDR': 1.0, 'generalPCut': 0.0, 'tauCut': 2}
+2025-08-18 12:59:06,684, INFO, [io] - Found 30 files
+2025-08-18 12:59:07,358, INFO, [processing] - Processing event 0 of experiment 30 out of 30
+2025-08-18 12:59:10,709, INFO, [processing] - Processing event 1000 of experiment 30 out of 30
+2025-08-18 12:59:13,896, INFO, [processing] - Processing event 2000 of experiment 30 out of 30
+2025-08-18 12:59:16,958, INFO, [processing] - Processing event 3000 of experiment 30 out of 30
+2025-08-18 12:59:20,189, INFO, [processing] - Processing event 4000 of experiment 30 out of 30
+2025-08-18 12:59:23,323, INFO, [processing] - Processing event 5000 of experiment 30 out of 30
+2025-08-18 12:59:26,568, INFO, [processing] - Processing event 6000 of experiment 30 out of 30
+2025-08-18 12:59:29,772, INFO, [processing] - Processing event 7000 of experiment 30 out of 30
+2025-08-18 12:59:32,914, INFO, [processing] - Processing event 8000 of experiment 30 out of 30
+2025-08-18 12:59:36,084, INFO, [processing] - Processing event 9000 of experiment 30 out of 30
+2025-08-18 12:59:39,153, INFO, [processing] - Processing event 10000 of experiment 30 out of 30
+2025-08-18 12:59:42,362, INFO, [processing] - Processing event 11000 of experiment 30 out of 30
+2025-08-18 12:59:45,602, INFO, [processing] - Processing event 12000 of experiment 30 out of 30
+2025-08-18 12:59:48,646, INFO, [processing] - Processing event 13000 of experiment 30 out of 30
+2025-08-18 12:59:51,843, INFO, [processing] - Processing event 14000 of experiment 30 out of 30
+2025-08-18 12:59:54,965, INFO, [processing] - Processing event 15000 of experiment 30 out of 30
+2025-08-18 12:59:58,196, INFO, [processing] - Processing event 16000 of experiment 30 out of 30
+2025-08-18 13:00:01,598, INFO, [processing] - Processing event 17000 of experiment 30 out of 30
+2025-08-18 13:00:05,016, INFO, [processing] - Processing event 18000 of experiment 30 out of 30
+2025-08-18 13:00:08,188, INFO, [processing] - Processing event 19000 of experiment 30 out of 30
+2025-08-18 13:00:11,418, INFO, [processing] - Processing event 20000 of experiment 30 out of 30
+2025-08-18 13:00:14,749, INFO, [processing] - Processing event 21000 of experiment 30 out of 30
+2025-08-18 13:00:17,918, INFO, [processing] - Processing event 22000 of experiment 30 out of 30
+2025-08-18 13:00:21,151, INFO, [processing] - Processing event 23000 of experiment 30 out of 30
+2025-08-18 13:00:24,236, INFO, [processing] - Processing event 24000 of experiment 30 out of 30
+2025-08-18 13:00:27,506, INFO, [processing] - Processing event 25000 of experiment 30 out of 30
+2025-08-18 13:00:30,619, INFO, [processing] - Processing event 26000 of experiment 30 out of 30
+2025-08-18 13:00:33,750, INFO, [processing] - Processing event 27000 of experiment 30 out of 30
+2025-08-18 13:00:36,902, INFO, [processing] - Processing event 28000 of experiment 30 out of 30
+2025-08-18 13:00:40,134, INFO, [processing] - Processing event 29000 of experiment 30 out of 30
+2025-08-18 13:00:43,387, INFO, [processing] - Found 30000 events
+2025-08-18 13:00:43,538, INFO, [config] - Configuration saved to 'GATr_Results/Experiments/PFO_exps_NeutronCut3_TauPhotonPCutExp_TauPionPCut0.0_dRMax0.4_MatchedGenMinDR1.0_generalPCut0.0_tauCut2/config.yaml'
+2025-08-18 13:00:43,559, INFO, [processing] - Experiment finished!

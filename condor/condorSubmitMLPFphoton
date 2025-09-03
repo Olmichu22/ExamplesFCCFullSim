@@ -1,0 +1,10 @@
+executable             = /nfs/cms/arqolmo/ExamplesFCCFullSim/condor/condorExecutable.sh
+request_cpus           = 1
+#
+output                 = /nfs/cms/arqolmo/ExamplesFCCFullSim/condor/logs/job_mlpf_photon.out
+log                    = /nfs/cms/arqolmo/ExamplesFCCFullSim/condor/logs/job_mlpf_photon.log
+error                  = /nfs/cms/arqolmo/ExamplesFCCFullSim/condor/logs/job_mlpf_photon.err
+arguments              = python /nfs/cms/arqolmo/ExamplesFCCFullSim/TauAnalysis/cutExperiment.py -c /nfs/cms/arqolmo/ExamplesFCCFullSim/config/default/cutexperiment.yaml -V TauPhotonPCut -l 0 1.5 0.05 -v --gatr-result /nfs/cms/arqolmo/ExamplesFCCFullSim/tau_trained_mlpf_mapping.csv
+max_retries            = 1
+
+queue

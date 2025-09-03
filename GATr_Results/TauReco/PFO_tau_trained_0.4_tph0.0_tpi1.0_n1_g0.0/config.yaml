@@ -1,0 +1,21 @@
+cuts:
+  MatchedGenMinDR: 1
+  NeutronCut: 1
+  TauPhotonPCut: 0.0
+  TauPionPCut: 1.0
+  dRMax: 0.4
+  generalPCut: 0.0
+  tauCut: 2
+general:
+  decay:
+  - -777
+  matchedCM: 'True'
+  outfile: tau_trained_
+  sample: ZTauTau_SMPol_25Sept_MuonFix
+  test: 'True'
+output:
+  outputfile:
+  - tau_trained_decayAll_0.4_tph0.0_tpi1.0_n1_g0.0.root
+  outputlabels:
+  - GATr_Results/TauReco/PFO_tau_trained_0.4_tph0.0_tpi1.0_n1_g0.0/true_predicted_label_decayAll.csv
+  outputpath: GATr_Results/TauReco/PFO_tau_trained_0.4_tph0.0_tpi1.0_n1_g0.0/

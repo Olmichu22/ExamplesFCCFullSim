@@ -10,6 +10,7 @@ from modules.plotting import plot_1D_hist, plot_2D_hist, plot_hist_together, plo
 import numpy as np
 import pprint
 from array import array
+import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 parser = argparse.ArgumentParser(description="Configure the plot",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -50,7 +51,7 @@ use_root = True if args.root == "True" else False
 if use_root:
   from modules.plotting import plot_absolute, plot_metric
 else:
-  from modules.PltPlotting import plot_absolute, plot_metric
+  from modules.PltPlotting import plot_absolute, plot_metric,plot_accuracy
 
 # default_config = "config/plots/experiment_plotconfig.yaml"
 plot_config = args.plotconfig
@@ -92,13 +93,19 @@ for exp_value in experiment_values:
 if plot_config:
   metric = args.metric if args.metric is not None else plot_config.get("metric", "recall")
   migrations = plot_config["migrations"]
-  for key in list(plot_config["migrations"].keys()):
-    els_in_key = key.split("->")
-    values_to_plot[key] = []
-    if els_in_key[0] == els_in_key[1]:
-      values_to_plot[key + " "+metric] = []
-    else:
-      values_to_plot[key + " recall"] = []
+  if metric != "accuracy":
+    for key in list(plot_config["migrations"].keys()):
+      els_in_key = key.split("->")
+      values_to_plot[key] = []
+      if els_in_key[0] == els_in_key[1]:
+        values_to_plot[key + " "+metric] = []
+      else:
+        values_to_plot[key + " recall"] = []
+  else:
+    values_to_plot["accuracy"] = []
+    decays_id = [0, 1, 2, 10, 11]
+    for decay in decays_id:
+      values_to_plot[f"accuracy {decay}"] = []
   max_absolute_value = 0
   min_absolute_value = 0
   for exp in experiment_values:
@@ -106,19 +113,29 @@ if plot_config:
     true_label = data["True"].to_numpy()
     pred_label = data["Predicted"].to_numpy()
     # Mostrar cm con las labels
-    for key, item in plot_config["migrations"].items():
-      decay = item[0]
-      m = item[1]
-      mig_value = np.sum((true_label == decay)*(pred_label == m))
-      values_to_plot[key].append(np.sum(mig_value))
-      if metric == "recall" or decay !=m:
-        values_to_plot[key + " recall"].append(mig_value/np.sum(true_label == decay))
-      elif metric == "purity" and decay == m:
-        values_to_plot[key + " "+metric].append(mig_value/np.sum(pred_label == m))
-      if mig_value > max_absolute_value:
-        max_absolute_value = mig_value
-      if mig_value < min_absolute_value:
-        min_absolute_value = mig_value
+    if metric != "accuracy":
+      for key, item in plot_config["migrations"].items():
+        decay = item[0]
+        m = item[1]
+        mig_value = np.sum((true_label == decay)*(pred_label == m))
+        values_to_plot[key].append(np.sum(mig_value))
+        if metric == "recall" or decay !=m:
+          values_to_plot[key + " recall"].append(mig_value/np.sum(true_label == decay))
+        elif metric == "purity" and decay == m:
+          values_to_plot[key + " "+metric].append(mig_value/np.sum(pred_label == m))
+        if mig_value > max_absolute_value:
+          max_absolute_value = mig_value
+        if mig_value < min_absolute_value:
+          min_absolute_value = mig_value
+    else:
+      cumulated_true_preds = 0
+      for real_id in set(true_label):
+        true_preds = np.sum((true_label == real_id) & (pred_label == real_id))
+        cumulated_true_preds += true_preds
+        if real_id in decays_id:
+          values_to_plot[f"accuracy {real_id}"].append(true_preds/np.sum(true_label == real_id))
+      values_to_plot["accuracy"].append(cumulated_true_preds/len(true_label))
+      
 else:
   # We get all the migrations between m
   for i in range(len(migrations)):
@@ -185,11 +202,12 @@ xaxis = plot_config.get("axis",{}).get("xlabel",config["experiment"] + "(GeV)")
 
 if plot_config:
   migrations = set()
-  for key in plot_config["migrations"].keys():
-    decay = plot_config["migrations"][key][0]
-    m = plot_config["migrations"][key][1]
-    migrations.add(decay)
-    migrations.add(m)
+  if metric != "accuracy":
+    for key in plot_config["migrations"].keys():
+        decay = plot_config["migrations"][key][0]
+        m = plot_config["migrations"][key][1]
+        migrations.add(decay)
+        migrations.add(m)
   migrations = list(migrations)
     
 
@@ -212,9 +230,22 @@ if use_root:
   plot_metric(canvas_metric, graphs, metric_keys, colors, xaxis,
                        title, outputpath, metric, mig_str)
 else:
+  n = len(graphs)
+  # cmap = plt.cm.get_cmap('tab10', n)  # 'tab10', 'viridis', 'plasma', etc.
+  # Generar lista de colores
+  # colors = [cmap(i) for i in range(n)]
   colors = ["purple", "orange", "blue", "red", "gray"]
-  plot_absolute(graphs, absolute_keys, colors, xaxis,
-                              min_absolute_value, max_absolute_value,
-                              title, outputpath, mig_str)
-  plot_metric(graphs, metric_keys, colors, xaxis,
-                           title, outputpath, metric, mig_str)
+  if metric != "accuracy":
+    plot_absolute(graphs, absolute_keys, colors, xaxis,
+                                min_absolute_value, max_absolute_value,
+                                title, outputpath, mig_str)
+    plot_metric(graphs, metric_keys, colors, xaxis,
+                            title, outputpath, metric, mig_str)
+  else:
+    n = len(graphs)
+    cmap = plt.cm.get_cmap('tab10', n)  # 'tab10', 'viridis', 'plasma', etc.
+
+    # Generar lista de colores
+    colors = [cmap(i) for i in range(n)]
+    plot_accuracy(graphs, colors, xaxis,
+                            title, outputpath)

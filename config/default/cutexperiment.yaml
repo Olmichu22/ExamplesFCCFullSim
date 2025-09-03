@@ -1,7 +1,7 @@
 experiment: TauPhotonPCut
 cuts:
   NeutronCut:
-    - 0
+    - 0.
   TauPhotonPCut:
     - 0.
   TauPionPCut:
@@ -13,7 +13,8 @@ cuts:
   generalPCut:
     - 0.
 general:
-  decay: -777
+  decay:
+  - -777
   outfile: exps
   sample: ZTauTau_SMPol_25Sept_MuonFix
   matchedCM: "True"

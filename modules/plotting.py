@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import pandas as pd
 import os
+from array import array
 
 PI0 = "π⁰"
 PI = "π"
@@ -170,13 +171,18 @@ def plot_1D_hist(file, variabs, labels, outputpath, normalize):
                 decay_str = id_to_key_root(int(decay_id))
                 title = "\\text{" + title_text + "}(" + decay_str+")"
             histo.SetTitle(title)
+        else:
+          cfg = {}
         c.Clear()
+        if cfg.get("fit", False):
+          ROOT.gStyle.SetOptFit(1111)
+          
+
         if "effi" in var.lower():
           # Configuración para gráficos de eficiencia (que pueden ser TGraphAsymmErrors)
           histo.SetMarkerStyle(20)   # círculos sólidos
           histo.SetMarkerSize(1.1)
           histo.SetMarkerColor(9)
-
         if normalize:
           if "effi" in var.lower():
             if isinstance(histo, ROOT.TGraphAsymmErrors):
@@ -191,11 +197,39 @@ def plot_1D_hist(file, variabs, labels, outputpath, normalize):
               histo.Draw("AP")  # A: crea los ejes, P: muestra puntos, E: muestra barras de error
             else:
               histo.Draw("P")  # Solo puntos para histogramas normales de eficiencia
-          else:            
+            histo.GetYaxis().SetRangeUser(0.0, 1.1)
+            histo.GetYaxis().SetNoExponent(ROOT.kTRUE)
+          else:
             histo.Draw("HIST")
+        if cfg.get("fit", False):
+          histo.SetLineColor(ROOT.kBlack)
+          # Definir el ajuste Crystal Ball en el rango deseado
+          # cb = ROOT.TF1("cb", "crystalball", 0.05, 0.25)
+
+          # Parámetros: mean, sigma, alpha, n
+          # cb.SetParameters(0.135, 0.01, 1.5, 5)
+
+          # Ajustar histograma
+          # fitres = histo.Fit(cb, "R")
+          
+          if cfg.get("fitrange", None):
+            fit_range = cfg["fitrange"]
+            fitres = histo.Fit("gaus", "Q","", fit_range[0], fit_range[1])  # devuelve TFitResultPtr
+          else:
+            fitres = histo.Fit("gaus", "Q")  # devuelve TFitResultPtr
+            
+          # f = histo.GetFunction("cb")
+          f = histo.GetFunction("gaus")
+          
+          if f:
+            f.SetLineWidth(2)
+            # aseguramos que se vea sobre lo ya dibujado
+            f.Draw("same")
+            c.Update()
         out_file = os.path.join(out_dir, f"{var}.png")
         c.SaveAs(out_file)
         print(f"Saved histogram '{var}' as '{out_file}'")
+    ROOT.gStyle.SetOptFit()
     c.Close()
 
 
@@ -413,7 +447,7 @@ def plot_hist_together(file, together_config, outputpath):
         else:
           legend = ROOT.TLegend(0.65, 0.70, 0.88, 0.88)
         legend.SetTextSize(0.03)
-        legend.SetBorderSize(1)
+        legend.SetBorderSize(0)
         legend.SetFillStyle(0)
         first = True
         normalize = cfg.get("norm", False)
@@ -439,22 +473,31 @@ def plot_hist_together(file, together_config, outputpath):
             if i == 0:
               histo.SetLineColor(ROOT.kRed)
               histo.SetMarkerColor(ROOT.kRed)
+              histo.SetLineWidth(2)
+              if cfg.get("fill", False):
+                histo.SetFillColor(ROOT.kRed)
               if scatter_plot:
                 histo.SetMarkerStyle(20)
             elif i == 1:
               if not scatter_plot:
-                histo.SetLineStyle(2)
+                histo.SetLineStyle(1)
               else:
                 histo.SetMarkerStyle(20)   # círculos sólidos
+              if cfg.get("fill", False):
+                histo.SetFillColor(ROOT.kBlue)
               histo.SetLineColor(ROOT.kBlue)
               histo.SetMarkerColor(ROOT.kBlue)
+              histo.SetLineWidth(2)
             elif i == 2:
               if not scatter_plot:
-                histo.SetLineStyle(3)
+                histo.SetLineStyle(1)
               else:
                 histo.SetMarkerStyle(20)   # círculos sólidos
+              if cfg.get("fill", False):
+                histo.SetFillColor(ROOT.kGreen+2)
               histo.SetLineColor(ROOT.kGreen+2)
               histo.SetMarkerColor(ROOT.kGreen+2)
+              histo.SetLineWidth(2)
             elif i == 3:
               if not scatter_plot:
                 histo.SetLineStyle(4)
@@ -495,7 +538,8 @@ def plot_hist_together(file, together_config, outputpath):
               histo.SetMarkerColor(ROOT.kAzure+3)
                 
             histo.SetLineWidth(2)
-            
+            if cfg.get("fill", False):
+              histo.SetFillStyle(3002)
             # Draw the first histogram normally; then draw others with "same"
             if first:
               if isinstance(histo, ROOT.TGraphAsymmErrors):
@@ -857,3 +901,477 @@ def plot_metric(canvas, graphs, metric_keys, colors, xaxis,
 
     canvas.Update()
     canvas.SaveAs(outputpath + f"graphs_plot_{metric}_{mig_str}.png")
+
+
+
+
+def _draw_one_object_1d(obj, first, draw_as_scatter):
+    """
+    Dibuja un TH1/TGraphAsymmErrors con la opción adecuada.
+    Devuelve la opción 'same' utilizada.
+    """
+    if isinstance(obj, ROOT.TGraphAsymmErrors):
+        opt = "AP" if first else "P same"
+    else:
+        if draw_as_scatter:
+            opt = "P" if first else "P same"
+        else:
+            opt = "HIST" if first else "HIST same"
+    obj.Draw(opt)
+    return opt
+
+def _apply_style_1d(obj, color, linestyle, markerstyle, markersize):
+    obj.SetLineColor(color)
+    obj.SetMarkerColor(color)
+    obj.SetLineStyle(linestyle)
+    obj.SetMarkerStyle(markerstyle)
+    obj.SetLineWidth(2)
+    obj.SetMarkerSize(markersize)
+
+def plot_compare_1D_across_files(files_info, plots, outdir):
+    """
+    Compara 1D histos/TGraphs entre varios ROOT files, dibujándolos en la misma figura,
+    con soporte para un 'gráfico común' (p.ej. gen-level) que solo se dibuja una vez.
+
+    Parámetros:
+      files_info: lista de dicts con:
+          - file: ROOT.TFile
+          - label: str para la leyenda
+          - color: int (ROOT color)
+          - linestyle: int
+          - markerstyle: int
+      plots: dict con entradas (una figura por entrada), ej:
+          MyPlot:
+             name: "histo_or_graph_name"        # mismo nombre en todos los files
+             # O alternativamente, mapear por dataset:
+             # per_dataset:
+             #   "<label_ds1>": "hname_en_ds1"
+             #   "<label_ds2>": "hname_en_ds2"
+             title: "Título"
+             x: "Eje X"
+             y: "Eje Y"
+             normalize: "none|max|integral"     # normalización por curva (para las series principales)
+             y_range: [min, max]                 # fuerza rango Y
+             logy: false
+             legend: [0.65, 0.70, 0.88, 0.88]    # opcional
+
+             common:                              # (opcional) serie única (p.ej. gen-level)
+               name: "hGenP"                      # nombre del histo común en el ROOT elegido
+               # o, si difiere por dataset:
+               # per_dataset:
+               #   Pandora: "hGenP"
+               #   MLPF:    "hGenP"
+               from: "Pandora"                    # de qué dataset extraerlo (por defecto: el primero)
+               label: "Generator-level P"
+               color: 1                           # ROOT.kBlack
+               linestyle: 2
+               markerstyle: 24
+               normalize: "none|max|integral"     # normalización específica del común (si falta, hereda 'normalize')
+               draw: "HIST"                       # "HIST" o "P" (opcional, para forzar modo de dibujo)
+      outdir: carpeta de salida
+    """
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    for fig_name, cfg in plots.items():
+        c = ROOT.TCanvas(f"c_compare_{fig_name}", fig_name, 900, 700)
+        if cfg.get("gridx", False):
+            c.SetGridx()
+        if cfg.get("gridy", False):
+            c.SetGridy()
+        leg_pos = cfg.get("legend", [0.65, 0.70, 0.88, 0.88])
+        legend = ROOT.TLegend(*leg_pos)
+        legend.SetTextSize(0.03)
+        legend.SetBorderSize(0)
+        legend.SetFillStyle(0)
+
+        # ¿Gráfico de eficiencia? -> eje 0..1.1 y sin notación científica
+        # Heurística por nombre del plot
+        is_eff = ("effi" in fig_name.lower()) or ("eff" in fig_name.lower())
+
+        first = True
+        global_max = 0.0
+        global_min = None
+        draw_as_scatter = False  # si alguna serie es TGraphAsymmErrors
+        objs = []                # [(obj, label, kind, force_draw)], kind in {"main", "common"}
+
+        # --- Normalización por defecto para las series principales
+        norm_main = cfg.get("normalize", "none").lower()
+        if norm_main not in ("none", "max", "integral"):
+            norm_main = "none"
+
+        # --- 1) Recuperar, estilizar y (si procede) normalizar las series principales
+        list_graph_values = dict()
+        for ds in files_info:
+            label = ds["label"]
+            f = ds["file"]
+
+            # nombre del objeto por dataset o común
+            if "per_dataset" in cfg:
+                hname = cfg["per_dataset"].get(label, None)
+                if hname is None:
+                    print(f"[WARN] Plot '{fig_name}': dataset '{label}' no tiene histo mapeado en 'per_dataset'. Se omite.")
+                    continue
+            else:
+                hname = cfg["name"]
+
+            obj = f.Get(hname)
+            if not obj:
+                print(f"[WARN] No se encontró '{hname}' en dataset '{label}'.")
+                continue
+
+            # Detectamos si es TGraphAsymmErrors
+            if isinstance(obj, ROOT.TGraphAsymmErrors):
+                draw_as_scatter = True
+
+            # Clonamos para no alterar el original
+            o = obj.Clone(f"{hname}_{label}_clone")
+            if isinstance(o, ROOT.TGraphAsymmErrors):
+              n_points = o.GetN()
+              x_vals = [float(o.GetPointX(i)) for i in range(n_points)]
+              y_vals = [float(o.GetPointY(i)) for i in range(n_points)]
+              y_err_lo = [float(o.GetErrorYlow(i)) for i in range(n_points)]
+              y_err_hi = [float(o.GetErrorYhigh(i)) for i in range(n_points)]
+
+    # Guarda también errores (low/high)
+              list_graph_values[label] = (x_vals, y_vals, y_err_lo, y_err_hi)
+              # list_graph_values[label] = (x_vals, y_vals)
+            _apply_style_1d(o, ds["color"], ds["linestyle"], ds["markerstyle"], ds["markersize"])
+
+            # Normalización (series principales)
+            if isinstance(o, ROOT.TH1):
+                if norm_main == "max":
+                    m = o.GetMaximum()
+                    if m > 0:
+                        o.Scale(1.0 / m)
+                elif norm_main == "integral":
+                    integ = o.Integral()
+                    if integ > 0:
+                        o.Scale(1.0 / integ)
+                global_max = max(global_max, o.GetMaximum())
+                ymin = o.GetMinimum()
+                global_min = ymin if global_min is None else min(global_min, ymin)
+            else:
+                # TGraph: estimamos extremos Y a partir de puntos
+                n = o.GetN()
+                if n > 0:
+                    ys = [o.GetPointY(i) for i in range(n)]
+                    if ys:
+                        global_max = max(global_max, max(ys))
+                        mn = min(ys)
+                        global_min = mn if global_min is None else min(global_min, mn)
+
+            objs.append((o, label, "main", ""))  # "" => sin modo de dibujo forzado
+
+        # --- 2) Recuperar la SERIE COMÚN (opcional) y añadirla UNA sola vez
+        common_cfg = cfg.get("common", None)
+        if common_cfg:
+            # dataset fuente (o primero)
+            src_label = common_cfg.get("from", files_info[0]["label"] if files_info else None)
+            src = next((ds for ds in files_info if ds["label"] == src_label), None)
+            if src is None:
+                print(f"[WARN] Plot '{fig_name}': common.from='{src_label}' no coincide con ningún dataset.")
+            else:
+                # nombre del histo común (por dataset o único)
+                if "per_dataset" in common_cfg:
+                    hname_c = common_cfg["per_dataset"].get(src_label, None)
+                else:
+                    hname_c = common_cfg.get("name", None)
+
+                if not hname_c:
+                    print(f"[WARN] Plot '{fig_name}': 'common' sin 'name' ni 'per_dataset'.")
+                else:
+                    obj_c = src["file"].Get(hname_c)
+                    if not obj_c:
+                        print(f"[WARN] Plot '{fig_name}': no se encontró común '{hname_c}' en '{src_label}'.")
+                    else:
+                        oc = obj_c.Clone(f"{hname_c}_{src_label}_common_clone")
+
+                        # Estilo propio del común (por defecto: negro, línea discontinua, marcador hueco)
+                        c_color       = common_cfg.get("color", ROOT.kBlack)
+                        c_linestyle   = common_cfg.get("linestyle", 2)
+                        c_markerstyle = common_cfg.get("markerstyle", 24)
+                        c_markersize  = common_cfg.get("markersize", 1.5)
+                        _apply_style_1d(oc, c_color, c_linestyle, c_markerstyle, c_markersize)
+
+                        # Normalización específica del común (si falta, hereda la principal)
+                        norm_c = common_cfg.get("normalize", norm_main).lower()
+                        if norm_c not in ("none", "max", "integral"):
+                            norm_c = "none"
+
+                        if isinstance(oc, ROOT.TH1):
+                            if norm_c == "max":
+                                m = oc.GetMaximum()
+                                if m > 0:
+                                    oc.Scale(1.0 / m)
+                            elif norm_c == "integral":
+                                integ = oc.Integral()
+                                if integ > 0:
+                                    oc.Scale(1.0 / integ)
+                            global_max = max(global_max, oc.GetMaximum())
+                            ymin = oc.GetMinimum()
+                            global_min = ymin if global_min is None else min(global_min, ymin)
+                        else:
+                            # Si fuera TGraph
+                            n = oc.GetN()
+                            if n > 0:
+                                ys = [oc.GetPointY(i) for i in range(n)]
+                                if ys:
+                                    global_max = max(global_max, max(ys))
+                                    mn = min(ys)
+                                    global_min = mn if global_min is None else min(global_min, mn)
+
+                        # Etiqueta y posible modo de dibujo forzado
+                        common_label = common_cfg.get("label", "Common")
+                        force_draw   = common_cfg.get("draw", "").upper()  # "", "HIST", "P"
+
+                        # Añade al final para que el común no tape las curvas principales
+                        objs.append((oc, common_label, "common", force_draw))
+        diff_graph = None
+        diff_ymin = None
+        diff_ymax = None
+        difference_line = cfg.get("diff_line", None)
+        # --- Diferencia punto a punto (se dibujará en un PAD inferior) ---
+        if difference_line is not None and len(list_graph_values) >= 2:
+            _labels = list(list_graph_values.keys())
+            x0 = np.asarray(list_graph_values[_labels[0]][0], dtype=float)
+            y0 = np.asarray(list_graph_values[_labels[0]][1], dtype=float)
+            x1 = np.asarray(list_graph_values[_labels[1]][0], dtype=float)
+            y1 = np.asarray(list_graph_values[_labels[1]][1], dtype=float)
+            
+            min_len = min(len(x0), len(x1), len(y0), len(y1))
+            x0, y0 = x0[:min_len], y0[:min_len]
+            x1, y1 = x1[:min_len], y1[:min_len]
+            
+            # Si x difiere entre métodos, aquí podrías interpolar (np.interp); por ahora, resta por índice
+            diff_vals = y0 - y1
+            def _get_yerrs(values_tuple, n):
+              # values_tuple puede ser (x, y) o (x, y, yerr_lo, yerr_hi)
+              if len(values_tuple) >= 4:
+                  lo = np.asarray(values_tuple[2], dtype=float)[:n]
+                  hi = np.asarray(values_tuple[3], dtype=float)[:n]
+              else:
+                  lo = np.zeros(n, dtype=float)
+                  hi = np.zeros(n, dtype=float)
+              return lo, hi
+
+            e0_lo, e0_hi = _get_yerrs(list_graph_values[_labels[0]], min_len)
+            e1_lo, e1_hi = _get_yerrs(list_graph_values[_labels[1]], min_len)
+
+            diff_err_lo = np.sqrt(e0_lo**2 + e1_lo**2)
+            diff_err_hi = np.sqrt(e0_hi**2 + e1_hi**2)
+            diff_graph = ROOT.TGraphAsymmErrors(min_len)
+            for i in range(min_len):
+                xi  = float(x0[i])
+                yi  = float(diff_vals[i])
+                elo = float(diff_err_lo[i])
+                ehi = float(diff_err_hi[i])
+                diff_graph.SetPoint(i, xi, yi)
+                # errores en X = 0; en Y asimétricos (low/high)
+                diff_graph.SetPointError(i, 0.0, 0.0, elo, ehi)
+
+            # Estilo
+            diff_graph.SetName(f"gdiff_{fig_name}")
+            diff_graph.SetTitle("")
+            diff_graph.SetMarkerStyle(20)
+            diff_graph.SetMarkerSize(1.0)
+            diff_graph.SetMarkerColor(ROOT.kGray+2)
+            diff_graph.SetLineColor(ROOT.kGray+2)
+            diff_graph.SetLineStyle(1)
+            # Opcional: banda semitransparente alrededor de los puntos
+            # diff_graph.SetFillColorAlpha(ROOT.kGray+1, 0.25)
+
+            # --- Rango Y del panel inferior ---
+            dcfg = difference_line if isinstance(difference_line, dict) else {}
+            if "y_range" in dcfg:
+                diff_ymin, diff_ymax = float(dcfg["y_range"][0]), float(dcfg["y_range"][1])
+            else:
+                if diff_vals.size:
+                    dmin, dmax = float(np.min(diff_vals - diff_err_lo)), float(np.max(diff_vals + diff_err_hi))
+                    pad = 0.1 * max(1e-9, (dmax - dmin) if (dmax != dmin) else abs(dmax) + 1.0)
+                    diff_ymin, diff_ymax = dmin - pad, dmax + pad
+                else:
+                    diff_ymin, diff_ymax = -0.1, 0.1
+            # gx = array('d', x0.tolist())
+            # gy = array('d', diff_vals.tolist())
+            # diff_graph = ROOT.TGraph(len(gx), gx, gy)
+            # diff_graph.SetName(f"gdiff_{fig_name}")
+            # diff_graph.SetTitle("")
+            # diff_graph.SetMarkerStyle(20)
+            # diff_graph.SetMarkerSize(1.0)
+            # diff_graph.SetMarkerColor(ROOT.kGray+2)
+            # diff_graph.SetLineColor(ROOT.kGray+2)
+
+            # # Rango Y del panel inferior
+            # dcfg = difference_line if isinstance(difference_line, dict) else {}
+            # if "y_range" in dcfg:
+            #     diff_ymin, diff_ymax = float(dcfg["y_range"][0]), float(dcfg["y_range"][1])
+            # else:
+            #     # auto (incluye margen)
+            #     if diff_vals.size:
+            #         dmin, dmax = float(np.min(diff_vals)), float(np.max(diff_vals))
+            #         pad = 0.1 * max(1e-9, (dmax - dmin) if (dmax != dmin) else abs(dmax) + 1.0)
+            #         diff_ymin, diff_ymax = dmin - pad, dmax + pad
+            #     else:
+            #         diff_ymin, diff_ymax = -0.1, 0.1
+
+
+
+        # --- 3) Dibujar
+        # --- 3) Dibujar en dos pads si hay diferencia ---
+        # Layout: top (70%) para principales, bottom (30%) para diferencia
+        have_diff_panel = diff_graph is not None
+
+        if have_diff_panel:
+            pad_top = ROOT.TPad("pad_top", "pad_top", 0.0, 0.30, 1.0, 1.0)
+            pad_bot = ROOT.TPad("pad_bot", "pad_bot", 0.0, 0.00, 1.0, 0.30)
+            pad_top.SetTickx(1)
+            pad_top.SetBottomMargin(0.02)   # que no moleste al pad de abajo
+            pad_bot.SetTopMargin(0.05)
+            pad_bot.SetBottomMargin(0.35)   # deja sitio a las etiquetas del eje x
+            if cfg.get("gridx", False): pad_top.SetGridx()
+            if cfg.get("gridy", False): pad_top.SetGridy()
+
+            pad_top.Draw()
+            pad_bot.Draw()
+            pad_top.cd()
+        else:
+            # dibujo normal en el canvas completo
+            if cfg.get("logy", False):
+                c.SetLogy()
+
+        # Ejes/títulos se toman del primer objeto que dibujamos
+        for i, (o, label, kind, force_draw) in enumerate(objs):
+            if i == 0:
+                # Títulos ejes
+                if isinstance(o, ROOT.TGraphAsymmErrors):
+                    o.GetXaxis().SetTitle(cfg.get("x", ""))
+                    o.GetYaxis().SetTitle(cfg.get("y", ""))
+                    # Rango Y
+                    if "y_range" in cfg:
+                        ymin, ymax = cfg["y_range"]
+                        o.GetYaxis().SetRangeUser(ymin, ymax)
+                    else:
+                        if is_eff:
+                          if "diff_line" in cfg.keys():
+                            o.GetYaxis().SetRangeUser(0.0, 1.1)
+                          else:
+                            o.GetYaxis().SetRangeUser(0.0, 1.1)
+                              
+                          o.GetYaxis().SetNoExponent(ROOT.kTRUE)
+                        else:
+                            if cfg.get("logy", False):
+                                # evitar rangos inválidos
+                                lo = max(1e-6, 0.001 if global_min is None else max(1e-6, 0.5*max(1e-6, global_min)))
+                                hi = 1.2*max(1e-9, global_max)
+                                o.GetYaxis().SetRangeUser(lo, hi)
+                            else:
+                                o.GetYaxis().SetRangeUser(0.0, 1.2*max(1e-9, global_max))
+                else:
+                    o.SetXTitle(cfg.get("x", ""))
+                    o.SetYTitle(cfg.get("y", ""))
+                    if "y_range" in cfg:
+                        ymin, ymax = cfg["y_range"]
+                        o.GetYaxis().SetRangeUser(ymin, ymax)
+                    else:
+                        if is_eff:
+                            o.GetYaxis().SetRangeUser(0.0, 1.1)
+                            o.GetYaxis().SetNoExponent(ROOT.kTRUE)
+                        else:
+                            if cfg.get("logy", False):
+                                o.GetYaxis().SetRangeUser(0.001, 1.2*max(1e-9, global_max))
+                            else:
+                                o.GetYaxis().SetRangeUser(0.0, 1.2*max(1e-9, global_max))
+
+                    if is_eff or cfg.get("no_exponent_y", False):
+                        o.GetYaxis().SetNoExponent(ROOT.kTRUE)
+
+                # Título del canvas/objeto
+                o.SetTitle(cfg.get("title", ""))
+                # Ocultar etiquetas y título del eje X en el pad superior si hay panel de diferencia
+                if have_diff_panel:
+                                  # Usa el rango del gráfico de diferencia para forzar el mismo X en ambos pads
+                  x_min = diff_graph.GetXaxis().GetXmin()
+                  x_max = diff_graph.GetXaxis().GetXmax()
+
+                  # Forzar mismo rango y mismas divisiones/ticklength en el pad superior
+                  # (SetLimits para TGraph; para TH1 también funciona al haber frame creado)
+                  o.GetXaxis().SetLimits(x_min, x_max)
+                  xax = o.GetXaxis()
+                  xax.SetNdivisions(510)   # mismas divisiones que abajo
+                  xax.SetTickLength(0.03)  # misma longitud de tick
+
+                  # Ocultar números/título en el pad superior (manteniendo ticks)
+                  xax.SetLabelSize(0)
+                  xax.SetTitleSize(0)
+
+
+                # Dibujo primero
+                if force_draw in ("HIST", "P"):
+                    o.Draw(force_draw)
+                else:
+                    _draw_one_object_1d(o, True, draw_as_scatter)
+            else:
+                # Resto: dibujar con SAME (o forzar modo si se indicó)
+                if isinstance(o, ROOT.TLine):
+                  # Asegúrate de que ya haya un marco (algún objeto 2D) dibujado antes.
+                  # Si es el primero (raro), tendrías que crear un frame, pero aquí asumimos que NO es el primero.
+                  o.Draw("same")
+                elif force_draw in ("HIST", "P"):
+                    o.Draw(f"{force_draw} same")
+                else:
+                    _draw_one_object_1d(o, False, draw_as_scatter)
+
+            # Leyenda (si es TGraph, usamos 'lp'; si forzó "P", 'p'; si histo, 'l')
+            if isinstance(o, ROOT.TGraphAsymmErrors):
+                legopt = "lp"
+            else:
+                legopt = "p" if force_draw == "P" else ("l" if not draw_as_scatter else "lp")
+            if isinstance(o, ROOT.TLine):
+              legend.AddEntry(o, label, "l")
+            else:
+              legend.AddEntry(o, label, legopt)
+
+        legend.Draw()
+        if have_diff_panel:
+          pad_bot.cd()
+
+          # Si quieres que el eje X solo se rotule aquí, reduce el tamaño de labels en el pad superior:
+          # (ya hicimos SetBottomMargin en pad_top; esto suele bastar)
+          title = difference_line["label"]
+          # Dibuja el scatter con ejes propios
+          diff_graph.Draw("AP")
+          x_min = diff_graph.GetXaxis().GetXmin()
+          x_max = diff_graph.GetXaxis().GetXmax()
+          diff_graph.GetXaxis().SetLimits(x_min, x_max)
+          diff_graph.GetXaxis().SetNdivisions(510)
+          diff_graph.GetXaxis().SetTickLength(0.03)
+          diff_graph.GetXaxis().SetTitle(cfg.get("x", ""))
+          diff_graph.GetYaxis().SetTitle(title)
+          diff_graph.GetYaxis().SetRangeUser(diff_ymin, diff_ymax)
+
+          # Fuente un poco más pequeña para encajar
+          diff_graph.GetXaxis().SetTitleSize(0.10)
+          diff_graph.GetYaxis().SetTitleSize(0.10)
+          diff_graph.GetXaxis().SetLabelSize(0.08)
+          diff_graph.GetYaxis().SetLabelSize(0.08)
+          diff_graph.GetYaxis().SetTitleOffset(0.4)
+
+          # Línea horizontal y=0
+          x_min = diff_graph.GetXaxis().GetXmin()
+          x_max = diff_graph.GetXaxis().GetXmax()
+          y0line = ROOT.TLine(x_min, 0.0, x_max, 0.0)
+          y0line.SetLineStyle(2)
+          y0line.SetLineColor(ROOT.kGray+1)
+          y0line.Draw("same")
+
+          pad_bot.Update()
+        c.Update()
+
+        # Guardar
+        os.makedirs(outdir, exist_ok=True)
+        outpath = os.path.join(outdir, f"{fig_name}.png")
+        c.SaveAs(outpath)
+        print(f"[OK] Guardado: {outpath}")
+        c.Close()
+
