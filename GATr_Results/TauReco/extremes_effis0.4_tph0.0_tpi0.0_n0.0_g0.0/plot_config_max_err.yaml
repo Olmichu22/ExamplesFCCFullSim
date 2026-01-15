@@ -1,0 +1,2722 @@
+variabs_hist:
+- ZMass_max
+- ZVisMass_max
+- TauPairVisAngle_max
+- TauPairAngle_max
+- TauPt_max
+- TauVisPt_max
+- TauP_max
+- HadronTauP_max
+- TauVisP_max
+- TauType_max
+- TauVisMass_max
+- TauQ_max
+- TauEta_max
+- TauTheta_max
+- TauDR_max
+- ConstPi0Mass_max
+- RhoPiDecayP_max
+- RhoTwoPhotonDecayP_max
+- RhoTwoPhotonDecaySumP_max
+- RhoTwoPhotonDecayPiPhotonSumP_max
+- RhoOnePhotonDecayPiP_max
+- RhoOnePhotonDecayPhotonP_max
+- RhoOnePhotonDecayPhotonSumP_max
+- RhoOnePhotonDecayPhotonAng_max
+- RhoOnePhotonDecayPiPhotonSumP_max
+- PionPid_max
+- NTaus_max
+- NTausType_max
+- TauTheta0_max
+- TauTheta1_max
+- TauTheta2_max
+- TauTheta10_max
+- PhotonTheta_max
+- PionTheta_max
+- AllPhotonsP_max
+- AllPhotonsTheta_max
+- MissmatchedPhotonsP_max
+- MissmatchedPhotonsTheta_max
+- UnmatchedPhotonsP_max
+- UnmatchedPhotonsTheta_max
+- AllPionsP_max
+- AllPionsTheta_max
+- AllPionsPCut_max
+- AllPionsThetaCut_max
+- MissmatchedPionsP_max
+- MissmatchedPionsTheta_max
+- UnmatchedPionsP_max
+- UnmatchedPionsTheta_max
+- TauP0_max
+- TauP1_max
+- TauP2_max
+- TauP10_max
+- TauVisP0_max
+- TauVisP1_max
+- TauVisP2_max
+- TauVisP10_max
+- PhotonP_max
+- PionP_max
+- PionP0_max
+- PionP1_max
+- PionP2_max
+- PionP10_max
+- PionsP_max
+- TauP1Correct_max
+- PionsTheta_max
+- TauCharge_max
+- TauMaxAngle_max
+- TauNComp_max
+- PionsPRes_max
+- PhotonPRes_max
+- PionsThetaRes_max
+- PhotonThetaRes_max
+- TauMass_max
+- a1OnePionMass_max
+- a1ThreePionMass_max
+- RhoMass_max
+- ConstPi0MassRhoGen_max
+- ConstPi0MassRhoReco_max
+- ConstTwoPhotonAngDist_max
+- ConstPi0MassFromPhotonMass_max
+- ConstPi0MassFromPhotonDist_max
+- Pi0MassOverNPhoton_max
+- ConstlessPhotonPa1strMass_max
+- ConstlessPhotonPa1strMassZoom_max
+- ConstlessPhotonPa1strDist_max
+- ConstxtraPhotonPrhostrMass_max
+- ConstxtraPhotonPrhostrMassZoom_max
+- ConstxtraPhotonPrhostrDist_max
+- ConstlessPhotonPrho_max
+- ConstxtraPhotonPi_max
+- ConstlessPhotonPrhoZoom_max
+- ConstxtraPhotonPiZoom_max
+- ThreePhotonMatchOnestrMassP_max
+- ThreePhotonMatchOnestrDistP_max
+- ThreePhotonMatchTwostrMassP_max
+- ThreePhotonMatchTwostrDistP_max
+- ThreePhotonNoMatchstrMassP_max
+- ThreePhotonNoMatchstrDistP_max
+- RhoOnePhotonDecayPiPhotonP_max
+- NeutralHadronP_max
+- NeutralHadronTauP_max
+- DuplicatePionMatch_max
+- ZMassGen_max
+- ZVisMassGen_max
+- TauPairVisAngleGen_max
+- TauPairAngleGen_max
+- TauPtGen_max
+- TauVisPtGen_max
+- TauPGen_max
+- HadronTauPGen_max
+- TauVisPGen_max
+- TauTypeGen_max
+- TauVisMassGen_max
+- TauQGen_max
+- TauEtaGen_max
+- TauThetaGen_max
+- TauDRGen_max
+- ConstPi0MassGen_max
+- RhoPiDecayPGen_max
+- RhoTwoPhotonDecayPGen_max
+- RhoTwoPhotonDecaySumPGen_max
+- RhoTwoPhotonDecayPiPhotonSumPGen_max
+- RhoOnePhotonDecayPiPGen_max
+- RhoOnePhotonDecayPhotonPGen_max
+- RhoOnePhotonDecayPhotonSumPGen_max
+- RhoOnePhotonDecayPhotonAngGen_max
+- RhoOnePhotonDecayPiPhotonSumPGen_max
+- PionPidGen_max
+- NTausGen_max
+- NTausTypeGen_max
+- TauTheta0Gen_max
+- TauTheta1Gen_max
+- TauTheta2Gen_max
+- TauTheta10Gen_max
+- PhotonThetaGen_max
+- PionThetaGen_max
+- AllPhotonsPGen_max
+- AllPhotonsThetaGen_max
+- MissmatchedPhotonsPGen_max
+- MissmatchedPhotonsThetaGen_max
+- UnmatchedPhotonsPGen_max
+- UnmatchedPhotonsThetaGen_max
+- AllPionsPGen_max
+- AllPionsThetaGen_max
+- AllPionsPCutGen_max
+- AllPionsThetaCutGen_max
+- MissmatchedPionsPGen_max
+- MissmatchedPionsThetaGen_max
+- UnmatchedPionsPGen_max
+- UnmatchedPionsThetaGen_max
+- TauP0Gen_max
+- TauP1Gen_max
+- TauP2Gen_max
+- TauP10Gen_max
+- TauVisP0Gen_max
+- TauVisP1Gen_max
+- TauVisP2Gen_max
+- TauVisP10Gen_max
+- PhotonPGen_max
+- PionPGen_max
+- PionP0Gen_max
+- PionP1Gen_max
+- PionP2Gen_max
+- PionP10Gen_max
+- TauPMatched_max
+- TauVisPMatched_max
+- TauPtMatched_max
+- TauVisPtMatched_max
+- HadronTauPMatched_max
+- TauTypeMatched_max
+- TauVisMassMatched_max
+- TauQMatched_max
+- TauEtaMatched_max
+- TauThetaMatched_max
+- TauDRMatched_max
+- ConstPi0MassMatched_max
+- TauTheta0Matched_max
+- TauTheta1Matched_max
+- TauTheta2Matched_max
+- TauTheta10Matched_max
+- PhotonThetaMatched_max
+- PionThetaMatched_max
+- PionsPMatched_max
+- AllPhotonsPMatched_max
+- AllPhotonsThetaMatched_max
+- AllPionsPMatched_max
+- AllPionsThetaMatched_max
+- AllPionsPCutMatched_max
+- AllPionsThetaCutMatched_max
+- TauP0Matched_max
+- TauP1Matched_max
+- TauP2Matched_max
+- TauP10Matched_max
+- TauVisP0Matched_max
+- TauVisP1Matched_max
+- TauVisP2Matched_max
+- TauVisP10Matched_max
+- TauP1CorrectMatched_max
+- PhotonPMatched_max
+- PionPMatched_max
+- PionsThetaMatched_max
+- TauPResMatched_max
+- TauPtResMatched_max
+- TauChargeResMatched_max
+- TauMaxAngleResMatched_max
+- TauNCompResMatched_max
+- TauTheta0ResMatched_max
+- TauTheta1ResMatched_max
+- TauTheta2ResMatched_max
+- TauTheta10ResMatched_max
+- PionsPResMatched_max
+- PhotonPResMatched_max
+- PionsThetaResMatched_max
+- PhotonThetaResMatched_max
+- TauP0ResMatched_max
+- TauP1ResMatched_max
+- TauP2ResMatched_max
+- TauP10ResMatched_max
+- ZMassReco_max
+- TauPairAngleReco_max
+- TauPtReco_max
+- TauPReco_max
+- TauMassReco_max
+- TauTypeReco_max
+- TauQReco_max
+- TauEtaReco_max
+- TauThetaReco_max
+- TauDRReco_max
+- a1OnePionMassReco_max
+- a1ThreePionMassReco_max
+- RhoMassReco_max
+- ConstPi0MassRhoGenReco_max
+- ConstPi0MassRhoRecoReco_max
+- ConstTwoPhotonAngDistReco_max
+- ConstPi0MassFromPhotonMassReco_max
+- ConstPi0MassFromPhotonDistReco_max
+- Pi0MassOverNPhotonReco_max
+- ConstlessPhotonPa1strMassReco_max
+- ConstlessPhotonPa1strMassZoomReco_max
+- ConstlessPhotonPa1strDistReco_max
+- ConstxtraPhotonPrhostrMassReco_max
+- ConstxtraPhotonPrhostrMassZoomReco_max
+- ConstxtraPhotonPrhostrDistReco_max
+- ConstlessPhotonPrhoReco_max
+- ConstxtraPhotonPiReco_max
+- ConstlessPhotonPrhoZoomReco_max
+- ConstxtraPhotonPiZoomReco_max
+- ThreePhotonMatchOnestrMassPReco_max
+- ThreePhotonMatchOnestrDistPReco_max
+- ThreePhotonMatchTwostrMassPReco_max
+- ThreePhotonMatchTwostrDistPReco_max
+- ThreePhotonNoMatchstrMassPReco_max
+- ThreePhotonNoMatchstrDistPReco_max
+- RhoPiDecayPReco_max
+- RhoTwoPhotonDecayPReco_max
+- RhoTwoPhotonDecaySumPReco_max
+- RhoTwoPhotonDecayPiPhotonSumPReco_max
+- RhoOnePhotonDecayPiPReco_max
+- RhoOnePhotonDecayPhotonPReco_max
+- RhoOnePhotonDecayPiPhotonPReco_max
+- NTausReco_max
+- NTausTypeReco_max
+- TauTheta0Reco_max
+- TauTheta1Reco_max
+- TauTheta2Reco_max
+- TauTheta10Reco_max
+- NeutralHadronPReco_max
+- NeutralHadronTauPReco_max
+- PhotonThetaReco_max
+- PionThetaReco_max
+- AllPhotonsThetaReco_max
+- AllPhotonsPReco_max
+- AllPionsThetaReco_max
+- AllPionsPReco_max
+- DuplicatePionMatchReco_max
+- UnmatchedPionsPReco_max
+- UnmatchedPionsThetaReco_max
+- UnmatchedPhotonsPReco_max
+- UnmatchedPhotonsThetaReco_max
+- TauP0Reco_max
+- TauP1Reco_max
+- TauP2Reco_max
+- TauP10Reco_max
+- PhotonPReco_max
+- PionPReco_max
+- TauPtResReco_max
+- TauPResReco_max
+- TauMassResReco_max
+- TauTheta0ResReco_max
+- TauTheta1ResReco_max
+- TauTheta2ResReco_max
+- TauTheta10ResReco_max
+- TauP0ResReco_max
+- TauP1ResReco_max
+- TauP2ResReco_max
+- TauP10ResReco_max
+- TauPtGenVsReco_max
+- TauPGenVsReco_max
+- TauDRGenVsReco_max
+- TauMassGenVsReco_max
+- TauTypeGenVsReco_max
+- TauQGenVsReco_max
+plot_titles_config_hist:
+  ZMass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ZVisMass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPairVisAngle_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPairAngle_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPt_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisPt_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  HadronTauP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauType_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisMass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauQ_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauEta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauDR_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0Mass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoPiDecayP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoTwoPhotonDecayP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoTwoPhotonDecaySumP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoTwoPhotonDecayPiPhotonSumP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPiP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPhotonP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPhotonSumP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPhotonAng_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPiPhotonSumP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionPid_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  NTaus_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  NTausType_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta0_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta1_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta2_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta10_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonTheta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionTheta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPhotonsP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPhotonsTheta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  MissmatchedPhotonsP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  MissmatchedPhotonsTheta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPhotonsP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPhotonsTheta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsTheta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsPCut_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsThetaCut_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  MissmatchedPionsP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  MissmatchedPionsTheta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPionsP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPionsTheta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP0_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP1_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP2_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP10_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP0_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP1_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP2_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP10_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionP0_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionP1_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionP2_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionP10_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionsP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP1Correct_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionsTheta_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauCharge_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauMaxAngle_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauNComp_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionsPRes_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonPRes_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionsThetaRes_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonThetaRes_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauMass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  a1OnePionMass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  a1ThreePionMass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoMass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassRhoGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassRhoReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstTwoPhotonAngDist_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassFromPhotonMass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassFromPhotonDist_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  Pi0MassOverNPhoton_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstlessPhotonPa1strMass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstlessPhotonPa1strMassZoom_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstlessPhotonPa1strDist_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstxtraPhotonPrhostrMass_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstxtraPhotonPrhostrMassZoom_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstxtraPhotonPrhostrDist_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstlessPhotonPrho_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstxtraPhotonPi_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstlessPhotonPrhoZoom_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstxtraPhotonPiZoom_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonMatchOnestrMassP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonMatchOnestrDistP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonMatchTwostrMassP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonMatchTwostrDistP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonNoMatchstrMassP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonNoMatchstrDistP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPiPhotonP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  NeutralHadronP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  NeutralHadronTauP_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  DuplicatePionMatch_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ZMassGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ZVisMassGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPairVisAngleGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPairAngleGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPtGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisPtGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  HadronTauPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTypeGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisMassGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauQGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauEtaGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauThetaGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauDRGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoPiDecayPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoTwoPhotonDecayPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoTwoPhotonDecaySumPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoTwoPhotonDecayPiPhotonSumPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPiPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPhotonPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPhotonSumPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPhotonAngGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPiPhotonSumPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionPidGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  NTausGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  NTausTypeGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta0Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta1Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta2Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta10Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonThetaGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionThetaGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPhotonsPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPhotonsThetaGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  MissmatchedPhotonsPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  MissmatchedPhotonsThetaGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPhotonsPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPhotonsThetaGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsThetaGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsPCutGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsThetaCutGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  MissmatchedPionsPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  MissmatchedPionsThetaGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPionsPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPionsThetaGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP0Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP1Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP2Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP10Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP0Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP1Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP2Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP10Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionPGen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionP0Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionP1Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionP2Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionP10Gen_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisPMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPtMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisPtMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  HadronTauPMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTypeMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisMassMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauQMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauEtaMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauThetaMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauDRMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta0Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta1Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta2Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta10Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonThetaMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionThetaMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionsPMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPhotonsPMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPhotonsThetaMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsPMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsThetaMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsPCutMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsThetaCutMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP0Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP1Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP2Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP10Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP0Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP1Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP2Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauVisP10Matched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP1CorrectMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonPMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionPMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionsThetaMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPtResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauChargeResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauMaxAngleResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauNCompResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta0ResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta1ResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta2ResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta10ResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionsPResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonPResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionsThetaResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonThetaResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP0ResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP1ResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP2ResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP10ResMatched_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ZMassReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPairAngleReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPtReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauMassReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTypeReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauQReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauEtaReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauThetaReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauDRReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  a1OnePionMassReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  a1ThreePionMassReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoMassReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassRhoGenReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassRhoRecoReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstTwoPhotonAngDistReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassFromPhotonMassReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassFromPhotonDistReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  Pi0MassOverNPhotonReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstlessPhotonPa1strMassReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstlessPhotonPa1strMassZoomReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstlessPhotonPa1strDistReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstxtraPhotonPrhostrMassReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstxtraPhotonPrhostrMassZoomReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstxtraPhotonPrhostrDistReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstlessPhotonPrhoReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstxtraPhotonPiReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstlessPhotonPrhoZoomReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstxtraPhotonPiZoomReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonMatchOnestrMassPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonMatchOnestrDistPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonMatchTwostrMassPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonMatchTwostrDistPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonNoMatchstrMassPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ThreePhotonNoMatchstrDistPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoPiDecayPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoTwoPhotonDecayPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoTwoPhotonDecaySumPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoTwoPhotonDecayPiPhotonSumPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPiPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPhotonPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  RhoOnePhotonDecayPiPhotonPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  NTausReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  NTausTypeReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta0Reco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta1Reco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta2Reco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta10Reco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  NeutralHadronPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  NeutralHadronTauPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonThetaReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionThetaReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPhotonsThetaReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPhotonsPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsThetaReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  AllPionsPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  DuplicatePionMatchReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPionsPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPionsThetaReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPhotonsPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  UnmatchedPhotonsThetaReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP0Reco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP1Reco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP2Reco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP10Reco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PionPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPtResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauMassResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta0ResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta1ResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta2ResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTheta10ResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP0ResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP1ResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP2ResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauP10ResReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPtGenVsReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauPGenVsReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauDRGenVsReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauMassGenVsReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauTypeGenVsReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  TauQGenVsReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+variabs_2d: []
+plot_titles_config_2d: {}

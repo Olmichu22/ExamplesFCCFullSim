@@ -1,0 +1,86 @@
+# compare.yaml
+global:
+  luminosity: 5000 # in pb-1
+datasets:
+  # - path: GATr_Results/RhoAnalysis/PFO_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt3.0_4.0tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  # - path: GATr_Results/RhoAnalysis/PFO_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.5_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  # - path: Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.5_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  - path: Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt3.0_4.0tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+    
+    label: Signal
+    color: 2          # kRed
+    linestyle: 1
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+    xsec: 1476.58 # pb
+    n_events: 1000000
+
+  # - path: GATr_Results/RhoAnalysis/PFO_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt3.0_4.0tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  # - path: GATr_Results/RhoAnalysis/PFO_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.5_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  # - path: Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.5_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root  
+  - path: Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt3.0_4.0tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+    
+    label: Migrations BG
+    color: 5          # kRed
+    linestyle: 1
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+    xsec: 1476.58 # pb
+    n_events: 1000000
+
+
+  - path: Results/RhoAnalysis/Zee_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt3.0_4.0tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  # - path: Results/RhoAnalysis/Zee_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.5_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+
+    label: Zee BG
+    color: 4          # kBlue
+    linestyle: 1
+    markerstyle: 21
+    markersize: 1.
+    linewidth: 3
+    xsec: 1476.58 # pb
+    n_events: 50000
+
+  - path: Results/RhoAnalysis/Zqq_sampletau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt3.0_4.0tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  # - path: Results/RhoAnalysis/Zqq_sampletau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.5_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+
+    label: Zqq BG
+    color: 1          # kBlue
+    linestyle: 1
+    markerstyle: 21
+    markersize: 1.
+    linewidth: 3
+    xsec: 30170  # pb
+    n_events: 1000000
+
+  - path: Results/RhoAnalysis/bhabha_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt3.0_4.0tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  # - path: Results/RhoAnalysis/bhabha_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.5_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root  
+    label: Bhabha BG
+    color: 3          # kBlue
+    linestyle: 1
+    markerstyle: 21
+    markersize: 1.
+    linewidth: 3
+    xsec:  273500 # pb
+    n_events: 1000000
+
+
+plots:
+
+  # # si el histo se llama distinto según dataset:
+  signal_vs_BG_pol_angle_separation_3_4:
+    per_dataset:
+      Signal: "DeltaR_LepMeson_SIGNAL"
+      "Zee BG": "DeltaR_LepMeson_BG"
+      "Zqq BG": "DeltaR_LepMeson_BG"
+      "Bhabha BG": "DeltaR_LepMeson_BG"
+      "Migrations BG": "DeltaR_LepMeson_BG"
+    title: \text{Signal vs Background Omega (}\rho \text{ decay) angle separation}
+    x: \text{Lepton-Meson }\Delta R
+    y: "Events"
+    show_entries: "both" #absolute | percent | both
+    legend: [0.25, 0.7, 0.5, 0.85]
+
+

@@ -1,0 +1,188 @@
+GenFinal:
+  Events:
+    # Globales: todo estado final estable
+    AllFinalP:
+      type: "1D"
+      name: GenFinal_AllFinalP
+      range: [0, 100]
+      bins: 200
+
+    AllFinalTheta:
+      type: "1D"
+      name: GenFinal_AllFinalTheta
+      range: [0, 3.15]
+      bins: 120
+
+    # Por categoría (según categorize_pdg en el script)
+    PhotonP:
+      type: "1D"
+      name: GenFinal_PhotonP
+      range: [0, 50]
+      bins: 200
+
+    PhotonTheta:
+      type: "1D"
+      name: GenFinal_PhotonTheta
+      range: [0, 3.15]
+      bins: 120
+
+    ElectronP:
+      type: "1D"
+      name: GenFinal_ElectronP
+      range: [0, 50]
+      bins: 200
+
+    ElectronTheta:
+      type: "1D"
+      name: GenFinal_ElectronTheta
+      range: [0, 3.15]
+      bins: 120
+
+    MuonP:
+      type: "1D"
+      name: GenFinal_MuonP
+      range: [0, 50]
+      bins: 200
+
+    MuonTheta:
+      type: "1D"
+      name: GenFinal_MuonTheta
+      range: [0, 3.15]
+      bins: 120
+
+    Charged_hadronP:
+      type: "1D"
+      name: GenFinal_ChargedHadronP
+      range: [0, 50]
+      bins: 200
+
+    Charged_hadronTheta:
+      type: "1D"
+      name: GenFinal_ChargedHadronTheta
+      range: [0, 3.15]
+      bins: 120
+
+    Neutral_hadronP:
+      type: "1D"
+      name: GenFinal_NeutralHadronP
+      range: [0, 50]
+      bins: 200
+
+    Neutral_hadronTheta:
+      type: "1D"
+      name: GenFinal_NeutralHadronTheta
+      range: [0, 3.15]
+      bins: 120
+
+    OtherP:
+      type: "1D"
+      name: GenFinal_OtherP
+      range: [0, 50]
+      bins: 200
+
+    OtherTheta:
+      type: "1D"
+      name: GenFinal_OtherTheta
+      range: [0, 3.15]
+      bins: 120
+
+  Effi:
+  Resolution:
+
+Reco:
+  Events:
+    # Conteo de candidatos tau reconstruidos (ruido de taus)
+    NTaus:
+      type: "1D"
+      name: Reco_NTaus
+      range: [0, 10]
+      bins: 10
+
+    # Cinemática por tipo (rellenados si existen en el script)
+    TauP:
+      type: "1D"
+      name: Reco_TauP
+      range: [0, 100]
+      bins: 200
+
+    TauPt:
+      type: "1D"
+      name: Reco_TauPt
+      range: [0, 50]
+      bins: 200
+
+    TauTheta:
+      type: "1D"
+      name: Reco_TauTheta
+      range: [0, 3.15]
+      bins: 120
+
+    TauEta:
+      type: "1D"
+      name: Reco_TauEta
+      range: [-5, 5]
+      bins: 200
+
+    # ID del candidato tau (tu pipeline puede usar -1, 0,1,2,10,...)
+    TauType:
+      type: "1D"
+      name: Reco_TauType
+      range: [-25, 25]
+      bins: 30
+
+    # Electrones y muones reconstruidos (si el pipeline los devuelve)
+    ElectronP:
+      type: "1D"
+      name: Reco_ElectronP
+      range: [0, 100]
+      bins: 200
+
+    ElectronPt:
+      type: "1D"
+      name: Reco_ElectronPt
+      range: [0, 50]
+      bins: 200
+
+    MuonP:
+      type: "1D"
+      name: Reco_MuonP
+      range: [0, 100]
+      bins: 200
+
+    MuonPt:
+      type: "1D"
+      name: Reco_MuonPt
+      range: [0, 50]
+      bins: 200
+
+    # “Ruido” interno: nº de constituyentes en candidatos tau (fotones/piones/neutrones)
+    TauCandNPhotons:
+      type: "1D"
+      name: Reco_TauCandNPhotons
+      range: [0, 20]
+      bins: 20
+
+    TauCandNPions:
+      type: "1D"
+      name: Reco_TauCandNPions
+      range: [0, 10]
+      bins: 10
+
+    TauCandNNeutrons:
+      type: "1D"
+      name: Reco_TauCandNNeutrons
+      range: [0, 10]
+      bins: 10
+
+  Effi:
+  Resolution:
+
+Matched:
+  Events:
+  Effi:
+  Resolution:
+
+GenVSReco:
+  Events:
+  Effi:
+  Resolution:

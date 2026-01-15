@@ -7,3 +7,5 @@
 *.log
 *.pkl
 ExamplesFCCFullSim.code-workspace
+nohup.out
+tmp

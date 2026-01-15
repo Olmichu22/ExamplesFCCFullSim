@@ -1,10 +1,19 @@
-import ROOT 
+import ROOT
+ROOT.gROOT.SetBatch(True)
 import numpy as np
+import os
+os.environ["XDG_CACHE_HOME"] = "/nfs/cms/arqolmo/ExamplesFCCFullSim/tmp/mplconfig"
+os.makedirs(os.environ["XDG_CACHE_HOME"], exist_ok=True)
+
+os.environ["MPLCONFIGDIR"] = "/nfs/cms/arqolmo/ExamplesFCCFullSim/tmp/mplconfig"
+os.makedirs(os.environ["MPLCONFIGDIR"], exist_ok=True)
+
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import pandas as pd
 import os
 from array import array
+# from modules.myutils import compute_sigma_from_hist
 
 PI0 = "π⁰"
 PI = "π"
@@ -25,6 +34,132 @@ RTAU = "\\tau"
 RGAMMA = "\\gamma"
 RRHO = "\\rho"  
 RA1 = "a_{1}"
+import ROOT
+import numpy as np
+
+def plot_sigma_vs_energy_root(hist_dict, bin_edges, energy_bins, region_order=None):
+    """
+    Compute sigma for each (region, energy bin) histogram and
+    create a ROOT TCanvas showing sigma vs energy with individual TGraphs.
+
+    Returns the canvas, a list of graphs, and the sigma_results.
+    """
+
+    if region_order is None:
+        region_order = list(hist_dict.keys())
+
+    sigma_results = {region: {} for region in region_order}
+
+    canvas = ROOT.TCanvas("c_sigma", "Sigma vs Energy", 900, 700)
+
+    # Lista de gráficos individuales
+    graphs = []
+
+    colors = {
+        "barrel": ROOT.kRed+1,
+        "endcap": ROOT.kBlue+1,
+        "transition": ROOT.kGreen+2
+    }
+
+    first_graph_drawn = False  # para la primera llamada a Draw()
+
+    for region in region_order:
+        E_centers = []
+        E_errors = []
+        sigmas = []
+        sigma_errors = []
+
+        last_bin = len(energy_bins) - 1
+
+        for i, (E_min, E_max) in enumerate(energy_bins):
+
+            if (i != last_bin) and (not np.isfinite(E_max)):
+                continue
+
+            E_max_finite = E_max if np.isfinite(E_max) else 25.0
+            E_center = 0.5 * (E_min + E_max_finite)
+            E_err = 0.5 * (E_max_finite - E_min)
+
+            if region not in hist_dict or i not in hist_dict[region]:
+                continue
+
+            values_list = hist_dict[region][i]
+            hist, edges = np.histogram(values_list, bins=50, range=(-0.2, 0.2))
+
+            # print(f"Region: {region}, Energy bin: {E_min}-{E_max_finite}, Number of entries: {len(values_list)}")
+            plt.hist(values_list, bins=50)
+            plt.title(f"Region: {region}, Energy bin: {E_min}-{E_max_finite}")
+            plt.savefig(f"hist_region_{region}_energy_{E_min}_{E_max_finite}.png")
+            plt.close()
+
+            sigma, sigma_err = compute_sigma_from_hist(hist, edges, values_list)
+            print(f"Computed sigma: {sigma} ± {sigma_err}")
+            if np.isnan(sigma):
+                continue
+
+            E_centers.append(E_center)
+            E_errors.append(E_err)
+            sigmas.append(sigma)
+            sigma_errors.append(sigma_err)
+
+            sigma_results[region][i] = {
+                "E_center": E_center,
+                "E_err": E_err,
+                "sigma": sigma,
+                "sigma_err": sigma_err
+            }
+
+        if len(E_centers) == 0 or np.all(np.isnan(sigmas)):
+            continue
+
+        n = len(E_centers)
+        x = np.array(E_centers, dtype='float64')
+        y = np.array(sigmas, dtype='float64')
+        ex = np.array(E_errors, dtype='float64')
+        ey = np.array(sigma_errors, dtype='float64')
+
+        graph = ROOT.TGraphErrors(n, x, y, ex, ey)
+        graph.SetLineColor(colors.get(region, ROOT.kBlack))
+        graph.SetMarkerColor(colors.get(region, ROOT.kBlack))
+        graph.SetMarkerStyle(20)
+        graph.SetLineWidth(2)
+        graph.SetTitle(region)
+
+        graphs.append((graph, region))
+
+        # Dibujar cada gráfico individualmente
+        if not first_graph_drawn:
+            graph.Draw("AP")
+            first_graph_drawn = True
+        else:
+            graph.Draw("P SAME")
+
+    if not graphs:
+        return None, [], {}
+
+    first_graph = graphs[0][0]
+    first_graph.GetXaxis().SetTitle("Energy [units]")
+    first_graph.GetYaxis().SetTitle("Sigma of resolution")
+    first_graph.GetXaxis().SetLimits(0, 26)
+    first_graph.SetMinimum(0.0)
+    first_graph.SetMaximum(0.5)
+
+    # Crear leyenda
+    legend = ROOT.TLegend(0.7, 0.75, 0.9, 0.9)
+    legend.SetBorderSize(0)
+    legend.SetFillStyle(0)
+
+    for g, region in graphs:
+        legend.AddEntry(g, region, "p")
+
+    # IMPORTANTE: Dibujar ANTES de Modified/Update y añadir al canvas
+    legend.Draw()
+    canvas.GetListOfPrimitives().Add(legend)
+
+    canvas.Modified()
+    canvas.Update()
+
+    return canvas, graphs, sigma_results
 
 def id_to_key_root(event_id, photons=False):
   if photons:
@@ -162,7 +297,7 @@ def plot_1D_hist(file, variabs, labels, outputpath, normalize):
             histo.GetYaxis().SetMaxDigits(2)
             title = cfg.get("title", "")
             if title:
-              print(title)
+              # print(title)
               if "Decay" in title and "(" in title:
                 # Buscamos decay y el id entre ()
                 title_text = title.split("Decay")[0].split("(")[0]
@@ -227,6 +362,20 @@ def plot_1D_hist(file, variabs, labels, outputpath, normalize):
             f.Draw("same")
             c.Update()
         out_file = os.path.join(out_dir, f"{var}.png")
+        if cfg.get("print_mean", False):
+          # Get absolute mean of the histogram (not from the fit)
+          values = []
+          for bin in range(1, histo.GetNbinsX() + 1):
+              bin_center = abs(histo.GetBinCenter(bin))
+              bin_content = histo.GetBinContent(bin)
+              values.extend([bin_center] * int(bin_content))
+          if values:
+            mean = np.mean(values)
+          # mean = histo.GetMean()
+          print("===============================")
+          print(f"Mean of histogram '{var}': {mean}")
+          print("===============================")
+          
         c.SaveAs(out_file)
         print(f"Saved histogram '{var}' as '{out_file}'")
     ROOT.gStyle.SetOptFit()
@@ -422,6 +571,20 @@ def plot_hist_zoom(file, zoom_config, outputpath):
         print(f"Saved group '{group}' as '{out_file}'")
         c.Close()
 
+def get_graph_max(graph):
+    """
+    Returns Y maxium in a TGraphAsymmErrors.
+    If input is not TGraphAsymmErrors, the function returns GetMaximum().
+    """
+    if isinstance(graph, ROOT.TGraphAsymmErrors):
+        n_points = graph.GetN()
+        if n_points == 0:
+            return -1111.0
+        y_vals = [graph.GetPointY(i) for i in range(n_points)]
+        return max(y_vals)
+    else:
+        return graph.GetMaximum()
+
 def plot_hist_together(file, together_config, outputpath):
     """
     Plots groups of 1D histograms together on a single canvas.
@@ -441,26 +604,53 @@ def plot_hist_together(file, together_config, outputpath):
         else:
           scatter_plot = False
         c = ROOT.TCanvas(f"c_together_{group}", group, 900, 700)
+        c.SetLeftMargin(0.12)   # margen izquierdo (0.1-0.2 suele ser bueno)
+        c.SetRightMargin(0.05)  # margen derecho
+        c.SetBottomMargin(0.12) # margen inferior
+        c.SetTopMargin(0.08)    # margen superior
         position = cfg.get("position", None)
         if position:
           legend = ROOT.TLegend(position[0], position[1], position[2], position[3])
         else:
           legend = ROOT.TLegend(0.65, 0.70, 0.88, 0.88)
-        legend.SetTextSize(0.03)
+        
+        ncolumns = cfg.get("ncolumns", 1)
+        legend.SetNColumns(ncolumns)
+        
+        legend_text_size = cfg.get("legend_txt_size", 0.03)
+        legend.SetTextSize(legend_text_size)
         legend.SetBorderSize(0)
         legend.SetFillStyle(0)
         first = True
+        
+        draw_mode = cfg.get("draw_mode", "hist")
         normalize = cfg.get("norm", False)
         global_max_value = 0
+        rebin = cfg.get("rebin", None)
+        # print(global_max_value)
+        # print("===============================")
         for histo_name in cfg["variabs"]:
+          # original_histo = file.Get(histo_name)
           histo = file.Get(histo_name)
           if not histo:
             continue
-          max_histo = histo.GetMaximum()
+          # histo = original_histo.Clone()
+          
+          # Apply rebin if specified
+          if rebin:
+            histo.Rebin(rebin)
+          # print(histo)
+          max_histo = get_graph_max(histo)
+          # print(max_histo)
+          # print("===============================")
           if max_histo > global_max_value:
             global_max_value = max_histo
         
         # For each histogram name in the group configuration
+        linewidth = cfg.get("linewidth", 2)
+        markersize = cfg.get("markersize", 1.2)
+        drawn_histos = {}
+        fill_graphs = []
         for i, var in enumerate(cfg["variabs"]):
             histo = file.Get(var)
             if not histo:
@@ -471,23 +661,23 @@ def plot_hist_together(file, together_config, outputpath):
             
             # Assign a distinct line color for each histogram (simple scheme)
             if i == 0:
-              histo.SetLineColor(ROOT.kRed)
-              histo.SetMarkerColor(ROOT.kRed)
-              histo.SetLineWidth(2)
-              if cfg.get("fill", False):
-                histo.SetFillColor(ROOT.kRed)
+              # histo.SetLineWidth(linewidth)
               if scatter_plot:
                 histo.SetMarkerStyle(20)
+              if cfg.get("fill", False):
+                histo.SetFillColor(ROOT.kBlue)
+              histo.SetLineColor(ROOT.kBlue)
+              histo.SetMarkerColor(ROOT.kBlue)
             elif i == 1:
               if not scatter_plot:
                 histo.SetLineStyle(1)
               else:
                 histo.SetMarkerStyle(20)   # círculos sólidos
               if cfg.get("fill", False):
-                histo.SetFillColor(ROOT.kBlue)
-              histo.SetLineColor(ROOT.kBlue)
-              histo.SetMarkerColor(ROOT.kBlue)
-              histo.SetLineWidth(2)
+                histo.SetFillColor(ROOT.kRed)
+              histo.SetLineColor(ROOT.kRed)
+              histo.SetMarkerColor(ROOT.kRed)
+              # histo.SetLineWidth(linewidth)
             elif i == 2:
               if not scatter_plot:
                 histo.SetLineStyle(1)
@@ -497,50 +687,66 @@ def plot_hist_together(file, together_config, outputpath):
                 histo.SetFillColor(ROOT.kGreen+2)
               histo.SetLineColor(ROOT.kGreen+2)
               histo.SetMarkerColor(ROOT.kGreen+2)
-              histo.SetLineWidth(2)
+              # histo.SetLineWidth(linewidth)
             elif i == 3:
-              if not scatter_plot:
-                histo.SetLineStyle(4)
-              else:
-                histo.SetMarkerStyle(20)   # círculos sólidos
-                 
-              histo.SetLineColor(ROOT.kMagenta)
-              histo.SetMarkerColor(ROOT.kMagenta)
-              histo.SetMarkerStyle(20)   # círculos sólidos
+                if not scatter_plot:
+                    histo.SetLineStyle(2)
+                else:
+                    histo.SetMarkerStyle(21)
+                # histo.SetLineColor(ROOT.kOrange+7)
+                histo.SetLineColor(ROOT.kBlue)
+                histo.SetMarkerColor(ROOT.kOrange+7)
+                if cfg.get("fill", False):
+                    histo.SetFillColor(ROOT.kOrange-3)
+
             elif i == 4:
               if not scatter_plot:
-                histo.SetLineStyle(2)
+                  histo.SetLineStyle(2)
               else:
-                histo.SetMarkerStyle(20)   # círculos sólidos
-              histo.SetLineColor(ROOT.kCyan)
-              histo.SetMarkerColor(ROOT.kCyan)
-              # histo.SetMarkerStyle(34)   # círculos sólidos
+                  histo.SetMarkerStyle(22)
+              histo.SetLineColor(ROOT.kRed)
+              # histo.SetLineColor(ROOT.kViolet+1)
+              histo.SetMarkerColor(ROOT.kViolet+1)
+              if cfg.get("fill", False):
+                  histo.SetFillColor(ROOT.kViolet-5)
+
             elif i == 5:
               if not scatter_plot:
-                histo.SetLineStyle(2)
+                  histo.SetLineStyle(2)
               else:
-                histo.SetMarkerStyle(20)   # círculos sólidos
-              histo.SetLineColor(ROOT.kSpring)
-              histo.SetMarkerColor(ROOT.kSpring)
+                  histo.SetMarkerStyle(23)
+              histo.SetLineColor(ROOT.kGreen+2) 
+              # histo.SetLineColor(ROOT.kTeal+2)
+              histo.SetMarkerColor(ROOT.kTeal+2)
+              if cfg.get("fill", False):
+                  histo.SetFillColor(ROOT.kTeal-5)
+
             elif i == 6:
               if not scatter_plot:
-                histo.SetLineStyle(2)
+                  histo.SetLineStyle(9)
               else:
-                histo.SetMarkerStyle(20)   # círculos sólidos
-              histo.SetLineColor(ROOT.kYellow)
-              histo.SetMarkerColor(ROOT.kYellow)
+                  histo.SetMarkerStyle(24)
+              histo.SetLineColor(ROOT.kPink+9)   # rojo vino oscuro
+              histo.SetMarkerColor(ROOT.kPink+9)
+              if cfg.get("fill", False):
+                  histo.SetFillColor(ROOT.kPink-2)
             elif i == 7:
-              if not scatter_plot:
-                histo.SetLineStyle(2)
-              else:
-                histo.SetMarkerStyle(20)   # círculos sólidos
-              histo.SetLineColor(ROOT.kAzure+3)
-              histo.SetMarkerColor(ROOT.kAzure+3)
+                if not scatter_plot:
+                    histo.SetLineStyle(3)
+                else:
+                    histo.SetMarkerStyle(25)
+                histo.SetLineColor(ROOT.kBlue+3)
+                histo.SetMarkerColor(ROOT.kBlue+3)
+                if cfg.get("fill", False):
+                    histo.SetFillColor(ROOT.kBlue-7)
+
                 
-            histo.SetLineWidth(2)
+            histo.SetLineWidth(linewidth)
+            histo.SetMarkerSize(markersize)
             if cfg.get("fill", False):
               histo.SetFillStyle(3002)
             # Draw the first histogram normally; then draw others with "same"
+            drawn_histos[var] = histo
             if first:
               if isinstance(histo, ROOT.TGraphAsymmErrors):
                 histo.GetXaxis().SetTitle(cfg.get("x", ""))
@@ -574,6 +780,7 @@ def plot_hist_together(file, together_config, outputpath):
                   histo.GetYaxis().SetRangeUser(0.001, 1.1 * global_max_value)
                 else:
                   histo.GetYaxis().SetRangeUser(0, 1.1 * global_max_value)
+              
               if scatter_plot:
                 # histo.Sumw2()
                 if isinstance(histo, ROOT.TGraphAsymmErrors):
@@ -582,7 +789,13 @@ def plot_hist_together(file, together_config, outputpath):
                   histo.Draw("P")
                 # histo.Draw("L SAME")
               else:
-                histo.Draw("HIST")
+                if draw_mode == "points":
+                    histo.SetMarkerStyle(20)
+                    histo.Draw("P")
+                elif draw_mode == "line":
+                    histo.Draw("L")
+                else:  # hist por defecto
+                    histo.Draw("HIST")
               first = False
             else:
               max_val = histo.GetMaximum()
@@ -597,7 +810,13 @@ def plot_hist_together(file, together_config, outputpath):
                 histo.Draw("P same")
                 # histo.Draw("L same")
               else:
-                histo.Draw("HIST same")
+                if draw_mode == "points":
+                    histo.SetMarkerStyle(20)
+                    histo.Draw("P SAME")
+                elif draw_mode == "line":
+                    histo.Draw("L SAME")
+                else:
+                    histo.Draw("HIST SAME")
 
                 # Set axis from 0 to 1
                 
@@ -605,9 +824,108 @@ def plot_hist_together(file, together_config, outputpath):
             label = cfg["labels"][i] if i < len(cfg["labels"]) else var
             legend.AddEntry(histo, label, "l")
         
+        # ===== Fill-between functionality =====
+        if "fill_between" in cfg:
+            fb = cfg["fill_between"] 
+
+            reference_name = fb["reference"]
+            targets = fb["histos"]
+            fill_style = fb.get("fillstyle", 3004)
+            fill_colors = fb.get("colors", ROOT.kGray+1)
+
+            if reference_name not in drawn_histos:
+                print(f"[WARNING] reference '{reference_name}' not found for fill_between")
+            else:
+                href = drawn_histos[reference_name]
+
+                # Comprobamos que referencia y targets sean TH1 (solo tiene sentido para histos)
+                if not isinstance(href, ROOT.TH1):
+                    print(f"[WARNING] reference '{reference_name}' is not a TH1, skip polygon fill_between")
+                else:
+                    nb = href.GetNbinsX()
+
+                    for k, hname in enumerate(targets):
+                        if hname not in drawn_histos:
+                            print(f"[WARNING] target '{hname}' not found for fill_between")
+                            continue
+                        htar = drawn_histos[hname]
+                        if not isinstance(htar, ROOT.TH1):
+                            print(f"[WARNING] target '{hname}' is not a TH1, skip in polygon fill_between")
+                            continue
+
+                        fill_color = (
+                            fill_colors[k]
+                            if isinstance(fill_colors, list)
+                            else fill_colors
+                        )
+
+                        # --- Modo HIST: polígono siguiendo bordes de bin ---
+                        if draw_mode.lower() == "hist":
+                            # 4 puntos por bin: 2 para borde superior, 2 para borde inferior
+                            g = ROOT.TGraph(4 * nb)
+                            g.SetName(f"fill_between_{reference_name}_{hname}")
+                            idx = 0
+
+                            # Parte superior: x_low -> x_high manteniendo y_up constante
+                            for b in range(1, nb + 1):
+                                x_low = href.GetBinLowEdge(b)
+                                x_high = x_low + href.GetBinWidth(b)
+                                yref = href.GetBinContent(b)
+                                ytar = htar.GetBinContent(b)
+                                y_up = max(yref, ytar)
+                                # punto en x_low
+                                g.SetPoint(idx, x_low, y_up)
+                                idx += 1
+                                # punto en x_high
+                                g.SetPoint(idx, x_high, y_up)
+                                idx += 1
+
+                            # Parte inferior: x_high -> x_low (orden inverso)
+                            for b in range(nb, 0, -1):
+                                x_low = href.GetBinLowEdge(b)
+                                x_high = x_low + href.GetBinWidth(b)
+                                yref = href.GetBinContent(b)
+                                ytar = htar.GetBinContent(b)
+                                y_low = min(yref, ytar)
+                                # punto en x_high
+                                g.SetPoint(idx, x_high, y_low)
+                                idx += 1
+                                # punto en x_low
+                                g.SetPoint(idx, x_low, y_low)
+                                idx += 1
+
+                        # --- Otros modos (line/points): comportamiento antiguo por centros ---
+                        else:
+                            g = ROOT.TGraph(2 * nb)
+                            g.SetName(f"fill_between_{reference_name}_{hname}")
+                            idx = 0
+
+                            # Upper boundary (por centros)
+                            for b in range(1, nb + 1):
+                                x = href.GetBinCenter(b)
+                                yref = href.GetBinContent(b)
+                                ytar = htar.GetBinContent(b)
+                                g.SetPoint(idx, x, max(yref, ytar))
+                                idx += 1
+
+                            # Lower boundary (por centros, en orden inverso)
+                            for b in range(nb, 0, -1):
+                                x = href.GetBinCenter(b)
+                                yref = href.GetBinContent(b)
+                                ytar = htar.GetBinContent(b)
+                                g.SetPoint(idx, x, min(yref, ytar))
+                                idx += 1
+
+                        g.SetFillColor(fill_color)
+                        g.SetFillStyle(fill_style)
+                        g.SetLineColor(fill_color)
+                        g.Draw("F SAME")
+                        fill_graphs.append(g)
         legend.Draw()
+        if cfg.get("gridy", False):
+          c.SetGridy()
         if cfg.get("logy", False):
-            c.SetLogy()
+          c.SetLogy()
         out_file = os.path.join(out_dir, f"{group}.png")
         c.SaveAs(out_file)
         print(f"Saved group '{group}' as '{out_file}'")
@@ -707,7 +1025,7 @@ def plot_cm(results_df, outputpath, plotphotons=False, plot_config={}):
     # --- Absolute values plot ---
     if "decays" in plot_config:
       plt.figure(figsize=(8, 6))
-      fontsize = 14
+      fontsize = 10
     else:
       plt.figure(figsize=(12, 8))
       fontsize = 8
@@ -762,7 +1080,7 @@ def plot_cm(results_df, outputpath, plotphotons=False, plot_config={}):
         mapped_classes_true = [id_to_key(cls, photons=False) for cls in classes_true]
         mapped_classes_pred = [id_to_key(cls, photons=False) for cls in classes_pred]
       plt.figure(figsize=(8, 6))
-      fontsize = 14
+      fontsize = 10
     else:
       plt.figure(figsize=(12, 8))
       fontsize = 8
@@ -777,7 +1095,7 @@ def plot_cm(results_df, outputpath, plotphotons=False, plot_config={}):
         tick_marks = np.arange(len(mapped_classes_true))
         plt.xticks(tick_marks, mapped_classes_true, rotation=45)
         plt.yticks(tick_marks, mapped_classes_true)
-    cm_normalized = cm_normalized.to_numpy()
+    # cm_normalized = cm_normalized.to_numpy()
     thresh_norm = cm_normalized.max() / 2.
     # Annotate each cell with the percentage
     for i in range(cm_normalized.shape[0]):
@@ -801,21 +1119,6 @@ def plot_cm(results_df, outputpath, plotphotons=False, plot_config={}):
 def plot_absolute(canvas, graphs, absolute_keys, colors, xaxis,
                            min_absolute_value, max_absolute_value,
                            title, outputpath, mig_str):
-    """
-    Grafica los datos absolutos utilizando PyROOT.
-    
-    Parámetros:
-      canvas            : objeto TCanvas donde se dibuja el gráfico.
-      graphs            : diccionario con objetos TGraph.
-      absolute_keys     : lista de claves (strings) para los gráficos.
-      colors            : lista con los códigos de color (por ejemplo, [1,2,3,...]).
-      xaxis             : etiqueta para el eje X.
-      min_absolute_value: valor mínimo para definir el rango del eje Y.
-      max_absolute_value: valor máximo para definir el rango del eje Y.
-      title             : título a dibujar en la parte superior.
-      outputpath        : ruta para guardar la imagen.
-      mig_str           : sufijo para el nombre del archivo.
-    """
     canvas.cd()
     # Dibujar cada gráfico
     for i, key in enumerate(absolute_keys):
@@ -854,20 +1157,6 @@ def plot_absolute(canvas, graphs, absolute_keys, colors, xaxis,
 
 def plot_metric(canvas, graphs, metric_keys, colors, xaxis,
                        title, outputpath, metric, mig_str):
-    """
-    Grafica los datos métricos utilizando PyROOT.
-    
-    Parámetros:
-      canvas       : objeto TCanvas para el gráfico.
-      graphs       : diccionario con objetos TGraph.
-      metric_keys  : lista de claves (strings) para iterar los gráficos.
-      colors       : lista con los códigos de color.
-      xaxis        : etiqueta del eje X.
-      title        : título del recuadro de texto.
-      outputpath   : ruta de salida para la imagen.
-      metric       : cadena identificadora para la gráfica (parte del nombre del archivo).
-      mig_str      : sufijo adicional para el nombre del archivo.
-    """
     canvas.cd()
     for i, key in enumerate(metric_keys):
         color = colors[i % len(colors)]
@@ -906,10 +1195,6 @@ def plot_metric(canvas, graphs, metric_keys, colors, xaxis,
 
 
 def _draw_one_object_1d(obj, first, draw_as_scatter):
-    """
-    Dibuja un TH1/TGraphAsymmErrors con la opción adecuada.
-    Devuelve la opción 'same' utilizada.
-    """
     if isinstance(obj, ROOT.TGraphAsymmErrors):
         opt = "AP" if first else "P same"
     else:
@@ -919,69 +1204,44 @@ def _draw_one_object_1d(obj, first, draw_as_scatter):
             opt = "HIST" if first else "HIST same"
     obj.Draw(opt)
     return opt
+def get_total_entries(obj):
+    """
+    Returns total entries for TH1 or TGraph.
+    """
+    if isinstance(obj, ROOT.TH1):
+        return obj.Integral()
+    elif isinstance(obj, ROOT.TGraph):
+        return obj.GetN()
+    return 0
 
-def _apply_style_1d(obj, color, linestyle, markerstyle, markersize):
-    obj.SetLineColor(color)
-    obj.SetMarkerColor(color)
+def _apply_style_1d(obj, color, linestyle, markerstyle, markersize, linewidth):
+    # print(color)
+    obj.SetLineColor(eval(color))
+    obj.SetMarkerColor(eval(color))
     obj.SetLineStyle(linestyle)
     obj.SetMarkerStyle(markerstyle)
-    obj.SetLineWidth(2)
     obj.SetMarkerSize(markersize)
+    obj.SetLineWidth(linewidth)
 
 def plot_compare_1D_across_files(files_info, plots, outdir):
-    """
-    Compara 1D histos/TGraphs entre varios ROOT files, dibujándolos en la misma figura,
-    con soporte para un 'gráfico común' (p.ej. gen-level) que solo se dibuja una vez.
-
-    Parámetros:
-      files_info: lista de dicts con:
-          - file: ROOT.TFile
-          - label: str para la leyenda
-          - color: int (ROOT color)
-          - linestyle: int
-          - markerstyle: int
-      plots: dict con entradas (una figura por entrada), ej:
-          MyPlot:
-             name: "histo_or_graph_name"        # mismo nombre en todos los files
-             # O alternativamente, mapear por dataset:
-             # per_dataset:
-             #   "<label_ds1>": "hname_en_ds1"
-             #   "<label_ds2>": "hname_en_ds2"
-             title: "Título"
-             x: "Eje X"
-             y: "Eje Y"
-             normalize: "none|max|integral"     # normalización por curva (para las series principales)
-             y_range: [min, max]                 # fuerza rango Y
-             logy: false
-             legend: [0.65, 0.70, 0.88, 0.88]    # opcional
-
-             common:                              # (opcional) serie única (p.ej. gen-level)
-               name: "hGenP"                      # nombre del histo común en el ROOT elegido
-               # o, si difiere por dataset:
-               # per_dataset:
-               #   Pandora: "hGenP"
-               #   MLPF:    "hGenP"
-               from: "Pandora"                    # de qué dataset extraerlo (por defecto: el primero)
-               label: "Generator-level P"
-               color: 1                           # ROOT.kBlack
-               linestyle: 2
-               markerstyle: 24
-               normalize: "none|max|integral"     # normalización específica del común (si falta, hereda 'normalize')
-               draw: "HIST"                       # "HIST" o "P" (opcional, para forzar modo de dibujo)
-      outdir: carpeta de salida
-    """
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-
+    
     for fig_name, cfg in plots.items():
         c = ROOT.TCanvas(f"c_compare_{fig_name}", fig_name, 900, 700)
         if cfg.get("gridx", False):
             c.SetGridx()
         if cfg.get("gridy", False):
             c.SetGridy()
+        c.SetLeftMargin(0.14)
+        c.SetRightMargin(0.05)
+        c.SetBottomMargin(0.12)
+        c.SetTopMargin(0.08)
         leg_pos = cfg.get("legend", [0.65, 0.70, 0.88, 0.88])
         legend = ROOT.TLegend(*leg_pos)
-        legend.SetTextSize(0.03)
+        legend_text_size = cfg.get("legend_txt_size", 0.03)
+        
+        legend.SetTextSize(legend_text_size)
         legend.SetBorderSize(0)
         legend.SetFillStyle(0)
 
@@ -999,9 +1259,13 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
         norm_main = cfg.get("normalize", "none").lower()
         if norm_main not in ("none", "max", "integral"):
             norm_main = "none"
+        rebin = cfg.get("rebin", None)
 
         # --- 1) Recuperar, estilizar y (si procede) normalizar las series principales
         list_graph_values = dict()
+        entries_per_dataset = {}
+
+        ignore_entries_for  = cfg.get("ignore_entries_for", [])
         for ds in files_info:
             label = ds["label"]
             f = ds["file"]
@@ -1010,14 +1274,14 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
             if "per_dataset" in cfg:
                 hname = cfg["per_dataset"].get(label, None)
                 if hname is None:
-                    print(f"[WARN] Plot '{fig_name}': dataset '{label}' no tiene histo mapeado en 'per_dataset'. Se omite.")
+                    print(f"[WARN] Plot '{fig_name}': dataset '{label}' has not 'per_dataset'.")
                     continue
             else:
                 hname = cfg["name"]
 
             obj = f.Get(hname)
             if not obj:
-                print(f"[WARN] No se encontró '{hname}' en dataset '{label}'.")
+                print(f"[WARN] '{hname}' not found in data '{label}'.")
                 continue
 
             # Detectamos si es TGraphAsymmErrors
@@ -1026,6 +1290,10 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
 
             # Clonamos para no alterar el original
             o = obj.Clone(f"{hname}_{label}_clone")
+            weight = ds.get("weight", 1.0)
+            if weight != 1.0:
+              if isinstance(o, ROOT.TH1):
+                  o.Scale(weight)
             if isinstance(o, ROOT.TGraphAsymmErrors):
               n_points = o.GetN()
               x_vals = [float(o.GetPointX(i)) for i in range(n_points)]
@@ -1036,7 +1304,9 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
     # Guarda también errores (low/high)
               list_graph_values[label] = (x_vals, y_vals, y_err_lo, y_err_hi)
               # list_graph_values[label] = (x_vals, y_vals)
-            _apply_style_1d(o, ds["color"], ds["linestyle"], ds["markerstyle"], ds["markersize"])
+            _apply_style_1d(o, ds["color"], ds["linestyle"], ds["markerstyle"], ds["markersize"], ds.get("linewidth", 2))
+            if label not in ignore_entries_for:
+              entries_per_dataset[label] = get_total_entries(o)
 
             # Normalización (series principales)
             if isinstance(o, ROOT.TH1):
@@ -1048,6 +1318,8 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                     integ = o.Integral()
                     if integ > 0:
                         o.Scale(1.0 / integ)
+                if rebin and isinstance(rebin, int) and rebin > 1:
+                    o.Rebin(rebin)
                 global_max = max(global_max, o.GetMaximum())
                 ymin = o.GetMinimum()
                 global_min = ymin if global_min is None else min(global_min, ymin)
@@ -1062,71 +1334,85 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                         global_min = mn if global_min is None else min(global_min, mn)
 
             objs.append((o, label, "main", ""))  # "" => sin modo de dibujo forzado
+        total_entries = sum(entries_per_dataset.values()) if entries_per_dataset else 0
 
+        percentages = {}
+        if total_entries > 0:
+            for k, v in entries_per_dataset.items():
+                percentages[k] = 100.0 * v / total_entries
         # --- 2) Recuperar la SERIE COMÚN (opcional) y añadirla UNA sola vez
-        common_cfg = cfg.get("common", None)
-        if common_cfg:
-            # dataset fuente (o primero)
-            src_label = common_cfg.get("from", files_info[0]["label"] if files_info else None)
-            src = next((ds for ds in files_info if ds["label"] == src_label), None)
-            if src is None:
-                print(f"[WARN] Plot '{fig_name}': common.from='{src_label}' no coincide con ningún dataset.")
-            else:
-                # nombre del histo común (por dataset o único)
-                if "per_dataset" in common_cfg:
-                    hname_c = common_cfg["per_dataset"].get(src_label, None)
-                else:
-                    hname_c = common_cfg.get("name", None)
+        common_cfg_list = cfg.get("common_list", None)
+        if common_cfg_list:
+          for common_cfg_key in common_cfg_list:  
+              common_cfg = common_cfg_list.get(common_cfg_key, None)
+              # dataset fuente (o primero)
+              src_label = common_cfg.get("from", files_info[0]["label"] if files_info else None)
+              src = next((ds for ds in files_info if ds["label"] == src_label), None)
+              if src is None:
+                  print(f"[WARN] Plot '{fig_name}': common.from='{src_label}' no coincide con ningún dataset.")
+              else:
+                  # nombre del histo común (por dataset o único)
+                  if "per_dataset" in common_cfg:
+                      hname_c = common_cfg["per_dataset"].get(src_label, None)
+                  else:
+                      hname_c = common_cfg.get("name", None)
 
-                if not hname_c:
-                    print(f"[WARN] Plot '{fig_name}': 'common' sin 'name' ni 'per_dataset'.")
-                else:
-                    obj_c = src["file"].Get(hname_c)
-                    if not obj_c:
-                        print(f"[WARN] Plot '{fig_name}': no se encontró común '{hname_c}' en '{src_label}'.")
-                    else:
-                        oc = obj_c.Clone(f"{hname_c}_{src_label}_common_clone")
+                  if not hname_c:
+                      print(f"[WARN] Plot '{fig_name}': 'common' sin 'name' ni 'per_dataset'.")
+                  else:
+                      obj_c = src["file"].Get(hname_c)
+                      if not obj_c:
+                          print(f"[WARN] Plot '{fig_name}': no se encontró común '{hname_c}' en '{src_label}'.")
+                      else:
+                          oc = obj_c.Clone(f"{hname_c}_{src_label}_common_clone")
 
-                        # Estilo propio del común (por defecto: negro, línea discontinua, marcador hueco)
-                        c_color       = common_cfg.get("color", ROOT.kBlack)
-                        c_linestyle   = common_cfg.get("linestyle", 2)
-                        c_markerstyle = common_cfg.get("markerstyle", 24)
-                        c_markersize  = common_cfg.get("markersize", 1.5)
-                        _apply_style_1d(oc, c_color, c_linestyle, c_markerstyle, c_markersize)
+                          # Estilo propio del común (por defecto: negro, línea discontinua, marcador hueco)
+                          c_color       = common_cfg.get("color", ROOT.kBlack)
+                          c_linestyle   = common_cfg.get("linestyle", 2)
+                          c_markerstyle = common_cfg.get("markerstyle", 24)
+                          c_markersize  = common_cfg.get("markersize", 1.5)
+                          c_linewidth   = common_cfg.get("linewidth", 2)
 
-                        # Normalización específica del común (si falta, hereda la principal)
-                        norm_c = common_cfg.get("normalize", norm_main).lower()
-                        if norm_c not in ("none", "max", "integral"):
-                            norm_c = "none"
+                          _apply_style_1d(oc, c_color, c_linestyle, c_markerstyle, c_markersize, c_linewidth)
 
-                        if isinstance(oc, ROOT.TH1):
-                            if norm_c == "max":
-                                m = oc.GetMaximum()
-                                if m > 0:
-                                    oc.Scale(1.0 / m)
-                            elif norm_c == "integral":
-                                integ = oc.Integral()
-                                if integ > 0:
-                                    oc.Scale(1.0 / integ)
-                            global_max = max(global_max, oc.GetMaximum())
-                            ymin = oc.GetMinimum()
-                            global_min = ymin if global_min is None else min(global_min, ymin)
-                        else:
-                            # Si fuera TGraph
-                            n = oc.GetN()
-                            if n > 0:
-                                ys = [oc.GetPointY(i) for i in range(n)]
-                                if ys:
-                                    global_max = max(global_max, max(ys))
-                                    mn = min(ys)
-                                    global_min = mn if global_min is None else min(global_min, mn)
+                          # Normalización específica del común (si falta, hereda la principal)
+                          norm_c = common_cfg.get("normalize", norm_main).lower()
+                          if norm_c not in ("none", "max", "integral"):
+                              norm_c = "none"
 
-                        # Etiqueta y posible modo de dibujo forzado
-                        common_label = common_cfg.get("label", "Common")
-                        force_draw   = common_cfg.get("draw", "").upper()  # "", "HIST", "P"
+                          if isinstance(oc, ROOT.TH1):
+                              if norm_c == "max":
+                                  m = oc.GetMaximum()
+                                  if m > 0:
+                                      oc.Scale(1.0 / m)
+                              elif norm_c == "integral":
+                                  integ = oc.Integral()
+                                  if integ > 0:
+                                      oc.Scale(1.0 / integ)
 
-                        # Añade al final para que el común no tape las curvas principales
-                        objs.append((oc, common_label, "common", force_draw))
+                              # aplicar mismo rebin que a las series principales
+                              if rebin and isinstance(rebin, int) and rebin > 1:
+                                  oc.Rebin(rebin)
+
+                              global_max = max(global_max, oc.GetMaximum())
+                              ymin = oc.GetMinimum()
+                              global_min = ymin if global_min is None else min(global_min, ymin)
+                          else:
+                              # Si fuera TGraph
+                              n = oc.GetN()
+                              if n > 0:
+                                  ys = [oc.GetPointY(i) for i in range(n)]
+                                  if ys:
+                                      global_max = max(global_max, max(ys))
+                                      mn = min(ys)
+                                      global_min = mn if global_min is None else min(global_min, mn)
+
+                          # Etiqueta y posible modo de dibujo forzado
+                          common_label = common_cfg.get("label", "Common")
+                          force_draw   = common_cfg.get("draw", "").upper()  # "", "HIST", "P"
+
+                          # Añade al final para que el común no tape las curvas principales
+                          objs.append((oc, common_label, "common", force_draw))
         diff_graph = None
         diff_ymin = None
         diff_ymax = None
@@ -1330,7 +1616,22 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
             if isinstance(o, ROOT.TLine):
               legend.AddEntry(o, label, "l")
             else:
-              legend.AddEntry(o, label, legopt)
+              # legend.AddEntry(o, label, legopt)
+              show_entries = cfg.get("show_entries", False)
+              # ignore_entries_for = cfg.get("ignore_entries_for", [])
+              if show_entries and label in entries_per_dataset and label not in ignore_entries_for:
+                  n = entries_per_dataset[label]
+                  p = percentages.get(label, 0.0)
+                  if show_entries == "absolute":
+                    label_ext = f"{label}  (N={int(n)})"
+                  elif show_entries == "percent":
+                    label_ext = f"{label}  ({p:.1f}%)"
+                  else:
+                    label_ext = f"{label}  (N={int(n)}, {p:.1f}%)"
+              else:
+                  label_ext = label
+
+              legend.AddEntry(o, label_ext, legopt)
 
         legend.Draw()
         if have_diff_panel:
@@ -1372,6 +1673,6 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
         os.makedirs(outdir, exist_ok=True)
         outpath = os.path.join(outdir, f"{fig_name}.png")
         c.SaveAs(outpath)
-        print(f"[OK] Guardado: {outpath}")
+        print(f"[OK] Saved: {outpath}")
         c.Close()
 

@@ -1,0 +1,152 @@
+variabs_hist:
+- Pi0Mass_GEN_SIGNAL
+- Pi0Mass_GEN_SIGNAL_smeared
+- Pi0Mass_SIGNAL
+- Pi0Mass_GEN_SIGNAL_max
+- Pi0Mass_SIGNAL_max
+- Pi0Mass_GEN_SIGNAL_min
+- Pi0Mass_SIGNAL_min
+- PhotonPResGen
+- PhotonPResReco
+
+plot_together:
+
+  Pi0massCompareBounds:
+    variabs:
+      - Pi0Mass_SIGNAL
+      - Pi0Mass_SIGNAL_max
+      - Pi0Mass_SIGNAL_min
+      - Pi0Mass_GEN_SIGNAL
+      # - Pi0Mass_GEN_SIGNAL_smeared
+    labels:
+      - \pi^0 \text{ Mass from Reco}
+      - \pi^0 \text{ Mass from Reco (+ 1% energy scale)}
+      - \pi^0 \text{ Mass from Reco (- 1% energy scale)}
+      - \pi^0 \text{ Mass from Gen}
+      # - \pi^0 \text{ Mass from Gen w/ Photon Smearing}
+    title: \pi^0 \text{ Mass Distribution with Photon Energy Smearing Bounds}
+    x: GeV/c^{2}
+    y: "Events norm"
+    # rebin: 2
+    # logy: True
+    position: [0.46, 0.65, 0.8, 0.9]
+    norm: True
+  Pi0mass_smearing:
+    variabs:
+      - Pi0Mass_GEN_SIGNAL_smeared
+      - Pi0Mass_SIGNAL
+      - Pi0Mass_GEN_SIGNAL
+    labels:
+      # - \omega \text{ Gen from } \rho \text{ decay} 
+      - \pi^0 \text{ Mass from Gen w/ Photon Smearing}
+      - \pi^0 \text{ Mass from Reco}
+      - \pi^0 \text{ Mass from Gen}
+    title: \pi^0 \text{ Mass Distribution with Photon Energy Smearing}
+    x: GeV/c^{2}
+    y: "Events norm"
+    # rebin: 2
+    # logy: True
+    position: [0.46, 0.65, 0.8, 0.9]
+    norm: True
+  
+  Pi0mass_smearing_max:
+    variabs:
+      - Pi0Mass_GEN_SIGNAL_smeared_max
+      - Pi0Mass_SIGNAL_max
+      - Pi0Mass_GEN_SIGNAL_max
+    labels:
+      # - \omega \text{ Gen from } \rho \text{ decay} 
+      - \pi^0 \text{ Mass from Gen w/ Photon Smearing}
+      - \pi^0 \text{ Mass from Reco}
+      - \pi^0 \text{ Mass from Gen}
+    title: \pi^0 \text{ Mass Distribution with Photon Energy Smearing (Upper Bound)}
+    x: GeV/c^{2}
+    y: "Events norm"
+    # rebin: 2
+    # logy: True
+    position: [0.46, 0.65, 0.8, 0.9]
+    norm: True
+
+  Pi0mass_smearing_min:
+    variabs:
+      - Pi0Mass_GEN_SIGNAL_smeared_min
+      - Pi0Mass_SIGNAL_min
+      - Pi0Mass_GEN_SIGNAL_min
+    labels:
+      # - \omega \text{ Gen from } \rho \text{ decay} 
+      - \pi^0 \text{ Mass from Gen w/ Photon Smearing}
+      - \pi^0 \text{ Mass from Reco}
+      - \pi^0 \text{ Mass from Gen}
+    title: \pi^0 \text{ Mass Distribution with Photon Energy Smearing (Lower Bound)}
+    x: GeV/c^{2}
+    y: "Events norm"
+    # rebin: 2
+    # logy: True
+    position: [0.46, 0.65, 0.8, 0.9]
+    norm: True
+
+  photon_resolution_smearing:
+    variabs:
+      - PhotonPResGen
+      - PhotonPResReco
+    labels:
+      - \text{Gen w/ Smearing } \sigma = E \frac{0.16}{\sqrt{E}}
+      - \text{Reco}
+    title: \text{Photon Energy Resolution Distribution with Smearing}
+    x: \frac{\Delta E}{E}
+    y: "Events norm"
+    # rebin: 2
+    # logy: True
+    position: [0.15, 0.8, 0.4, 0.9]
+    # norm: True 
+    # ncolums: 2
+    # fill_between:
+    #   reference: Omega_SIGNAL
+    #   histos:
+    #     - Omega_SIGNAL_max
+    #     - Omega_SIGNAL_min
+    #   colors:
+    #     - 632
+    #     - 416
+    #   fillstyle: 3020
+    # # draw_mode: line
+    # markersize: 1
+    # linewidth: 2
+
+
+plot_titles_config_hist:
+  Pi0Mass_GEN_SIGNAL:
+    x: GeV/c^{2}
+    y: "Events norm"
+    title: \pi^0 \text{ Distribution from Gen (Smearing)}
+    # norm: True
+    fit: True
+  Pi0Mass_SIGNAL:
+    x: GeV/c^{2}
+    y: "Events norm"
+    title: \pi^0 \text{ Distribution from Reco}
+    fit: True
+  PhotonPResGen:
+    x: \frac{\Delta E}{E}
+    y: "Events norm"
+    title: \text{Photon Energy Resolution Distribution from Gen (Smearing)}
+    fit: True
+    fitrange: [-0.2, 0.2]
+  
+  PhotonPResReco:
+    x: \frac{\Delta E}{E}
+    y: "Events norm"
+    title: \text{Photon Energy Resolution Distribution from Reco}
+    fit: True
+    fitrange: [-0.2, 0.2]
+    # norm: True
+# variabs_2d:
+#   - hRecoGenTypeMatched
+ 
+
+# plot_titles_config_2d:
+#   hRecoGenTypeMatched:
+#     x: "Gen Tau Type"
+#     y: "Reco Tau Type"
+#     title: "2D Histogram of Reco and Gen Tau Type"
+  

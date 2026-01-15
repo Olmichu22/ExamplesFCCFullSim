@@ -1,0 +1,51 @@
+variabs_hist:
+- PhotonPResMatched
+# plot_together:
+#   Pi0mass_smearing:
+#     variabs:
+#       - PhotonPResMatched
+#     labels:
+#       # - \omega \text{ Gen from } \rho \text{ decay} 
+#       - \text{Photon Energy Resolution}
+#     title: \text{Photon Energy Resolution Distribution}
+#     x: \frac{\Delta E}{E}
+#     y: "Events norm"
+#     rebin: 2
+#     # logy: True
+#     position: [0.46, 0.65, 0.8, 0.9]
+#     norm: True
+
+    # ncolums: 2
+    # fill_between:
+    #   reference: Omega_SIGNAL
+    #   histos:
+    #     - Omega_SIGNAL_max
+    #     - Omega_SIGNAL_min
+    #   colors:
+    #     - 632
+    #     - 416
+    #   fillstyle: 3020
+    # # draw_mode: line
+    # markersize: 1
+    # linewidth: 2
+
+
+plot_titles_config_hist:
+  PhotonPResMatched:
+    x: \frac{\Delta E}{E}
+    y: "Events norm"
+    title: \text{Photon Energy Resolution Distribution}
+    # norm: True
+    fit: True
+    fitrange: [-0.2, 0.2]
+    # norm: True
+# variabs_2d:
+#   - hRecoGenTypeMatched
+ 
+
+# plot_titles_config_2d:
+#   hRecoGenTypeMatched:
+#     x: "Gen Tau Type"
+#     y: "Reco Tau Type"
+#     title: "2D Histogram of Reco and Gen Tau Type"
+  

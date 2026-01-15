@@ -1,0 +1,981 @@
+Gen:
+  Events:
+    PhotonPRes:
+      type: "1D"
+      name: PhotonPResGen
+      range: [-1, 1]
+      bins: 100
+
+    Pi0Mass_GEN_SIGNAL_smeared:
+      type: "1D"
+      name: Pi0Mass_GEN_SIGNAL_smeared
+      range: [0, 0.35]
+      bins: 140
+    Pi0Mass_GEN_SIGNAL:
+      type: "1D"
+      name: Pi0Mass_GEN_SIGNAL
+      range: [0, 0.35]
+      bins: 140
+    GenVisZMass:
+      type: "1D"
+      name: GenVisZMass
+      range: [0, 100]
+      bins: 200
+    MesonType_BG:
+      type: "1D"
+      name: MesonType_BG
+      range: [-15, 15]
+      bins: 31
+    MesonType:
+      type: "1D"
+      name: MesonType
+      range: [-15, 15]
+      bins: 31
+    Omega_GEN_SIGNAL:
+      type: "1D"
+      name: Omega_GEN_SIGNAL
+      range: [-1, 1]
+      bins: 100
+
+    Omega_GEN_SIGNAL_P1:
+      type: "1D"
+      name: Omega_GEN_SIGNAL_P1
+      range: [-1, 1]
+      bins: 100
+
+    Omega_GEN_SIGNAL_M1:
+      type: "1D"
+      name: Omega_GEN_SIGNAL_M1
+      range: [-1, 1]
+      bins: 100
+
+    Omega_GEN_BG:
+      type: "1D"
+      name: Omega_GEN_BG
+      range: [-1, 1]
+      bins: 100
+
+    Omega_GEN_BGMuon:
+      type: "1D"
+      name: Omega_GEN_BGMuon
+      range: [-1, 1]
+      bins: 100
+
+    Omega_GEN_BGEle:
+      type: "1D"
+      name: Omega_GEN_BGEle
+      range: [-1, 1]
+      bins: 100
+
+    Omega_GEN_BGPion:
+      type: "1D"
+      name: Omega_GEN_BGPion
+      range: [-1, 1]
+      bins: 100
+
+    Omega_GEN_BGRho:
+      type: "1D"
+      name: Omega_GEN_BGRho
+      range: [-1, 1]
+      bins: 100
+
+    Omega_GEN_BGA1:
+      type: "1D"
+      name: Omega_GEN_BGA1
+      range: [-1, 1]
+      bins: 100
+
+    Omega_GEN_BGOther:
+      type: "1D"
+      name: Omega_GEN_BGOther
+      range: [-1, 1]
+      bins: 100
+
+    Omega_GEN_ALL:
+      type: "1D"
+      name: Omega_GEN_ALL
+      range: [-1, 1]
+      bins: 100
+    OmegaCosThetaTau_GEN_SIGNAL:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_SIGNAL
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosThetaTau_GEN_SIGNAL_P1:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_SIGNAL_P1
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosThetaTau_GEN_SIGNAL_M1:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_SIGNAL_M1
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosThetaTau_GEN_BG:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_BG
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosThetaTau_GEN_BGMuon:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_BGMuon
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosThetaTau_GEN_BGEle:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_BGEle
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosThetaTau_GEN_BGPion:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_BGPion
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosThetaTau_GEN_BGRho:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_BGRho
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosThetaTau_GEN_BGA1:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_BGA1
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosThetaTau_GEN_BGOther:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_BGOther
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosThetaTau_GEN_ALL:
+      type: "2D"
+      name: OmegaCosThetaTau_GEN_ALL
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+    CosThetaTau_GEN_ALL:
+      type: "1D"
+      name: CosThetaTau_GEN_ALL
+      range: [-1, 1]
+      bins: 100
+
+    CosThetaRho_GEN_ALL:
+      type: "1D"
+      name: CosThetaRho_GEN_ALL
+      range: [-1, 1]
+      bins: 100
+
+    CosThetaRho_ALL:
+      type: "1D"
+      name: CosThetaRho_ALL
+      range: [-1, 1]
+      bins: 100
+    CosTheta_GEN_SIGNAL:
+      type: "1D"
+      name: CosTheta_GEN_SIGNAL
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_GEN_SIGNAL_P1:
+      type: "1D"
+      name: CosTheta_GEN_SIGNAL_P1
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_GEN_SIGNAL_M1:
+      type: "1D"
+      name: CosTheta_GEN_SIGNAL_M1
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_GEN_BG:
+      type: "1D"
+      name: CosTheta_GEN_BG
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_GEN_BGMuon:
+      type: "1D"
+      name: CosTheta_GEN_BGMuon
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_GEN_BGEle:
+      type: "1D"
+      name: CosTheta_GEN_BGEle
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_GEN_BGPion:
+      type: "1D"
+      name: CosTheta_GEN_BGPion
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_GEN_BGRho:
+      type: "1D"
+      name: CosTheta_GEN_BGRho
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_GEN_BGA1:
+      type: "1D"
+      name: CosTheta_GEN_BGA1
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_GEN_BGOther:
+      type: "1D"
+      name: CosTheta_GEN_BGOther
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_GEN_ALL:
+      type: "1D"
+      name: CosTheta_GEN_ALL
+      range: [-1, 1]
+      bins: 100
+    CosPsi_GEN_SIGNAL:
+      type: "1D"
+      name: CosPsi_GEN_SIGNAL
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_GEN_SIGNAL_P1:
+      type: "1D"
+      name: CosPsi_GEN_SIGNAL_P1
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_GEN_SIGNAL_M1:
+      type: "1D"
+      name: CosPsi_GEN_SIGNAL_M1
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_GEN_BG:
+      type: "1D"
+      name: CosPsi_GEN_BG
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_GEN_BGMuon:
+      type: "1D"
+      name: CosPsi_GEN_BGMuon
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_GEN_BGEle:
+      type: "1D"
+      name: CosPsi_GEN_BGEle
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_GEN_BGPion:
+      type: "1D"
+      name: CosPsi_GEN_BGPion
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_GEN_BGRho:
+      type: "1D"
+      name: CosPsi_GEN_BGRho
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_GEN_BGA1:
+      type: "1D"
+      name: CosPsi_GEN_BGA1
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_GEN_BGOther:
+      type: "1D"
+      name: CosPsi_GEN_BGOther
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_GEN_ALL:
+      type: "1D"
+      name: CosPsi_GEN_ALL
+      range: [-1, 1]
+      bins: 100
+
+
+  Effi:
+  Resolution:
+
+Matched:
+  Events:
+    MesonType_BG:
+      type: "1D"
+      name: MesonType_BG_Matched
+      range: [-15, 15]
+      bins: 31
+    MesonEOverBeamE:
+      type: "1D"
+      name: MesonEOverBeamE
+      range: [0, 1.1]
+      bins: 50
+    MesonEOverBeamE_P1:
+      type: "1D"
+      name: MesonEOverBeamE_P1
+      range: [0, 1.1]
+      bins: 50
+    MesonEOverBeamE_M1:
+      type: "1D"
+      name: MesonEOverBeamE_M1
+      range: [0, 1.1]
+      bins: 50
+    MesonCosTheta:
+      type: "1D"
+      name: MesonCosTheta
+      range: [-1, 1]
+      bins: 201
+    MesonCosTheta_P1:
+      type: "1D"
+      name: MesonCosTheta_P1
+      range: [-1, 1]
+      bins: 201
+    MesonCosTheta_M1:
+      type: "1D"
+      name: MesonCosTheta_M1
+      range: [-1, 1]
+      bins: 201
+    MesonEOverBeamE_BG:
+      type: "1D"
+      name: MesonEOverBeamE_BG
+      range: [0, 1.1]
+      bins: 50
+    MesonEOverBeamE_BGMuon:
+      type: "1D"
+      name: MesonEOverBeamE_BGMuon
+      range: [0, 1.1]
+      bins: 50
+    MesonEOverBeamE_BGEle:
+      type: "1D"
+      name: MesonEOverBeamE_BGEle
+      range: [0, 1.1]
+      bins: 50
+    MesonEOverBeamE_BGPion:
+      type: "1D"
+      name: MesonEOverBeamE_BGPion
+      range: [0, 1.1]
+      bins: 50
+    MesonEOverBeamE_BGRho:
+      type: "1D"
+      name: MesonEOverBeamE_BGRho
+      range: [0, 1.1]
+      bins: 50
+    MesonEOverBeamE_BGA1:
+      type: "1D"
+      name: MesonEOverBeamE_BGA1
+      range: [0, 1.1]
+      bins: 50
+    MesonEOverBeamE_BGOther:
+      type: "1D"
+      name: MesonEOverBeamE_BGOther
+      range: [0, 1.1]
+      bins: 50
+    MesonCosTheta_BG:
+      type: "1D"
+      name: MesonCosTheta_BG
+      range: [-1, 1]
+      bins: 201
+
+    MesonCosTheta_BGMuon:
+      type: "1D"
+      name: MesonCosTheta_BGMuon
+      range: [-1, 1]
+      bins: 201
+
+    MesonCosTheta_BGEle:
+      type: "1D"
+      name: MesonCosTheta_BGEle
+      range: [-1, 1]
+      bins: 201
+
+    MesonCosTheta_BGPion:
+      type: "1D"
+      name: MesonCosTheta_BGPion
+      range: [-1, 1]
+      bins: 201
+
+    MesonCosTheta_BGRho:
+      type: "1D"
+      name: MesonCosTheta_BGRho
+      range: [-1, 1]
+      bins: 201
+
+    MesonCosTheta_BGA1:
+      type: "1D"
+      name: MesonCosTheta_BGA1
+      range: [-1, 1]
+      bins: 201
+
+    MesonCosTheta_BGOther:
+      type: "1D"
+      name: MesonCosTheta_BGOther
+      range: [-1, 1]
+      bins: 201
+
+      
+  Effi:
+    TrackPionPEfficiency:
+      name: effGenPionsWTrackEfficiency
+      numerator: Matched/GenPionsWTrackGenP
+      denominator: Gen/AllPionsP
+  Resolution:
+
+Reco:
+  Events:
+    LeptonP_SIGNAL:
+      type: "1D"
+      name: LeptonP_SIGNAL
+      range: [0, 100]
+      bins: 100
+    LeptonP_BG:
+      type: "1D"
+      name: LeptonP_BG
+      range: [0, 100]
+      bins: 100
+    MesonP_SIGNAL:
+      type: "1D"
+      name: MesonP_SIGNAL
+      range: [0, 100]
+      bins: 100
+    MesonP_BG:
+      type: "1D"
+      name: MesonP_BG
+      range: [0, 100]
+      bins: 100
+    DeltaR_LepMeson_SIGNAL:
+      type: "1D"
+      name: DeltaR_LepMeson_SIGNAL
+      range: [0, 5]
+      bins: 100
+    DeltaR_LepMeson_BG:
+      type: "1D"
+      name: DeltaR_LepMeson_BG
+      range: [0, 5]
+      bins: 100
+    PhotonPRes:
+      type: "1D"
+      name: PhotonPResReco
+      range: [-1, 1]
+      bins: 100
+    Pi0Mass_SIGNAL:
+      type: "1D"
+      name: Pi0Mass_SIGNAL
+      range: [0, 0.35]
+      bins: 140
+    RecoMeson_BGMuon_PhiTheta:
+      type: "2D"
+      name: RecoMeson_BGMuon_PhiTheta
+      x_range: [0, 3.15]
+      x_bins: 100
+      y_range: [-3.15, 3.15]
+      y_bins: 100
+    RecoMeson_BGMuon_PtTheta:
+      type: "2D"
+      name: RecoMeson_BGMuon_PtTheta
+      x_range: [0, 3.15]
+      x_bins: 100
+      y_range: [0, 50]
+      y_bins: 100
+    RecoMeson_BGEle_PhiTheta:
+      type: "2D"
+      name: RecoMeson_BGEle_PhiTheta
+      x_range: [0, 3.15]
+      x_bins: 100
+      y_range: [-3.15, 3.15]
+      y_bins: 100
+    RecoMeson_BGEle_PtTheta:
+      type: "2D"
+      name: RecoMeson_BGEle_PtTheta
+      x_range: [0, 3.15]
+      x_bins: 100
+      y_range: [0, 50]
+      y_bins: 100
+    RecoMesonEOverBeamE_ALL:
+      type: "1D"
+      name: RecoMesonEOverBeamE_ALL
+      range: [0, 1.1]
+      bins: 50
+    RecoMesonEOverBeamE_SIGNAL:
+      type: "1D"
+      name: RecoMesonEOverBeamE_SIGNAL
+      range: [0, 1.1]
+      bins: 50
+    RecoMesonEOverBeamE_SIGNAL_P1:
+      type: "1D"
+      name: RecoMesonEOverBeamE_SIGNAL_P1
+      range: [0, 1.1]
+      bins: 50
+    RecoMesonEOverBeamE_SIGNAL_M1:
+      type: "1D"
+      name: RecoMesonEOverBeamE_SIGNAL_M1
+      range: [0, 1.1]
+      bins: 50
+    RecoMesonCosTheta_ALL:
+      type: "1D"
+      name: RecoMesonCosTheta_ALL
+      range: [-1, 1]
+      bins: 201
+    RecoMesonCosTheta_SIGNAL:
+      type: "1D"
+      name: RecoMesonCosTheta_SIGNAL
+      range: [-1, 1]
+      bins: 201
+    RecoMesonCosTheta_SIGNAL_P1:
+      type: "1D"
+      name: RecoMesonCosTheta_SIGNAL_P1
+      range: [-1, 1]
+      bins: 201
+    RecoMesonCosTheta_SIGNAL_M1:
+      type: "1D"
+      name: RecoMesonCosTheta_SIGNAL_M1
+      range: [-1, 1]
+      bins: 201
+    RecoZMass:
+      type: "1D"
+      name: RecoZMass
+      range: [0, 100]
+      bins: 200
+    RecoMeson_X:
+      type: "1D"
+      name: RecoMeson_X
+      range: [-1.5, 1.5]
+      bins: 50
+    RecoMeson_X_P1:
+      type: "1D"
+      name: RecoMeson_X_P1
+      range: [-1.5, 1.5]
+      bins: 50
+    RecoMeson_X_M1:
+      type: "1D"
+      name: RecoMeson_X_M1
+      range: [-1.5, 1.5]
+      bins: 50
+    RecoMeson_X_BG:
+      type: "1D"
+      name: RecoMeson_X_BG
+      range: [-1.5, 1.5]
+      bins: 50
+    RecoMeson_X_ALL:
+      type: "1D"
+      name: RecoMeson_X_ALL
+      range: [-1.5, 1.5]
+      bins: 50
+    RecoMesonEOverBeamE_BG:
+      type: "1D"
+      name: RecoMesonEOverBeamE_BG
+      range: [0, 1.1]
+      bins: 50
+
+    RecoMesonEOverBeamE_BGMuon:
+      type: "1D"
+      name: RecoMesonEOverBeamE_BGMuon
+      range: [0, 1.1]
+      bins: 50
+
+    RecoMesonEOverBeamE_BGEle:
+      type: "1D"
+      name: RecoMesonEOverBeamE_BGEle
+      range: [0, 1.1]
+      bins: 50
+
+    RecoMesonEOverBeamE_BGPion:
+      type: "1D"
+      name: RecoMesonEOverBeamE_BGPion
+      range: [0, 1.1]
+      bins: 50
+
+    RecoMesonEOverBeamE_BGRho:
+      type: "1D"
+      name: RecoMesonEOverBeamE_BGRho
+      range: [0, 1.1]
+      bins: 50
+
+    RecoMesonEOverBeamE_BGA1:
+      type: "1D"
+      name: RecoMesonEOverBeamE_BGA1
+      range: [0, 1.1]
+      bins: 50
+
+    RecoMesonEOverBeamE_BGOther:
+      type: "1D"
+      name: RecoMesonEOverBeamE_BGOther
+      range: [0, 1.1]
+      bins: 50
+    RecoMesonCosTheta_BG:
+      type: "1D"
+      name: RecoMesonCosTheta_BG
+      range: [-1, 1]
+      bins: 201
+
+    RecoMesonCosTheta_BGMuon:
+      type: "1D"
+      name: RecoMesonCosTheta_BGMuon
+      range: [-1, 1]
+      bins: 201
+
+    RecoMesonCosTheta_BGEle:
+      type: "1D"
+      name: RecoMesonCosTheta_BGEle
+      range: [-1, 1]
+      bins: 201
+
+    RecoMesonCosTheta_BGPion:
+      type: "1D"
+      name: RecoMesonCosTheta_BGPion
+      range: [-1, 1]
+      bins: 201
+
+    RecoMesonCosTheta_BGRho:
+      type: "1D"
+      name: RecoMesonCosTheta_BGRho
+      range: [-1, 1]
+      bins: 201
+
+    RecoMesonCosTheta_BGA1:
+      type: "1D"
+      name: RecoMesonCosTheta_BGA1
+      range: [-1, 1]
+      bins: 201
+
+    RecoMesonCosTheta_BGOther:
+      type: "1D"
+      name: RecoMesonCosTheta_BGOther
+      range: [-1, 1]
+      bins: 201
+    RecoMesonE_BGMuon:
+      type: "1D"
+      name: RecoMesonE_BGMuon
+      range: [0, 50]
+      bins: 50
+    RecoMesonType_BG:
+      type: "1D"
+      name: RecoMesonType_BG
+      range: [-15, 15]
+      bins: 31
+    RecoMesonType:
+      type: "1D"
+      name: RecoMesonType
+      range: [-15, 15]
+      bins: 31
+    
+    Omega_SIGNAL:
+      type: "1D"
+      name: Omega_SIGNAL
+      range: [-1, 1]
+      bins: 100
+
+    Omega_SIGNAL_P1:
+      type: "1D"
+      name: Omega_SIGNAL_P1
+      range: [-1, 1]
+      bins: 100
+
+    Omega_SIGNAL_M1:
+      type: "1D"
+      name: Omega_SIGNAL_M1
+      range: [-1, 1]
+      bins: 100
+
+    Omega_BG:
+      type: "1D"
+      name: Omega_BG
+      range: [-1, 1]
+      bins: 100
+
+    Omega_BGMuon:
+      type: "1D"
+      name: Omega_BGMuon
+      range: [-1, 1]
+      bins: 100
+
+    Omega_BGEle:
+      type: "1D"
+      name: Omega_BGEle
+      range: [-1, 1]
+      bins: 100
+
+    Omega_BGPion:
+      type: "1D"
+      name: Omega_BGPion
+      range: [-1, 1]
+      bins: 100
+
+    Omega_BGRho:
+      type: "1D"
+      name: Omega_BGRho
+      range: [-1, 1]
+      bins: 100
+
+    Omega_BGA1:
+      type: "1D"
+      name: Omega_BGA1
+      range: [-1, 1]
+      bins: 100
+
+    Omega_BGOther:
+      type: "1D"
+      name: Omega_BGOther
+      range: [-1, 1]
+      bins: 100
+
+    Omega_ALL:
+      type: "1D"
+      name: Omega_ALL
+      range: [-1, 1]
+      bins: 100
+    OmegaCosTheta_SIGNAL:
+      type: "2D"
+      name: OmegaCosTheta_SIGNAL
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosTheta_SIGNAL_P1:
+      type: "2D"
+      name: OmegaCosTheta_SIGNAL_P1
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosTheta_SIGNAL_M1:
+      type: "2D"
+      name: OmegaCosTheta_SIGNAL_M1
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosTheta_BG:
+      type: "2D"
+      name: OmegaCosTheta_BG
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosTheta_BGMuon:
+      type: "2D"
+      name: OmegaCosTheta_BGMuon
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosTheta_BGEle:
+      type: "2D"
+      name: OmegaCosTheta_BGEle
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosTheta_BGPion:
+      type: "2D"
+      name: OmegaCosTheta_BGPion
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosTheta_BGRho:
+      type: "2D"
+      name: OmegaCosTheta_BGRho
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosTheta_BGA1:
+      type: "2D"
+      name: OmegaCosTheta_BGA1
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosTheta_BGOther:
+      type: "2D"
+      name: OmegaCosTheta_BGOther
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+
+    OmegaCosTheta_ALL:
+      type: "2D"
+      name: OmegaCosTheta_ALL
+      x_range: [-1, 1]
+      x_bins: 100
+      y_range: [-1, 1]
+      y_bins: 100
+    CosTheta_SIGNAL:
+      type: "1D"
+      name: CosTheta_SIGNAL
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_SIGNAL_P1:
+      type: "1D"
+      name: CosTheta_SIGNAL_P1
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_SIGNAL_M1:
+      type: "1D"
+      name: CosTheta_SIGNAL_M1
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_BG:
+      type: "1D"
+      name: CosTheta_BG
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_BGMuon:
+      type: "1D"
+      name: CosTheta_BGMuon
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_BGEle:
+      type: "1D"
+      name: CosTheta_BGEle
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_BGPion:
+      type: "1D"
+      name: CosTheta_BGPion
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_BGRho:
+      type: "1D"
+      name: CosTheta_BGRho
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_BGA1:
+      type: "1D"
+      name: CosTheta_BGA1
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_BGOther:
+      type: "1D"
+      name: CosTheta_BGOther
+      range: [-1, 1]
+      bins: 100
+
+    CosTheta_ALL:
+      type: "1D"
+      name: CosTheta_ALL
+      range: [-1, 1]
+      bins: 100
+    CosPsi_SIGNAL:
+      type: "1D"
+      name: CosPsi_SIGNAL
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_SIGNAL_P1:
+      type: "1D"
+      name: CosPsi_SIGNAL_P1
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_SIGNAL_M1:
+      type: "1D"
+      name: CosPsi_SIGNAL_M1
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_BG:
+      type: "1D"
+      name: CosPsi_BG
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_BGMuon:
+      type: "1D"
+      name: CosPsi_BGMuon
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_BGEle:
+      type: "1D"
+      name: CosPsi_BGEle
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_BGPion:
+      type: "1D"
+      name: CosPsi_BGPion
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_BGRho:
+      type: "1D"
+      name: CosPsi_BGRho
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_BGA1:
+      type: "1D"
+      name: CosPsi_BGA1
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_BGOther:
+      type: "1D"
+      name: CosPsi_BGOther
+      range: [-1, 1]
+      bins: 100
+
+    CosPsi_ALL:
+      type: "1D"
+      name: CosPsi_ALL
+      range: [-1, 1]
+      bins: 100
+  Effi:
+  Resolution:

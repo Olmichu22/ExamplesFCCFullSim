@@ -4,19 +4,288 @@ import ROOT
 import yaml
 import os
 import argparse
-from array import array
-from podio import root_io
-import edm4hep
+import copy
 import logging
 import pandas as pd
 import pickle
 import numpy as np
 import pprint
 from pathlib import Path
-from modules import myutils
+from modules.ParticleObjects import GenParticle, RecoParticle
+
+
+
+def fit_sigma_energy(sigma_results):
+    """Fit sigma(E) vs E using sigma(E) = a/sqrt(E) ⊕ b
+
+    Args:
+        sigma_results (dict): Dict containing 'energy', 'sigma' and 'sigma_err' lists.
+    Returns:
+        popt (array): Best-fit parameters [a, b]
+        pcov (2D array): Covariance matrix
+    """
+
+    # Convert inputs to numpy arrays
+    E = np.asarray(sigma_results['E_center'])
+    sigma = np.asarray(sigma_results['sigma'])
+    sigma_err = np.asarray(sigma_results['sigma_err'])
+
+    # Model: sigma(E) = sqrt( (a/sqrt(E))^2 + b^2 )
+    def sigma_model(E, a, b):
+        return np.sqrt((a / np.sqrt(E))**2 + b**2)
+
+    # Initial guess
+    p0 = [1.0, 0.1]
+
+    # Fit
+    popt, pcov = curve_fit(
+        sigma_model,
+        E,
+        sigma,
+        sigma=sigma_err,
+        absolute_sigma=True,
+        p0=p0
+    )
+
+    return popt, pcov
+
+def compute_sigma_from_hist(hist, edges, values):
+    """
+    Compute FWHM by fitting a Gaussian to the histogram produced by numpy,
+    assuming the distribution is approximately normal. The fit range is fixed
+    to [-0.2, 0.2].
+
+    Parameters
+    ----------
+    hist : np.ndarray
+        Array of bin counts from numpy.histogram.
+    edges : np.ndarray
+        Bin edges returned by numpy.histogram (same length = len(hist)+1).
+
+    Returns
+    -------
+    fwhm : float
+        Full width at half maximum (FWHM) = 2.355 * sigma_fit.
+    fwhm_err : float
+        Uncertainty in FWHM from the sigma fit uncertainty.
+    """
+
+    # ---- Crear histograma ROOT a partir del histograma numpy ----
+    nbins = len(hist)
+
+    # Crear TH1F
+    h = ROOT.TH1F("h_tmp", "resolution", nbins, float(edges[0]), float(edges[-1]))
+
+    # Rellenar con los contenidos de numpy
+    for i in range(nbins):
+        h.SetBinContent(i+1, float(hist[i]))
+
+    # Si no hay estadística suficiente, devolver NaN
+    if h.GetEntries() < 5:
+        return np.nan, np.nan
+
+    # ---- Definir función gaussiana ----
+    gaus = ROOT.TF1("gaus_tmp", "gaus", -0.2, 0.2)
+
+    # Parámetros iniciales razonables (evita fallos de ajuste)
+    peak = h.GetMaximum()
+    mean_est = h.GetMean()
+    sigma_est = h.GetRMS()
+
+    gaus.SetParameters(peak, mean_est, sigma_est)
+
+    # ---- Ajuste gaussiano en rango [-0.2, 0.2] ----
+    fit_result = h.Fit(gaus, "SQN", "", -0.2, 0.2)
+    # S = silent, Q = quiet, N = no drawing
+
+    if int(fit_result) != 0:
+        # Ajuste fallido
+        return np.nan, np.nan
+    # Extraer media y su error
+    mean_val = np.mean(values)
+    mean_err = np.std(values) / math.sqrt(len(values))
+    # ---- Extraer sigma y error ----
+    sigma = gaus.GetParameter(2)
+    sigma_err = gaus.GetParError(2)
+
+    # ---- Calcular FWHM ----
+    # fwhm = 2.355 * sigma
+    # fwhm_err = 2.355 * sigma_err
+    fwhm = sigma
+    fwhm_err = sigma_err
+    return fwhm, fwhm_err
+
 logger_io = logging.getLogger('io')
-def associate_reco_with_gen_taus(gen_taus, reco_tau):
-    """Asocia cada hemisferio con el tau correspondiente usando la dirección del tau."""
+
+PLOT_1D_TEMPLATE = {"title": "", "x": "", "y": "", "fit": False, "fitrange": [0,0]}
+
+PLOT_2D_TEMPLATE = {"title": "", "x": "", "y": ""}
+
+
+
+def clone_histograms_with_suffix(hist_dict, suffix):
+    """
+    Clone all ROOT histograms inside an arbitrarily nested dictionary
+    and append a suffix ('_min' or '_max') to their internal ROOT name.
+
+    The dictionary structure and keys remain identical.
+    """
+    new_dict = {}
+
+    for key, value in hist_dict.items():
+        # Caso 1: El valor es otro subdiccionario -> recursión
+        if isinstance(value, dict):
+            new_dict[key] = clone_histograms_with_suffix(value, suffix)
+
+        # Caso 2: Es un histograma ROOT (TH1, TH2…)
+        elif isinstance(value, ROOT.TH1) or isinstance(value, ROOT.TH2):
+            # Clon seguro del histograma
+            cloned = value.Clone()
+            cloned.SetDirectory(0)
+
+            # Cambiar nombre interno del histograma ROOT
+            cloned.SetName(value.GetName() + suffix)
+
+            new_dict[key] = cloned
+
+        else:
+            # Por si apareciera algo inesperado
+            new_dict[key] = value
+
+    return new_dict
+
+
+def write_plot_config(root_histograms, outputpath, suffix=""):
+    """Write a the plot_config_file based on histogram info present in root_histograms
+
+    Args:
+        root_histograms (dict): Dictionary containing ROOT histograms.
+        outputpath (str): Path to the output directory.
+    """
+    # Get all 1D histograms
+    histograms_1d = []
+    histograms_2d = []
+    def extract_histograms(obj):
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                extract_histograms(value)
+        else:
+            if not isinstance(obj, ROOT.TH1):
+                histograms_2d.append((obj.GetName()))
+            else:
+                histograms_1d.append((obj.GetName()))
+    extract_histograms(root_histograms)
+    plot_config_name = os.path.join(outputpath, f"plot_config{suffix}.yaml")
+    if os.path.exists(plot_config_name):
+        logger_io.warning(f"{plot_config_name} exists and will be updated.")
+        with open(plot_config_name, "r") as file:
+            plot_config = yaml.safe_load(file)
+    else:
+        plot_config = {"variabs_hist": [], "plot_titles_config_hist":{}, "variabs_2d": [], "plot_titles_config_2d":{}}
+    for var in histograms_1d:
+        if var not in plot_config["variabs_hist"]:
+            plot_config["variabs_hist"].append(var)
+            plot_config["plot_titles_config_hist"][var] = copy.deepcopy(PLOT_1D_TEMPLATE)
+    for var in histograms_2d:
+        if var not in plot_config["variabs_2d"]:
+            plot_config["variabs_2d"].append(var)
+            plot_config["plot_titles_config_2d"][var] = copy.deepcopy(PLOT_2D_TEMPLATE)
+    with open(plot_config_name, "w") as file:
+        yaml.dump(plot_config, file, sort_keys=False)
+
+def write_histograms_recursive(obj):
+    """
+    Traverse a nested dictionary and call `.Write()` on each object of type ROOT histogram.
+    """
+    if isinstance(obj, dict):
+        for value in obj.values():
+            write_histograms_recursive(value)
+    else:
+        # If it is not a dict, assume it is a root hist
+        try:
+            obj.Write()
+        except AttributeError:
+            print(f"Object {obj} has not .Write() method. Ignored.")
+
+
+def set_up_root_histograms(histograms_config):
+    """
+    Configure root histograms based on the input config.
+    Args:
+        histograms_config (dict): Dict with hist configuration.
+    Returns:
+        dict: Nested dict with root histograms.
+    """
+    
+    root_histograms = {}     
+    for hist_level in histograms_config.keys():
+        root_histograms[hist_level] = {}
+        for category in histograms_config[hist_level].keys():
+            root_histograms[hist_level][category] = {}
+    
+    for hist_level, category in histograms_config.items():
+        for hist_class, hist_configs in category.items():
+            if hist_configs is None:
+                continue
+            if hist_class == "Effi":
+                continue
+            for hist_name, hist_params in hist_configs.items():
+                name = hist_params.get("name", hist_name)
+                hist_type = hist_params.get("type", "1D")
+                if hist_type == "1D":
+                    bins = hist_params.get("bins", 10)
+                    range_0, range_1 = hist_params.get("range", (0, 1))
+                    root_histograms[hist_level][hist_class][hist_name] = ROOT.TH1F(
+                        name, "", bins, range_0, range_1
+                    )
+                elif hist_type == "2D":
+                    bins_x = hist_params.get("x_bins", 10)
+                    bins_y = hist_params.get("y_bins", 10)
+                    range_0x, range_1x = hist_params.get("x_range", [0, 1])
+                    range_0y, range_1y = hist_params.get("y_range", [0, 1])
+                    root_histograms[hist_level][hist_class][hist_name] = ROOT.TH2F(
+                        name, "", bins_x, range_0x, range_1x, bins_y, range_0y, range_1y
+                    )
+    return root_histograms
+
+def calc_efficiency(root_histograms, histograms_config, suffix = ""):
+
+    for hist_level, category in histograms_config.items():
+        for hist_class, hist_configs in category.items():
+            if hist_configs is None:
+                continue
+            if hist_class != "Effi":
+                continue
+            for hist_name, hist_params in hist_configs.items():
+                name = hist_params.get("name", hist_name)
+                num_hist_name = hist_params.get("numerator")
+                num_hist_level, num_name = num_hist_name.split("/")
+                denom_hist_name = hist_params.get("denominator")
+                denom_hist_level, denom_name = denom_hist_name.split("/")
+                try:
+                    logger_io.debug(f"Calculating efficenciy for {name}: {num_hist_level}/{num_name} over {denom_hist_level}/{denom_name}")
+                    numerator = root_histograms[num_hist_level]["Events"][num_name]
+                    denominator = root_histograms[denom_hist_level]["Events"][denom_name]
+                    efficiency_hist = ROOT.TGraphAsymmErrors(numerator, denominator, "cl=0.683 b(1,1) mode")
+                    print(name + suffix)
+                    efficiency_hist.SetName(name +  suffix)
+                    root_histograms[hist_level][hist_class][hist_name] = efficiency_hist
+                except KeyError as e:
+                    logger_io.error(f"Error when calculating efficenciy for {name}: {e}")
+                    continue
+    return root_histograms
+
+def associate_reco_with_gen_taus(gen_taus: dict[GenParticle],
+                                 reco_tau: dict[RecoParticle]) -> tuple[int, float]:
+    """
+
+    Args:
+        gen_taus (dict[GenParticle]): Dict of gen particles.
+        reco_tau (dict[RecoParticle]): Dict of reco particles.
+
+    Returns:
+        (gen_tau_key, cos_gen_reco) (tupple[int, float]): Key to the nearest gen tau, and angle with respect to reco tau.
+    """
     
     # Obtener dirección de cada tau
     tau_directions = []
@@ -39,15 +308,16 @@ def associate_reco_with_gen_taus(gen_taus, reco_tau):
         return list(gen_taus.keys())[0], cos_r_tau1
     else:
         return list(gen_taus.keys())[1], cos_r_tau2
-    
-# I'm sure this exists already 
+
+# I'm sure this exists already
 def dRAngle(p1,p2):
-    """ Calculate the angle between two particles in the eta-phi plane
+    """
+    Calculate the angle between two particles in the eta-phi plane
     Args:
-    p1 (TLorentzVector): 4-momentum vector of the first particle
-    p2 (TLorentzVector): 4-momentum vector of the second particle
+        p1 (TLorentzVector): 4-momentum vector of the first particle
+        p2 (TLorentzVector): 4-momentum vector of the second particle
     Returns:
-    float: angle between the two particles in the theta-phi plane
+        float: angle between the two particles in the theta-phi plane
     """
     dphi=p1.Phi()-p2.Phi()
     if (dphi>math.pi) : dphi=2*math.pi-dphi
@@ -100,12 +370,13 @@ def sort_by_P(Tau):
     return sortedTau
 
 def load_yaml_config(config_file, default_config):
-    """Load the YAML configuration file if it exists.
+    """
+    Load the YAML configuration file if it exists.
     Args:
-    args (argparse.Namespace): command line arguments
-    config_file (str): path to the YAML configuration file
+            args (argparse.Namespace): command line arguments
+            config_file (str): path to the YAML configuration file
     Returns:
-    dict: configuration parameters
+            dict: configuration parameters
     """
     if config_file is not None and os.path.exists(config_file):
         with open(config_file, "r") as file:
@@ -122,12 +393,13 @@ def load_yaml_config(config_file, default_config):
     return config
 
 def load_yaml_config(config_file, default_config):
-    """Load the YAML configuration file if it exists.
+    """
+    Load the YAML configuration file if it exists.
     Args:
-    args (argparse.Namespace): command line arguments
-    config_file (str): path to the YAML configuration file
+        args (argparse.Namespace): command line arguments
+        config_file (str): path to the YAML configuration file
     Returns:
-    dict: configuration parameters
+        config (dict): configuration parameters
     """
     if config_file is not None and os.path.exists(config_file):
         with open(config_file, "r") as file:
@@ -144,24 +416,39 @@ def load_yaml_config(config_file, default_config):
     return config
 
 
-
-
 def setup_analysis_config(
     default_config: str = "config/default/taurecolong.yaml",
     output_base: str = "Results/TauReco/",
     parser_hook=None,
     exp = False,
+    particle_analysis = False
 ):
     """
-    Encapsula la configuración de argumentos, cargas de configuración,
-    aplicación de cortes, configuración de rutas de salida y logging.
+    Encapsulates argument configuration, config loading, cut application,
+    output path setup, and logging initialization.
 
-    Devuelve un diccionario con keys:
-      - args: Namespace de argparse
-      - config: diccionario de configuración actualizado
-      - outputpath: ruta de salida creada
-      - fileOutName: nombre de archivo de salida
-      - loggers: diccionario con loggers (config, io, processing, pi0mass)
+    Args:
+        default_config (str, optional): Path to the default YAML configuration file. 
+            Defaults to "config/default/taurecolong.yaml".
+        output_base (str, optional): Base directory for output results. 
+            Defaults to "Results/TauReco/".
+        parser_hook (_type_, optional): Optional hook to modify the argument parser. 
+            Defaults to None.
+        exp (bool, optional): Whether to enable experimental analysis mode. 
+            Defaults to False.
+        particle_analysis (bool, optional): Whether to enable particle-level analysis. 
+            Defaults to False.
+
+    Raises:
+        ValueError: Raised if `--test-pfo` is used without `--gatr-result`.
+
+    Returns:
+        dict: Dictionary containing:
+            - **args** (*argparse.Namespace*): Parsed command-line arguments.
+            - **config** (*dict*): Updated configuration dictionary.
+            - **outputpath** (*str*): Created output path.
+            - **fileOutName** (*str*): Output file name.
+            - **loggers** (*dict*): Dictionary of loggers (config, io, processing, pi0mass).
     """
     # Argument parser setup
     parser = argparse.ArgumentParser(
@@ -211,6 +498,18 @@ def setup_analysis_config(
         action="store_true",
         help="Use this flag to test the PFOs in same files as GATr.",
     )
+    parser.add_argument(
+        "--hist-config",
+        type=str,
+        default="config/histograms/particles_config.yml",
+        help="Path to the histogram configuration file.",
+    )
+    parser.add_argument(
+        "--prefix", required = False
+    )
+    parser.add_argument(
+        "--file-suffix", required = False, default = None
+    )
 
     if parser_hook is not None:
         parser_hook(parser)
@@ -219,7 +518,19 @@ def setup_analysis_config(
 
     # Load config
     config = load_yaml_config(args.config, default_config)
+    histograms_config = load_yaml_config(args.hist_config, None)
 
+    # systematics error (if exists)
+    if hasattr(args, "sys_err"):
+        sys_err_file = args.sys_err
+        if os.path.exists(sys_err_file):
+            with open(sys_err_file, "r") as file:
+                sys_err_config = yaml.safe_load(file)
+            config["systematics_errors"] = sys_err_config
+        else:
+            raise FileNotFoundError(f"Error: Systematics error file '{sys_err_file}' does not exist.")
+    
+    
     # Cut Configuration
     cuts = config.get("cuts", {})
     for key in ["tauCut", "dRMax", "TauPhotonPCut", "TauPionPCut", "NeutronCut", "MatchedGenMinDR", "generalPCut"]:
@@ -257,14 +568,20 @@ def setup_analysis_config(
 
     # Output path logic
     base = output_base + outfile + suffix[1:] + "/"
-    if args.gatr_result and args.test_pfo:
+    if args.gatr_result and args.test_pfo and not args.prefix:
         path = output_base + "PFO_" + outfile + suffix[1:] + "/"
+    elif args.gatr_result and args.prefix:
+        path = output_base + args.prefix + outfile + suffix[1:] + "/"
     elif args.test_pfo:
         raise ValueError("Cannot use --test-pfo without --gatr-result.")
+    elif args.prefix:
+        path = output_base + args.prefix + outfile + suffix[1:] + "/"
     else:
         path = base
     if args.gatr_result:
         path = "GATr_" + path
+    if particle_analysis:
+        path = "ParticleEval_" + path
     os.makedirs(path, exist_ok=True)
 
     config.setdefault("output", {}).setdefault("outputfile", [])
@@ -280,13 +597,13 @@ def setup_analysis_config(
         lvl = logging.WARNING if args.verbose == 0 else logging.INFO if args.verbose == 1 else logging.DEBUG
         handlers = []
         if args.verbose < 2:
-            handlers = [logging.StreamHandler(sys.stdout), logging.FileHandler(os.path.join(path, "app.log"), mode="w")]
+            handlers = [logging.StreamHandler(sys.stdout), logging.FileHandler(os.path.join(path, f"app_{decay_str}.log"), mode="w")]
         elif args.verbose == 2:
             sh = logging.StreamHandler(sys.stdout); sh.setLevel(logging.DEBUG)
-            fh = logging.FileHandler(os.path.join(path, "app.log"), mode="w"); fh.setLevel(logging.DEBUG)
+            fh = logging.FileHandler(os.path.join(path, f"app_{decay_str}.log"), mode="w"); fh.setLevel(logging.DEBUG)
             handlers = [sh, fh]
         else:
-            handlers = [logging.FileHandler(os.path.join(path, "app.log"), mode="w")]
+            handlers = [logging.FileHandler(os.path.join(path, f"app_{decay_str}.log"), mode="w")]
 
         logging.basicConfig(
             level=lvl,
@@ -318,6 +635,7 @@ def setup_analysis_config(
     return {
         "args": args,
         "config": config,
+        "histograms_config": histograms_config,
         "outputpath": path,
         "fileOutName": file_out,
         "loggers": loggers,
@@ -330,8 +648,34 @@ def setup_analysis_config(
     }
 
 
-def get_root_trees_path(sample, gatr_results_path, loggers, test):
-    
+def get_root_trees_path(sample, gatr_results_path, loggers, test, args=None):
+    """
+    Loads ROOT file paths and associated GATr (Graph Analysis Training results) predictions 
+    for a given sample. Handles both local GATr result files and simulation-only workflows.
+
+    Depending on whether `gatr_results_path` is provided, it either:
+      - Loads GATr prediction files and corresponding ROOT simulation files listed in a CSV file.
+      - Or, if `gatr_results_path` is None, reads simulation ROOT files directly from a predefined path.
+
+    Args:
+        sample (str): Name of the dataset or sample to process (used when `gatr_results_path` is None).
+        gatr_results_path (str or None): Path to a CSV file containing columns `prediction_file` and 
+            `simulation_file`. If None, simulation files are loaded from the default path.
+        loggers (dict): Dictionary of loggers with at least the `"io"` key used for logging 
+            information, warnings, and errors.
+        test (bool): If True, limits the processing to only one file for quick testing.
+        args (argparse.Namespace or None): Optional argument parser namespace containing additional
+            command-line arguments, such as file suffixes.
+
+    Raises:
+        SystemExit: If `gatr_results_path` is provided but the path does not exist.
+
+    Returns:
+        tuple:
+            - **filenames** (*list[str]*): List of valid ROOT file paths to be processed.
+            - **mlpf_results** (*dict*): Dictionary mapping unique event IDs to MLPF/GATr predictions 
+              (empty if no `gatr_results_path` is provided).
+    """
     mlpf_results = {}
     
     if gatr_results_path is not None:
@@ -346,7 +690,7 @@ def get_root_trees_path(sample, gatr_results_path, loggers, test):
         n_files = 0
         n_preds = 1
         for i, row in enumerate(mlpf_config.iterrows()):
-            if test == True and i > 0:
+            if test == True and i > 5:
                 break
             
             mlpf_predictions_path = row[1]["prediction_file"]
@@ -354,7 +698,7 @@ def get_root_trees_path(sample, gatr_results_path, loggers, test):
             my_file = Path(simulation_path)
             loggers["io"].debug("Reading file %s", simulation_path)
             if my_file.is_file():
-                root_file = myutils.open_root_file(simulation_path)
+                root_file = open_root_file(simulation_path)
                 if not root_file or root_file.IsZombie():
                     loggers["io"].warning("File %s is a zombie or could not be opened.", simulation_path)
                     continue
@@ -378,13 +722,28 @@ def get_root_trees_path(sample, gatr_results_path, loggers, test):
         path = "/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
         file = "out_reco_edm4hep_edm4hep"
         filenames = []
-        dir_path = path + "/" + sample
+        sample_path = None
+        if args.file_suffix is not None:
+            sample_path = args.file_suffix
+        else:
+            if sample.lower() in ("ZTauTau_SMPol_25Sept_MuonFix".lower(), "ztt"):
+                sample_path = "ZTauTau_SMPol_25Sept_MuonFix"
+            elif sample.lower() == "zqq":
+                sample_path = "Zqq_1M"
+            elif sample.lower() == "zee":
+                sample_path = "Zee_50k"
+            elif sample.lower() == "bhabha":
+                sample_path = "bhabha_1M" # bhabha_1M gives 1M events
+            else:
+                loggers["io"].error("Sample %s not recognized.", sample)
+                sys.exit(1)
+        dir_path = path + "/" + sample_path
 
         nfiles = len(os.listdir(dir_path))
 
         nfiles = 1000
         if test == True:
-            nfiles = 1
+            nfiles = 100
 
         loggers["io"].info("Reading files from %s", dir_path)
         for i in range(1, nfiles + 1):
@@ -392,9 +751,123 @@ def get_root_trees_path(sample, gatr_results_path, loggers, test):
             loggers["io"].debug("Reading file %s", filename)
             my_file = Path(filename)
             if my_file.is_file():
-                root_file = myutils.open_root_file(filename)
+                root_file = open_root_file(filename)
                 if not root_file or root_file.IsZombie():
                     logger_io.warning("File %s is a zombie or could not be opened.", filename)
                     continue
                 filenames.append(filename)
     return filenames, mlpf_results
+
+
+def compute_photon_resolution_two_by_two(reco_photons, gen_photons):
+    """
+    Calcula la resolución (E_reco - E_gen) / E_gen para dos fotones RECO y dos GEN.
+
+    Parámetros:
+        reco_photons: lista de 2 TLorentzVector
+        gen_photons:  lista de 2 TLorentzVector
+
+    Retorna:
+        (res1, res2): resoluciones asociadas tras minimizar ΔR total
+    """
+
+    if len(reco_photons) != 2 or len(gen_photons) != 2:
+        raise ValueError("Se requieren exactamente 2 fotones reco y 2 gen")
+
+    r1, r2 = reco_photons
+    g1, g2 = gen_photons
+
+    # ------------------------------
+    # Combinación A: r1↔g1 , r2↔g2
+    # ------------------------------
+    dR11 = dRAngle(r1, g1)
+    dR22 = dRAngle(r2, g2)
+    costA = dR11 + dR22
+
+    # ------------------------------
+    # Combinación B: r1↔g2 , r2↔g1
+    # ------------------------------
+    dR12 = dRAngle(r1, g2)
+    dR21 = dRAngle(r2, g1)
+    costB = dR12 + dR21
+
+    # Determinar emparejamiento óptimo
+    if costA <= costB:
+        pairs = [(r1, g1), (r2, g2)]
+    else:
+        pairs = [(r1, g2), (r2, g1)]
+
+    # Calcular resoluciones
+    resolutions = []
+    angles = []
+    gen_energies = []
+    for reco_p4, gen_p4 in pairs:
+        E_reco = reco_p4.P()
+        E_gen  = gen_p4.P()
+        res = (E_reco - E_gen) / E_gen if E_gen != 0 else 999.
+        resolutions.append(res)
+        angles.append(gen_p4.Theta())
+        gen_energies.append(E_gen)
+
+    return tuple(resolutions), tuple(angles), tuple(gen_energies)
+
+
+
+def update_resolution_hist(resolution, E_gen, theta,
+                           theta_bins_rad,
+                           energy_bins,
+                           hist_dict,
+                           bin_edges):
+    """
+    Update the resolution histogram dictionary based on angle and true energy.
+
+    Parameters
+    ----------
+    resolution : float
+        Value of (E_reco - E_gen) / E_gen.
+    E_gen : float
+        True photon energy.
+    theta : float
+        Photon incident angle in radians.
+    theta_bins_rad : dict
+        Dictionary defining detector regions and their angular ranges in radians.
+        Example: {"barrel": (theta_min, theta_max), ...}
+    energy_bins : list of [float, float]
+        List of energy bin intervals.
+    hist_dict : dict
+        Nested dictionary of histograms, structured as hist_dict[region][energy_bin].
+        Each entry is a numpy array containing histogram counts.
+    bin_edges : np.ndarray
+        Array of histogram bin edges.
+
+    Returns
+    -------
+    dict
+        The updated histogram dictionary.
+    """
+
+    # ---- Determinar la región del detector según theta ----
+    region = None
+    for reg, (tmin, tmax) in theta_bins_rad.items():
+        if tmin <= theta < tmax:
+            region = reg
+            break
+
+    # Si no pertenece a ninguna región conocida, no actualizar nada
+    if region is None:
+        return hist_dict
+
+    # ---- Determinar el bin de energía ----
+    energy_bin = None
+    for i, (emin, emax) in enumerate(energy_bins):
+        if emin <= E_gen < emax:
+            energy_bin = i
+            break
+
+    # Si la energía no cae en un bin válido, no actualizar nada
+    if energy_bin is None:
+        return hist_dict
+    
+    hist_dict[region][energy_bin].append(resolution)
+
+    return hist_dict

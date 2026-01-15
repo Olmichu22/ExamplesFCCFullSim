@@ -66,10 +66,13 @@ for outputfile in config["output"]["outputfile"]:
   if decay_str in outputfile:
     input_file = str(outputfile)  # Ensure file is a string
     break
-for outputfile in config["output"]["outputlabels"]:
-  if decay_str in outputfile:
-    labels_file = str(outputfile)  # Ensure labels_file is a string
-    break
+if config["output"].get("outputlabels") is not None:
+  for outputfile in config["output"]["outputlabels"]:
+    if decay_str in outputfile:
+      labels_file = str(outputfile)  # Ensure labels_file is a string
+      break
+else:
+  labels_file = None
 
 if input_file == None:
   raise Exception(f"Output file not found for decay {decay_str}")
@@ -77,41 +80,56 @@ if labels_file == None:
   # Warning if labels file is not found
   warnings.warn(f"Labels file not found for decay {decay_str}. CM plot will not be generated.")
 
-
-file_path = config["output"]["outputpath"]+input_file
+file_path = config["output"]["outputpath"]+"Histos_"+input_file
+print(file_path)
+if not os.path.exists(file_path):
+  file_path = config["output"]["outputpath"]+input_file
+  if not os.path.exists(file_path):
+    raise Exception(f"Input file {input_file} not found in path {config['output']['outputpath']} or {config['output']['outputpath']}Histos_")
 true_predict_labels = labels_file
 
+print(f"Input file: {file_path}")
+# exit(0)
 # Open the file
 file = ROOT.TFile(file_path)
 
-def formatHisto(file,variab,rename,titleX,color=ROOT.kBlack, linestyle=1, fillstyle=3001):
-  histo = file.Get(variab)
-  histo.SetName(rename)
-  if titleX != None:
-    histo.SetXTitle(titleX)
-  histo.SetLineColor(color)
-  # histo.SetLineWidth(2)
-  histo.SetLineStyle(linestyle)
-  if fillstyle != None:
-    histo.SetFillStyle(fillstyle)
-    histo.SetFillColor(color)
-  #histo.SetMarkerColor(color)
-  #histo.SetMarkerStyle(20)
-  # histo.Sumw2()
-  return histo
+# def formatHisto(file,variab,rename,titleX,color=ROOT.kBlack, linestyle=1, fillstyle=3001):
+#   histo = file.Get(variab)
+#   histo.SetName(rename)
+#   if titleX != None:
+#     histo.SetXTitle(titleX)
+#   histo.SetLineColor(color)
+#   # histo.SetLineWidth(2)
+#   histo.SetLineStyle(linestyle)
+#   if fillstyle != None:
+#     histo.SetFillStyle(fillstyle)
+#     histo.SetFillColor(color)
+#   #histo.SetMarkerColor(color)
+#   #histo.SetMarkerStyle(20)
+#   # histo.Sumw2()
+#   return histo
 
 # Select case for the type of plot
-variabs1D = plot_config["variabs_hist"]
-labels1D = plot_config["plot_titles_config_hist"]
-variabs2D = plot_config["variabs_2d"]
-labels2D = plot_config["plot_titles_config_2d"]
+variabs1D = plot_config.get("variabs_hist", [])
+labels1D = plot_config.get("plot_titles_config_hist", {})
+variabs2D = plot_config.get("variabs_2d", [])
+labels2D = plot_config.get("plot_titles_config_2d", {})
+
+def check_variab_in_file(file, variabs):
+  missing_variabs = []
+  for variab in variabs:
+    histo = file.Get(variab)
+    if histo is None:
+      missing_variabs.append(variab)
+  return missing_variabs
+
 if labels_file != None:
   results_df = pd.read_csv(true_predict_labels)
 
 for typeplt in typeplot:
   if typeplt == "1D":
-    variabs = plot_config["variabs_hist"]
-    labels = plot_config["plot_titles_config_hist"]
+    variabs = plot_config.get("variabs_hist", [])
+    labels = plot_config.get("plot_titles_config_hist", {})
     if args.same == "True":
       variabs_and_config = plot_config.get("plot_together", dict())
       plot_hist_together(file, variabs_and_config, outputpath)
@@ -121,9 +139,9 @@ for typeplt in typeplot:
     zoom_config = plot_config.get("Zoom", None)
     if zoom_config:
       plot_hist_zoom(file, zoom_config, outputpath)
-  elif typeplt == "2D":
-    variabs = plot_config["variabs_2d"]
-    labels = plot_config["plot_titles_config_2d"]
+  elif typeplt == "2D" and variabs2D:
+    variabs = plot_config.get("variabs_2d", [])
+    labels = plot_config.get("plot_titles_config_2d", {})
     plot_2D_hist(file, variabs, labels, outputpath)
   elif typeplt == "CM" and labels_file != None:
     results_df = pd.read_csv(true_predict_labels)

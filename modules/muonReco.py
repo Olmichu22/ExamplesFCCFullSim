@@ -1,15 +1,8 @@
-import sys
-import math
 import ROOT
-from array import array
-from podio import root_io
-import edm4hep
-from modules.ParticleObjects import GenParticle, RecoParticle
+from modules.ParticleObjects import RecoParticle
+from modules.tauReco import modifyMomentumWithErrors
 
-from modules import myutils
-
-
-def findAllMuons(pfos, minPt):
+def findAllMuons(pfos, minPt, err_d_mu: float = 0., err_p_mu: float = 0.):
   """ Find all tau candidates starting from PFO collection by recognizing the decay products.
 
   Args:
@@ -35,7 +28,7 @@ def findAllMuons(pfos, minPt):
         continue
     muonpdg = pf.getPDG()
     muoncharge = pf.getCharge()
-    
+    # muonP4 = modifyMomentumWithErrors(muonP4, err_d_mu, err_p_mu)
     muon = RecoParticle(p4 = muonP4, ID = -13, charge = muoncharge, PDGID=muonpdg)      
 
     muons[nMuons]=muon

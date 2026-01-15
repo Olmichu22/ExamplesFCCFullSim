@@ -1,0 +1,796 @@
+variabs_hist:
+- hGenClusteredPionsMaxPvsDR
+- hGenClusteredPionsMinPvsDR
+- hGenAllPionsP
+- hGenAllPionsTheta
+- hGenIsolatedPionsP
+- hGenIsolatedPionsTheta
+- hGenClusterPionP
+- hGenClusterPionTheta
+- hGenPionClusterDr
+- hMatchedClusteredPionsPvsDR
+- hUnmatchedClusteredPionsPvsDR
+- hMatchedClusteredPionsThetavsDR
+- hUnmatchedClusteredPionsThetavsDR
+- hMatchedGenPionClusterDr
+- hMatchedClusterUnmatchedGenPionDr
+- hMatchedTrackPionClusterDr
+- hGenPionsUnmatchedGenP
+- hGenPionsUnmatchedGenTheta
+- hIsolatedPionsUnmatchedGenP
+- hIsolatedPionsUnmatchedGenTheta
+- hClusterPionsUnmatchedGenP
+- hClusterPionsUnmatchedGenTheta
+- hMissmatchedGenPionsGenP
+- hMMissmatchedGenPionsGenTheta
+- hMissmatchedIsolatedGenPionsGenP
+- hMissmatchedIsolatedGenPionsGenTheta
+- hMissmatchedClusterGenPionsGenP
+- hMissmatchedClusterGenPionsGenTheta
+- hGenPionsWOTrackGenP
+- hGenPionsWOTrackGenTheta
+- hGenPionsWOTrackWRecoPionGenP
+- hGenPionsWOTrackWRecoPionGenTheta
+- hGenPionsWOTrackWORecoPionGenP
+- hGenPionsWOTrackWORecoPionGenTheta
+- hGenPionsWTrackGenP
+- hGenPionsWTrackGenTheta
+- hGenPionsWTrackWRecoGenP
+- hGenPionsWTrackWRecoGenTheta
+- hGenPionsWTrackWORecoGenP
+- hGenPionsWTrackWORecoGenTheta
+- hGenPionsWOTrackWRecoPionRecoP
+- hGenPionsWOTrackWRecoPionRecoTheta
+- hGenPionsWTrackWRecoPionRecoP
+- hGenPionsWTrackWRecoPionRecoTheta
+- hGenPionsWTrackTrackP
+- hGenPionsWTrackTrackTheta
+- hGenPionsWTrackWRecoPionTrackP
+- hGenPionsWTrackWRecoPionTrackTheta
+- hGenPionsWTrackWORecoTrackP
+- hGenPionsWTrackWORecoTrackTheta
+- hMatchedAllGenPionsP
+- hMatchedAllGenPionsTheta
+- hMatchedAllRecoPionsP
+- hMatchedAllRecoPionsTheta
+- hMatchedIsolatedPionsGenP
+- hMatchedIsolatedPionsGenTheta
+- hMatchedIsolatedPionsRecoP
+- hMatchedIsolatedPionsRecoTheta
+- hMatchedClusterPionGenP
+- hMatchedClusterPionGenTheta
+- hMatchedClusterPionRecoP
+- hMatchedClusterPionRecoTheta
+- hMatchedUnmatchedRecoPionsP
+- hMatchedUnmatchedRecoPionsTheta
+- hMissmatchedGenPionP_13
+- hMissmatchedGenPionTheta_13
+- hMissmatchedIsolatedGenPionP_13
+- hMissmatchedIsolatedGenPionTheta_13
+- hMissmatchedClusterGenPionP_13
+- hMissmatchedClusterGenPionTheta_13
+- hMissmatchedClusterGenPionDR_13
+- hMissmatchedGenPionP_11
+- hMissmatchedGenPionTheta_11
+- hMissmatchedIsolatedGenPionP_11
+- hMissmatchedIsolatedGenPionTheta_11
+- hMissmatchedClusterGenPionP_11
+- hMissmatchedClusterGenPionTheta_11
+- hMissmatchedClusterGenPionDR_11
+- hMissmatchedGenPionP_2112
+- hMissmatchedGenPionTheta_2112
+- hMissmatchedIsolatedGenPionP_2112
+- hMissmatchedIsolatedGenPionTheta_2112
+- hMissmatchedClusterGenPionP_2112
+- hMissmatchedClusterGenPionTheta_2112
+- hMissmatchedClusterGenPionDR_2112
+- hNRecoPionsInCluster
+- hRecoAllPionsP
+- hRecoAllPionsTheta
+plot_titles_config_hist:
+  hGenClusteredPionsMaxPvsDR:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenClusteredPionsMinPvsDR:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenAllPionsP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenAllPionsTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenIsolatedPionsP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenIsolatedPionsTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenClusterPionP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenClusterPionTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionClusterDr:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedClusteredPionsPvsDR:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hUnmatchedClusteredPionsPvsDR:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedClusteredPionsThetavsDR:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hUnmatchedClusteredPionsThetavsDR:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedGenPionClusterDr:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedClusterUnmatchedGenPionDr:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedTrackPionClusterDr:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsUnmatchedGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsUnmatchedGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hIsolatedPionsUnmatchedGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hIsolatedPionsUnmatchedGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hClusterPionsUnmatchedGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hClusterPionsUnmatchedGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedGenPionsGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMMissmatchedGenPionsGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedIsolatedGenPionsGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedIsolatedGenPionsGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionsGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionsGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWOTrackGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWOTrackGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWOTrackWRecoPionGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWOTrackWRecoPionGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWOTrackWORecoPionGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWOTrackWORecoPionGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackWRecoGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackWRecoGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackWORecoGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackWORecoGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWOTrackWRecoPionRecoP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWOTrackWRecoPionRecoTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackWRecoPionRecoP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackWRecoPionRecoTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackTrackP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackTrackTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackWRecoPionTrackP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackWRecoPionTrackTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackWORecoTrackP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hGenPionsWTrackWORecoTrackTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedAllGenPionsP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedAllGenPionsTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedAllRecoPionsP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedAllRecoPionsTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedIsolatedPionsGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedIsolatedPionsGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedIsolatedPionsRecoP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedIsolatedPionsRecoTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedClusterPionGenP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedClusterPionGenTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedClusterPionRecoP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedClusterPionRecoTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedUnmatchedRecoPionsP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedUnmatchedRecoPionsTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedGenPionP_13:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedGenPionTheta_13:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedIsolatedGenPionP_13:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedIsolatedGenPionTheta_13:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionP_13:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionTheta_13:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionDR_13:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedGenPionP_11:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedGenPionTheta_11:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedIsolatedGenPionP_11:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedIsolatedGenPionTheta_11:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionP_11:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionTheta_11:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionDR_11:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedGenPionP_2112:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedGenPionTheta_2112:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedIsolatedGenPionP_2112:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedIsolatedGenPionTheta_2112:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionP_2112:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionTheta_2112:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMissmatchedClusterGenPionDR_2112:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hNRecoPionsInCluster:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hRecoAllPionsP:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hRecoAllPionsTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+variabs_2d: []
+plot_titles_config_2d: {}

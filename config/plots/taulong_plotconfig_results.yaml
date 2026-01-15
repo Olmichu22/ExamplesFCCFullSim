@@ -1,4 +1,10 @@
 variabs_hist:
+- hEffiGenMissidPionP_Miss2112
+- hEffiGenMissidPionP_Miss11
+- hEffiGenMissidPionP_Miss13
+- hEffiGenMissidPionTheta_Miss2112
+- hEffiGenMissidPionTheta_Miss11
+- hEffiGenMissidPionTheta_Miss13
 - histoRecoRhoMass
 - histoRecoa1OnePionMass
 - histoRecoa1ThreePionMass
@@ -6,9 +12,17 @@ variabs_hist:
 - histoGenZMass
 - histoGenZVisMass
 - hEffiGenAllPionsP
+- hGenUnmatchedPionsPNorm
+- hGenMissmatchedPionsPNorm
 - hEffiGenAllPionsTheta
+- hGenUnmatchedPionsThetaNorm
+- hGenMissmatchedPionsThetaNorm
 - hEffiGenAllPhotonsP
+- hGenUnmatchedPhotonsPNorm
+- hGenMissmatchedPhotonsPNorm
 - hEffiGenAllPhotonsTheta
+- hGenUnmatchedPhotonsThetaNorm
+- hGenMissmatchedPhotonsThetaNorm
 - hMatchedPionsPRes
 - hMatchedPionsThetaRes
 - hMatchedPhotonPRes
@@ -34,9 +48,10 @@ variabs_hist:
 - hEffiGenHadronTauP
 - histoMatchedGenHadronTauP
 - histoGenHadronP
-- hEffiGenAllPionsP
+# - hEffiGenAllPionsP
 - hEffiGenAllPionsTheta
-- hUnmatchedGenPionP
+- hUnmatchedGenPionsP
+- hUnmatchedGenPionsTheta
 - hUnmatchedRecoPionsP
 - h111RecoPionsP
 # - h16RecoPionsP
@@ -169,6 +184,107 @@ variabs_hist:
 - hEffiGenTauVisP10
 plot_together:
 
+  PionRecognitionPEfficiency:
+    variabs:
+      - hEffiGenAllPionsP
+      - hGenUnmatchedPionsPNorm
+      - hGenMissmatchedPionsPNorm
+    labels:
+      - Efficiency All Pions
+      - Unmatched Pions
+      - Missmatched Pions
+    title: "Pion Efficiency vs P"
+    x: "P [GeV/c]"
+    y: "Efficiency"
+    position: [0.65, 0.4, 0.9, 0.6]
+    gridy: true
+  
+  PionRecognitionPEfficiencyPerMissid:
+    variabs:
+      - hEffiGenAllPionsP
+      - hGenUnmatchedPionsPNorm
+      - hEffiGenMissidPionP_Miss2112
+      - hEffiGenMissidPionP_Miss11
+      - hEffiGenMissidPionP_Miss13
+    labels:
+      - Efficiency All Pions
+      - Unmatched Pions
+      - Misid Pions (neutral hadrons)
+      - Misid Pions (electrons)
+      - Misid Pions (muons)
+    title: "Pion Efficiency vs P"
+    x: "P [GeV/c]"
+    y: "Efficiency"
+    position: [0.65, 0.4, 0.9, 0.6]
+    gridy: true
+  
+  PionRecognitionThetaEfficiency:
+    variabs:
+      - hEffiGenAllPionsTheta
+      - hGenUnmatchedPionsThetaNorm
+      - hGenMissmatchedPionsThetaNorm
+    labels:
+      - Efficiency All Pions
+      - Unmatched Pions
+      - Missmatched Pions
+    title: "Pion Efficiency vs Theta"
+    x: \theta \text{ [rad]}
+    y: "Efficiency"
+    position: [0.35, 0.4, 0.65, 0.6]
+    gridy: true
+
+  PionRecognitionThetaEfficiencyPerMissid:
+    variabs:
+      - hEffiGenAllPionsTheta
+      - hGenUnmatchedPionsThetaNorm
+      - hEffiGenMissidPionTheta_Miss2112
+      - hEffiGenMissidPionTheta_Miss11
+      - hEffiGenMissidPionTheta_Miss13
+    labels:
+      - Efficiency All Pions
+      - Unmatched Pions
+      - Misid Pions (neutral hadrons)
+      - Misid Pions (electrons)
+      - Misid Pions (muons)
+    title: "Pion Efficiency vs Theta"
+    x: \theta \text{ [rad]}
+    y: "Efficiency"
+    position: [0.35, 0.4, 0.65, 0.6]
+    gridy: true
+
+
+  PhotonRecognitionPEfficiency:
+    variabs:
+      - hEffiGenAllPhotonsP
+      - hGenUnmatchedPhotonsPNorm
+      - hGenMissmatchedPhotonsPNorm
+    labels:
+      - Efficiency All Photons
+      - Unmatched Photons
+      - Missmatched Photons
+    title: "Photon Efficiency vs P"
+    x: "P [GeV/c]"
+    y: "Efficiency"
+    position: [0.65, 0.4, 0.9, 0.6]
+    gridy: true
+
+
+  PhotonRecognitionThetaEfficiency:
+    variabs:
+      - hEffiGenAllPhotonsTheta
+      - hGenUnmatchedPhotonsThetaNorm
+      - hGenMissmatchedPhotonsThetaNorm
+    labels:
+      - Efficiency All Photons
+      - Unmatched Photons
+      - Missmatched Photons
+    title: "Photon Efficiency vs Theta"
+    x: \theta \text{ [rad]}
+    y: "Efficiency"
+    position: [0.35, 0.4, 0.65, 0.6]
+    gridy: true
+
+
   TauP:
     variabs:
       - histoGenTauVisP
@@ -269,14 +385,15 @@ plot_together:
   PionMissClassP:
     variabs:
       # - hUnmatchedRecoPionsP
-      - h111RecoPionsP
       # - h16RecoPionsP
       - h11RecoPionsP
       - h321RecoPionsP
       - h13RecoPionsP
+      - h130RecoPionsP
       - h311RecoPionsP
       - h12RecoPionsP
       - h14RecoPionsP
+      - h111RecoPionsP
       # - h221RecoPionsP
       # - h130RecoPionsP
       # - h310RecoPionsP
@@ -285,69 +402,133 @@ plot_together:
       # - h323RecoPionsP
     labels:
       # - Unmached Pions
-      - Pion -> 111
       - Pion -> 11
       - Pion -> 321
       - Pion -> 13
+      - Pion -> 130
       - Pion -> 311
       - Pion -> 12
       - Pion -> 14
-    title: Pion missmatch P Distribution
+      - Pion -> 111
+    title: \text{Reco } \pi^\pm \text{ matched with other particles}
     x: Pion P [GeV/c]
     y: Events
     logy: True
+    position: [0.8, 0.75, 0.95, 0.9]
+  # PhotonP:
+  #   linewidth: 4
+  #   fill: True
+  #   variabs:
+  #     - hGenAllPhotonsP
+  #     - hMatchedAllPhotonsP
+  #     - hRecoAllPhotonsP
+  #   labels:
+  #     - \text{Gen } \gamma
+  #     - \text{Gen } \gamma \text{ emparejado}
+  #     - \text{Reco } \gamma \text{ emparejado}
+  #   title: \text{Distribución } \gamma \text{ P}
+  #   x: "P [GeV/c]"
+  #   y: "Eventos"
+  #   position: [0.6, 0.6, 0.9, 0.9]
   PhotonP:
+    linewidth: 4
+    fill: True
     variabs:
-      - hMatchedAllPhotonsP
       - hGenAllPhotonsP
+      - hMatchedAllPhotonsP
       - hRecoAllPhotonsP
     labels:
-      - \text{Gen } \gamma \text{ emparejado}
       - \text{Gen } \gamma
-      - \text{Reco } \gamma \text{ emparejado}
-    title: \text{Distribución } \gamma \text{ P}
+      - \text{Gen matched } \gamma 
+      - \text{Reco matched } \gamma
+    title: \gamma \text{ P Distribution}
     x: "P [GeV/c]"
-    y: "Eventos"
+    y: "Events"
     position: [0.6, 0.6, 0.9, 0.9]
+  # PhotonTheta:
+  #   variabs:
+  #     - hMatchedAllPhotonsTheta
+  #     - hGenAllPhotonsTheta
+  #     - hRecoAllPhotonsTheta
+  #   labels:
+  #     - \text{Gen } \gamma \text{ emparejado}
+  #     - \text{Gen } \gamma
+  #     - \text{Reco } \gamma \text{ emparejado}
+  #   title: \text{Distribución } \gamma \text{ }\theta
+  #   x: \theta \text{[rad]}
+  #   y: "Eventos"
+  #   position: [0.3, 0.3, 0.6, 0.5]
   PhotonTheta:
     variabs:
-      - hMatchedAllPhotonsTheta
       - hGenAllPhotonsTheta
+      - hMatchedAllPhotonsTheta
       - hRecoAllPhotonsTheta
     labels:
-      - \text{Gen } \gamma \text{ emparejado}
       - \text{Gen } \gamma
-      - \text{Reco } \gamma \text{ emparejado}
-    title: \text{Distribución } \gamma \text{ }\theta
+      - \text{Gen matched } \gamma
+      - \text{Reco matched } \gamma
+    title: \gamma \text{ }\theta\text{ Distribution}
     x: \theta \text{[rad]}
-    y: "Eventos"
+    y: "Events"
     position: [0.3, 0.3, 0.6, 0.5]
+  # PionP:
+  #   linewidth: 4
+  #   fill: True
+  #   variabs:
+  #     - hGenAllPionsP
+  #     - hMatchedAllPionsP
+  #     - hRecoAllPionsP
+  #   labels:
+  #     - \text{Gen } \pi^\pm
+  #     - \text{Gen } \pi^\pm \text{ emparejado}
+  #     - \text{Reco } \pi^\pm \text{ emparejado}
+  #   title: \text{Distribución }\pi^\pm\text{ P}
+  #   x: "P [GeV/c]"
+  #   y: "Eventos"
+  #   position: [0.6, 0.6, 0.9, 0.9]
+  
   PionP:
+    linewidth: 4
+    fill: True
     variabs:
-      - hMatchedAllPionsP
       - hGenAllPionsP
+      - hMatchedAllPionsP
       - hRecoAllPionsP
     labels:
-      - \text{Gen } \pi^\pm \text{ emparejado}
       - \text{Gen } \pi^\pm
-      - \text{Reco } \pi^\pm \text{ emparejado}
-    title: \text{Distribución }\pi^\pm\text{ P}
+      - \text{Gen matched } \pi^\pm
+      - \text{Reco matched } \pi^\pm
+    title: \pi^\pm\text{ P Distribution}
     x: "P [GeV/c]"
-    y: "Eventos"
+    y: "Events"
     position: [0.6, 0.6, 0.9, 0.9]
+
+  # PionTheta:
+  #   variabs:
+  #     - hMatchedAllPionsTheta
+  #     - hGenAllPionsTheta
+  #     - hRecoAllPionsTheta
+  #   labels:
+  #     - \text{Gen } \pi^\pm \text{ emparejado}
+  #     - \text{Gen } \pi^\pm
+  #     - \text{Reco } \pi^\pm \text{ emparejado}
+  #   title: \text{Distribución } \pi^\pm \theta
+  #   x: \theta \text{[rad]}
+  #   y: "Eventos"
+  #   position: [0.3, 0.3, 0.6, 0.5]
 
   PionTheta:
     variabs:
-      - hMatchedAllPionsTheta
       - hGenAllPionsTheta
+      - hMatchedAllPionsTheta
       - hRecoAllPionsTheta
     labels:
-      - \text{Gen } \pi^\pm \text{ emparejado}
       - \text{Gen } \pi^\pm
-      - \text{Reco } \pi^\pm \text{ emparejado}
-    title: \text{Distribución } \pi^\pm \theta
+      - \text{Gen matched } \pi^\pm
+      - \text{Reco matched } \pi^\pm
+    title: \pi^\pm \theta \text{ Distribution}
     x: \theta \text{[rad]}
-    y: "Eventos"
+    y: "Events"
     position: [0.3, 0.3, 0.6, 0.5]
 
   Pi0Mass:
@@ -1241,34 +1422,43 @@ plot_titles_config_hist:
     title: "Tau P Resolution (Decay 0)"
     x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
+    print_mean: True
   histoTauPRes1:
     title: "Tau P Resolution (Decay 1)"
     x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
+    print_mean: True
   histoTauPRes2:
     title: "Tau P Resolution (Decay 2)"
     x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
+    print_mean: True
   histoTauPRes10:
     title: "Tau P Resolution (Decay 10)"
     x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
+    print_mean: True
   histoMatchedTauPRes0:
     title: "Matched Tau P Resolution (Decay 0)"
     x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
+    print_mean: True
   histoMatchedTauPRes1:
     title: "Matched Tau P Resolution (Decay 1)"
     x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
+    print_mean: True
+
   histoMatchedTauPRes2:
     title: "Matched Tau P Resolution (Decay 2)"
     x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
+    print_mean: True
   histoMatchedTauPRes10:
     title: "Matched Tau P Resolution (Decay 10)"
     x: "(P_{Reco}-P_{Gen})/P_{Gen}"
     y: "Events"
+    print_mean: True
   hEffiGenTauTheta0:
     title: "Efficiency Gen Tau Theta (Decay 0)"
     x: "Theta [rad]"
@@ -1359,6 +1549,6 @@ plot_titles_config_2d:
 
 
 cm_config:
-  # decays: [0, 1, 2, 10, 11]
+  decays: [-20, -2, -1, 0, 1, 2, 3, 4, 10, 11, 12]
   # photonDecays : [0, 1, 2, 3, 4, 10, 11]
   colorbar: false

@@ -1,0 +1,262 @@
+variabs_hist:
+# - RhoTwoPhotonDecayPGen_max
+# - RhoTwoPhotonDecaySumPGen_max
+# - RhoTwoPhotonDecayPiPhotonSumPGen_max
+# - RhoOnePhotonDecayPiPGen_max
+# - RhoOnePhotonDecayPhotonPGen_max
+# - RhoOnePhotonDecayPhotonSumPGen_max
+# - RhoOnePhotonDecayPhotonAngGen_max
+# - RhoOnePhotonDecayPiPhotonSumPGen_max
+# - PhotonThetaGen_max
+# - AllPhotonsPGen_max
+# - AllPhotonsThetaGen_max
+# - MissmatchedPhotonsPGen_max
+# - MissmatchedPhotonsThetaGen_max
+# - UnmatchedPhotonsPGen_max
+# - UnmatchedPhotonsThetaGen_max
+# - PhotonPGen_max
+# - PhotonThetaMatched_max
+# - AllPhotonsPMatched_max
+# - AllPhotonsThetaMatched_max
+# - PhotonPMatched_max
+# - PhotonPResMatched_max
+# - PhotonThetaResMatched_max
+# - ConstTwoPhotonAngDistReco_max
+# - ConstPi0MassFromPhotonMassReco_max
+# - ConstPi0MassFromPhotonDistReco_max
+# - Pi0MassOverNPhotonReco_max
+# - ConstlessPhotonPa1strMassReco_max
+# - ConstlessPhotonPa1strMassZoomReco_max
+# - ConstlessPhotonPa1strDistReco_max
+# - ConstxtraPhotonPrhostrMassReco_max
+# - ConstxtraPhotonPrhostrMassZoomReco_max
+# - ConstxtraPhotonPrhostrDistReco_max
+# - ConstlessPhotonPrhoReco_max
+# - ConstxtraPhotonPiReco_max
+# - ConstlessPhotonPrhoZoomReco_max
+# - ConstxtraPhotonPiZoomReco_max
+# - ThreePhotonMatchOnestrMassPReco_max
+# - ThreePhotonMatchOnestrDistPReco_max
+# - ThreePhotonMatchTwostrMassPReco_max
+# - ThreePhotonMatchTwostrDistPReco_max
+# - ThreePhotonNoMatchstrMassPReco_max
+# - ThreePhotonNoMatchstrDistPReco_max
+# - RhoTwoPhotonDecayPReco_max
+# - RhoTwoPhotonDecaySumPReco_max
+# - RhoTwoPhotonDecayPiPhotonSumPReco_max
+# - RhoOnePhotonDecayPiPReco_max
+# - RhoOnePhotonDecayPhotonPReco_max
+# - RhoOnePhotonDecayPiPhotonPReco_max
+# - ConstPi0MassMatched_max
+# - ConstPi0MassRhoGenReco_max
+
+- ConstPi0MassRhoRecoReco_max
+- ConstPi0MassRhoRecoReco_min
+- ConstPi0MassRhoRecoReco
+
+- ConstPi0MassFromPhotonMassReco_max
+- ConstPi0MassFromPhotonMassReco_min
+- ConstPi0MassFromPhotonMassReco
+
+- ConstPi0MassFromPhotonDistReco_max
+- ConstPi0MassFromPhotonDistReco_min
+- ConstPi0MassFromPhotonDistReco
+
+- PhotonPReco_max
+- PhotonPReco_min
+- PhotonPReco
+
+# - PhotonThetaReco_max
+# - PhotonPGen_max
+# - PhotonThetaGen_max
+# - PhotonPMatched_max
+# - PhotonThetaMatched_max
+# - ConstPi0MassGen_max
+# - ConstPi0Mass_max
+
+plot_together:
+  Pi0MassRho:
+    variabs:
+      - ConstPi0MassRhoRecoReco_max
+      - ConstPi0MassRhoRecoReco_min
+      - ConstPi0MassRhoRecoReco
+    labels:
+      - m_{\pi^0} \text{ from decays with 2 }\gamma \text{ (upper syst. limit)}
+      - m_{\pi^0} \text{ from decays with 2 }\gamma \text{ (lower syst. limit)}
+      - m_{\pi^0} \text{ from decays with 2 }\gamma\text{ (original reco)}
+
+    title: m_{\pi^0} \text{ Distribution according to syst. variations}
+    x: \text{Mass [GeV/c}^2\text{]}
+    y: "Normalized Events"
+    norm: True
+    position: [0.4, 0.6, 0.9, 0.8]
+
+  Pi0MassFromPhotonAssocwMass:
+    variabs:
+      - ConstPi0MassFromPhotonMassReco_max
+      - ConstPi0MassFromPhotonMassReco_min
+      - ConstPi0MassFromPhotonMassReco
+    labels:
+      - m_{\pi^0} \text{ from  }\gamma\gamma \text{ assoc. by mass (upper syst. limit)}
+      - m_{\pi^0} \text{ from  }\gamma\gamma \text{ assoc. by mass (lower syst. limit)}
+      - m_{\pi^0} \text{ from  }\gamma\gamma \text{ assoc. by mass (original reco)}
+    title: m_{\pi^0} \text{ Distribution according to syst. variations. Three } \gamma \text{ cases}
+    x: \text{Mass [GeV/c}^2\text{]}
+    y: "Normalized Events"
+    norm: True
+    position: [0.4, 0.6, 0.9, 0.8]
+  Pi0MassFromPhotonAssocwDist:
+    variabs:
+      - ConstPi0MassFromPhotonDistReco_max
+      - ConstPi0MassFromPhotonDistReco_min
+      - ConstPi0MassFromPhotonDistReco
+    labels:
+      - m_{\pi^0} \text{ from  }\gamma\gamma \text{ assoc. by dist. (upper syst. limit)}
+      - m_{\pi^0} \text{ from  }\gamma\gamma \text{ assoc. by dist. (lower syst. limit)}
+      - m_{\pi^0} \text{ from  }\gamma\gamma \text{ assoc. by dist. (original reco)}
+    title: m_{\pi^0} \text{ Distribution according to syst. variations. Three } \gamma \text{ cases}
+    x: \text{Mass [GeV/c}^2\text{]}
+    y: "Normalized Events"
+    norm: True
+    position: [0.4, 0.6, 0.9, 0.8]
+  
+  PhotonP:
+    variabs:
+      - PhotonPReco_max
+      - PhotonPReco_min
+      - PhotonPReco
+    labels:
+      - P_{\gamma} \text{ (upper syst. limit)}
+      - P_{\gamma} \text{ (lower syst. limit)}
+      - P_{\gamma} \text{ (original reco)}
+    title: P_{\gamma} \text{ Distribution according to syst. variations}
+    x: P_{\gamma}\text{ [GeV/c]}
+    y: "Normalized Events"
+    norm: False
+    position: [0.4, 0.6, 0.9, 0.8]
+  
+  RhoDecayRes:
+    variabs:
+      - TauPRes1_max
+      - TauPRes1_min
+      - TauPRes1
+    labels:
+      - P resolution (upper syst. limit)
+      - P resolution (lower syst. limit)
+      - P resolution
+    title: \text{Histogram of }\rho \text{ Decay Resolution}
+    x: Resolution
+    y: Normalized Events
+    norm: true
+
+  RhoDecayEffi:
+    variabs:
+      - hEffiGenTauP1_max
+      - hEffiGenTauP1_min
+      - hEffiGenTauP1
+    labels:
+      - \rho \text{ Decay Efficiency (upper syst. limit)}
+      - \rho \text{ Decay Efficiency (lower syst. limit)}
+      - \rho \text{ Decay Efficiency}
+    title: \text{Histogram of }\rho \text{ Decay Efficiency}
+    x: "P [GeV/c]"
+    y: "Efficiency"
+    norm: true
+
+plot_titles_config_hist:
+  ConstPi0MassRhoRecoReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassRhoRecoReco_min:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassRhoRecoReco:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassFromPhotonMassReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassFromPhotonMassReco_min:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassFromPhotonMassReco:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassFromPhotonDistReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassFromPhotonDistReco_min:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  ConstPi0MassFromPhotonDistReco:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonPReco_max:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonPReco_min:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  PhotonPReco:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0

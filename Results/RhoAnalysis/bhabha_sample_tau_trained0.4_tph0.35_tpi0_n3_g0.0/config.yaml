@@ -1,0 +1,25 @@
+cuts:
+  MatchedGenMinDR: 1
+  NeutronCut: 3
+  TauPhotonPCut: 0.35
+  TauPionPCut: 0
+  dRMax: 0.4
+  generalPCut: 0.0
+  tauCut: 2
+general:
+  decay:
+  - -777
+  - 0
+  matchedCM: 'True'
+  outfile: tau_trained
+  sample: bhabha
+  test: 'False'
+output:
+  outputfile:
+  - tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  outputlabels: null
+  outputpath: Results/RhoAnalysis/bhabha_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/
+systematics_errors:
+  photon_config:
+    const: 0.01
+    factor: 0.0

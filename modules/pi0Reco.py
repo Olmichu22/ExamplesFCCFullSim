@@ -1,10 +1,5 @@
-import sys
-import math
 import ROOT
-from array import array
-from podio import root_io
-import edm4hep
-from modules.ParticleObjects import GenParticle, RecoParticle
+from modules.ParticleObjects import RecoParticle
 from modules import myutils
 import itertools
 
@@ -13,9 +8,49 @@ logger = logging.getLogger("pi0mass")
 
 PI0INVARIANTMASS = 0.1349768 # GeV
 
-def getPi0Mass(photons, strategy):
-  
-  
+def getPi0Mass(photons: dict[int,RecoParticle], strategy):
+  """
+  Calculates the invariant mass of a neutral pion candidate from photon pairs.
+
+  Depending on the number of input photons and the selected strategy, the function
+  finds the best photon pair based on either their invariant mass proximity to the
+  π⁰ nominal mass or their angular distance (ΔR).  
+
+  If exactly two photons are provided, the function directly computes their invariant mass.
+  For more than two photons, it searches over all possible photon pairs and selects the best
+  candidate according to the specified strategy.
+
+  Args:
+      photons (dict[int, RecoParticle]): Collection of photon objects.  
+      strategy (dict): Dictionary defining the pairing strategy.  
+          Supported keys:
+            - `"mass"` (*float*): Selects the pair whose invariant mass is closest
+              to the π⁰ invariant mass (`PI0INVARIANTMASS`). Optional threshold can
+              be set with the `"mass"` value.
+            - `"distance"` (*float*): Selects the pair with the smallest angular
+              distance (ΔR) between photons. A maximum allowed distance can be set
+              with the `"distance"` value.
+
+  Returns:
+      tuple:
+          - **mass** (*float or None*): Calculated invariant mass of the selected photon pair,  
+            or `None` if no valid pair is found.
+          - **non_matched_photons** (*dict or list*): Remaining photons not used in the best pair.  
+            If no valid pair is found, returns the original photon collection.
+
+  Raises:
+      AttributeError: If a photon object does not provide compatible `getMomentum()` attributes
+          (`x`, `y`, `z` vs. `X()`, `Y()`, `Z()`).
+
+  Notes:
+      - For fewer than two photons, the function returns `(None, photons)`.
+      - If `strategy["mass"]` is provided, the best pair is chosen as the one
+        whose invariant mass is closest to `PI0INVARIANTMASS`.
+      - If `strategy["distance"]` is provided, the best pair is chosen based on
+        minimal ΔR distance between photon momenta (computed via `myutils.dRAngle()`).
+      - Uses `ROOT.TLorentzVector` to construct 4-momenta for invariant mass calculation.
+      - Logs detailed information and warnings using the global `logger` instance.
+  """
   # Conditions to not calculate the mass
   if len(photons) < 2:
     # Return non matched photon
@@ -152,3 +187,99 @@ def cumulatedPhotonsMass(P1, P2):
   
   P1 += P2
   return P1.M()
+
+import numpy as np
+
+
+
+def compute_photonp4(entry, reco=True):
+    """
+    Reconstruye el pi0 RECO usando los vectores guardados en el TTree.
+    Devuelve la masa invariante del pi0 reconstruido.
+    """
+    cum = ROOT.TLorentzVector()
+    cum.SetXYZM(0, 0, 0, 0)
+
+    
+    key = "reco" if reco else "gen"
+    n = len(getattr(entry, f"{key}_photons_E"))
+    if n < 2:
+        return -1  # No hay suficientes fotones para formar pi0
+
+    p4_list = []
+    for i in range(n):
+        E   = getattr(entry, f"{key}_photons_E")[i]
+        th  = getattr(entry, f"{key}_photons_theta")[i]
+        phi = getattr(entry, f"{key}_photons_phi")[i]
+
+        px = E * np.sin(th) * np.cos(phi)
+        py = E * np.sin(th) * np.sin(phi)
+        pz = E * np.cos(th)
+
+        p4 = ROOT.TLorentzVector()
+        p4.SetPxPyPzE(px, py, pz, E)
+        p4_list.append(p4)
+
+
+    return p4_list
+
+
+
+def compute_pi0_mass(entry, reco=True):
+    """
+    Reconstruye el pi0 RECO usando los vectores guardados en el TTree.
+    Devuelve la masa invariante del pi0 reconstruido.
+    """
+    cum = ROOT.TLorentzVector()
+    cum.SetXYZM(0, 0, 0, 0)
+
+    
+    key = "reco" if reco else "gen"
+    n = len(getattr(entry, f"{key}_photons_E"))
+    if n < 2:
+        return -1  # No hay suficientes fotones para formar pi0
+
+    for i in range(n):
+        E   = getattr(entry, f"{key}_photons_E")[i]
+        th  = getattr(entry, f"{key}_photons_theta")[i]
+        phi = getattr(entry, f"{key}_photons_phi")[i]
+
+        px = E * np.sin(th) * np.cos(phi)
+        py = E * np.sin(th) * np.sin(phi)
+        pz = E * np.cos(th)
+
+        p4 = ROOT.TLorentzVector()
+        p4.SetPxPyPzE(px, py, pz, E)
+
+        cum += p4
+
+    return cum.M()
+
+def compute_gen_pi0_mass_with_smearing(entry, rng=np.random):
+    """
+    Reconstruye el pi0 GEN aplicando el smearing energético
+    idéntico al usado en el análisis original.
+    Usa los vectores guardados en el TTree.
+    """
+    cum = ROOT.TLorentzVector()
+    cum.SetXYZM(0, 0, 0, 0)
+    new_p4 = []
+    for i in range(len(entry.gen_photons_E)):
+        E   = entry.gen_photons_E[i]
+        th  = entry.gen_photons_theta[i]
+        phi = entry.gen_photons_phi[i]
+
+        # Smearing original:
+        sigma = E * 0.16 / np.sqrt(E)
+        E_new = rng.normal(E, sigma)
+
+        px = E_new * np.sin(th) * np.cos(phi)
+        py = E_new * np.sin(th) * np.sin(phi)
+        pz = E_new * np.cos(th)
+
+        p4 = ROOT.TLorentzVector()
+        p4.SetPxPyPzE(px, py, pz, E_new)
+        new_p4.append(p4)
+        cum += p4
+
+    return cum.M(), new_p4

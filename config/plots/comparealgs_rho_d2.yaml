@@ -1,0 +1,58 @@
+# compare.yaml
+datasets:
+  - path: GATr_Results/RhoAnalysis/PFO_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Pandora
+    color: 2          # kRed
+    linestyle: 1
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+
+
+  - path: GATr_Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0.6_n0.0_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0.6_n0.0_g0.0.root
+    label: MLPF
+    color: 4          # kBlue
+    linestyle: 1
+    markerstyle: 21
+    markersize: 1.
+    linewidth: 3
+
+plots:
+  Omega_SIGNAL_d2:
+    name: "Omega_SIGNAL"       # TH1 o TGraphAsymmErrors
+    # title: \text{Reco }\pi^\pm \text{ no emparejados vs P}
+    title: \text{Reco }\omega\text{ from }\rho(\gamma\gamma)\text{ decay (Pandora vs MLPF)}
+    x: \omega
+    # y: "Eventos"
+    y: "Events"
+    normalize: "none"
+    # logy: true
+    legend: [0.65, 0.7, 0.9, 0.85]
+
+    rebin: 4
+    diff_line:
+      label: "Pandora - MLPF"
+      "y_range": [-0.5, 0.5]
+  
+    common_list:
+      mlpf_gen:
+        name: "Omega_GEN_SIGNAL"       # histo común presente en los ROOT
+        from: "MLPF"     # lo tomamos de un solo archivo
+        label: Gen Omega
+        color: 4
+        markersize: 1.
+        # linestyle: 1
+        markerstyle: 20
+        normalize: "none"
+        # draw: "P"
+      pandora_gen:
+        name: "Omega_GEN_SIGNAL"       # histo común presente en los ROOT
+        from: "Pandora"     # lo tomamos de un solo archivo
+        label: Gen Pandora
+        color: 2
+        markersize: 1.
+        # linestyle: 1
+        markerstyle: 20
+        normalize: "none"
+        # draw: "P"
+  

@@ -1,0 +1,504 @@
+variabs_hist:
+  - Omega_SIGNAL
+  - Omega_BG
+  - Omega_BGMuon
+  - Omega_BGEle
+  - Omega_BGPion
+  - Omega_BGA1
+  - Omega_BGOther
+  - RecoMesonEOverBeamE_SIGNAL
+  - RecoMesonEOverBeamE_BG
+  - RecoMesonEOverBeamE_BGMuon
+  - RecoMesonEOverBeamE_BGEle
+  - RecoMesonEOverBeamE_BGPion
+  - RecoMesonEOverBeamE_BGA1
+  - RecoMesonEOverBeamE_BGOther
+  - MesonEOverBeamE
+
+  - Omega_SIGNAL_min
+  - Omega_BG_min
+  - Omega_BGMuon_min
+  - Omega_BGEle_min
+  - Omega_BGPion_min
+  - Omega_BGA1_min
+  - Omega_BGOther_min
+  - RecoMesonEOverBeamE_SIGNAL_min
+  - RecoMesonEOverBeamE_BG_min 
+  - RecoMesonEOverBeamE_BGMuon_min
+  - RecoMesonEOverBeamE_BGEle_min
+  - RecoMesonEOverBeamE_BGPion_min
+  - RecoMesonEOverBeamE_BGA1_min
+  - RecoMesonEOverBeamE_BGOther_min 
+  - MesonEOverBeamE_min
+
+  - Omega_SIGNAL_max
+  - Omega_BG_max
+  - Omega_BGMuon_max
+  - Omega_BGEle_max
+  - Omega_BGPion_max
+  - Omega_BGA1_max
+  - Omega_BGOther_max
+  - RecoMesonEOverBeamE_SIGNAL_max
+  - RecoMesonEOverBeamE_BG_max  
+  - RecoMesonEOverBeamE_BGMuon_max
+  - RecoMesonEOverBeamE_BGEle_max
+  - RecoMesonEOverBeamE_BGPion_max
+  - RecoMesonEOverBeamE_BGA1_max
+  - RecoMesonEOverBeamE_BGOther_max
+  - MesonEOverBeamE_max
+
+plot_together:
+  CosTheta_compare:
+    variabs:
+      # - Omega_GEN_SIGNAL
+      - MesonCosTheta
+      - MesonCosTheta_max
+      - MesonCosTheta_min
+    labels:
+      # - \omega \text{ Gen from } \rho \text{ decay} 
+      - \omega \text{ Reco from } \rho \text{ decay - Nominal}
+      - \omega \text{ Reco from } \rho \text{ decay - Upper Syst. Limit}
+      - \omega \text{ Reco from } \rho \text{ decay - Lower Syst. Limit}
+    title: \text{Comparison of Reco}\omega\text{ with Systematic Variations}
+    x: \omega
+    y: "Events"
+    rebin: 2
+    # logy: True
+    position: [0.2, 0.15, 0.8, 0.3]
+    ncolums: 2
+    fill_between:
+      reference: Omega_SIGNAL
+      histos:
+        - Omega_SIGNAL_max
+        - Omega_SIGNAL_min
+      colors:
+        - 632
+        - 416
+      fillstyle: 3020
+    # draw_mode: line
+    markersize: 1
+    linewidth: 2 
+  
+  CosPhi_compare:
+    variabs:
+      # - Omega_GEN_SIGNAL
+      - Omega_SIGNAL
+      - Omega_SIGNAL_max
+      - Omega_SIGNAL_min
+      - Omega_BG
+      - Omega_BG_max
+      - Omega_BG_min
+    labels:
+      # - \omega \text{ Gen from } \rho \text{ decay} 
+      - \text{Signal - Nominal}
+      - \text{Signal - Upper Syst. Limit}
+      - \text{Signal - Lower Syst. Limit}
+      - \text{BG - Nominal}
+      - \text{BG - Upper Syst. Limit}
+      - \text{BG - Lower Syst. Limit}
+    title: \text{Comparison of Reco}\omega\text{ with Systematic Variations}
+    x: \omega
+    y: "Events"
+    rebin: 2
+    # logy: True
+    position: [0.2, 0.15, 0.8, 0.3]
+    ncolums: 2
+    fill_between:
+      reference: Omega_SIGNAL
+      histos:
+        - Omega_SIGNAL_max
+        - Omega_SIGNAL_min
+      colors:
+        - 632
+        - 416
+      fillstyle: 3020
+    # draw_mode: line
+    markersize: 1
+    linewidth: 2
+
+  OmegaReco_compare:
+    variabs:
+      # - Omega_GEN_SIGNAL
+      - Omega_SIGNAL
+      - Omega_SIGNAL_max
+      - Omega_SIGNAL_min
+      - Omega_BG
+      - Omega_BG_max
+      - Omega_BG_min
+    labels:
+      # - \omega \text{ Gen from } \rho \text{ decay} 
+      - \text{Signal - Nominal}
+      - \text{Signal - Upper Syst. Limit}
+      - \text{Signal - Lower Syst. Limit}
+      - \text{BG - Nominal}
+      - \text{BG - Upper Syst. Limit}
+      - \text{BG - Lower Syst. Limit}
+    title: \text{Comparison of Reco}\omega\text{ with Systematic Variations}
+    x: \omega
+    y: "Events"
+    rebin: 2
+    # logy: True
+    position: [0.5, 0.75, 0.8, 0.9]
+    ncolums: 2
+    fill_between:
+      reference: Omega_SIGNAL
+      histos:
+        - Omega_SIGNAL_max
+        - Omega_SIGNAL_min
+      colors:
+        - 632
+        - 416
+      fillstyle: 3020
+    # draw_mode: line
+    markersize: 1
+    linewidth: 2
+  
+  MesonEOverBeamE_original_compare:
+    variabs:
+      - RecoMesonEOverBeamE_SIGNAL
+      - RecoMesonEOverBeamE_SIGNAL_max
+      - RecoMesonEOverBeamE_SIGNAL_min
+      - RecoMesonEOverBeamE_BG
+      - RecoMesonEOverBeamE_BG_max
+      - RecoMesonEOverBeamE_BG_min
+    labels:
+      - Signal - Nominal
+      - Signal - Upper Syst. Limit
+      - Signal - Lower Syst. Limit
+      - BG - Nominal
+      - BG - Upper Syst. Limit
+      - BG - Lower Syst. Limit
+    title: \text{Comparison of Reco} \frac{E_{\pi}}{E_{beam}} \text{ with Systematic Variations}
+    x: \frac{E_{\pi}}{E_{beam}}
+    y: "Events"
+    rebin: 4  
+    logy: False
+    position: [0.2, 0.3, 0.7, 0.63]
+    ncolumns: 1
+    fill_between:
+      reference: RecoMesonEOverBeamE_SIGNAL
+      histos:
+        - RecoMesonEOverBeamE_SIGNAL_max
+        - RecoMesonEOverBeamE_SIGNAL_min
+      colors:
+        - 632
+        - 416
+      fillstyle: 3020
+    legend_txt_size: 0.03
+    # draw_mode: line
+    markersize: 1
+    # logy: True
+
+
+  OmegaReco_original:
+    variabs:
+      - Omega_GEN_SIGNAL
+      - Omega_SIGNAL
+      - Omega_BG
+    labels:
+      - \omega \text{ Gen from } \rho \text{ decay} 
+      - \omega \text{ Reco from } \rho \text{ decay} 
+      - \omega \text{ Reco from BG}
+    title: \text{Comparison of }\omega\text{ from Gen and Reco}
+    x: \omega
+    y: "Events"
+    rebin: 2
+    # logy: True
+    position: [0.6, 0.6, 0.9, 0.8]
+    ncolums: 2
+    fill: True
+  
+
+  OmegaReco_original_noise:
+    variabs:
+      - Omega_GEN_SIGNAL
+      - Omega_SIGNAL
+      - Omega_BGMuon
+      - Omega_BGEle
+      - Omega_BGPion
+      - Omega_BGA1
+      - Omega_BGOther
+    labels:
+      - \omega \text{ Gen from } \rho \text{ decay} 
+      - \omega \text{ Reco from } \rho \text{ decay} 
+      - \omega \text{ Reco from BG Muon}
+      - \omega \text{ Reco from BG Electron}
+      - \omega \text{ Reco from BG Pion}
+      - \omega \text{ Reco from BG A1}
+      - \omega \text{ Reco from BG Other}
+    title: \text{Comparison of }\omega\text{ from Gen and Reco}
+    x: \omega
+    y: "Events"
+    rebin: 2
+    logy: True
+    position: [0.2, 0.73, 0.9, 0.83]
+    ncolumns: 2
+
+
+  OmegaReco_min:
+    variabs:
+      - Omega_GEN_SIGNAL_min
+      - Omega_SIGNAL_min
+      - Omega_BG_min
+    labels:
+      - \omega \text{ Gen from } \rho \text{ decay} 
+      - \omega \text{ Reco from } \rho \text{ decay} 
+      - \omega \text{ Reco from BG}
+    title: \text{Comparison of }\omega\text{ from Gen and Reco - Lower Syst. Limit}
+    x: \omega
+    y: "Events"
+    rebin: 2
+    # logy: True
+    position: [0.6, 0.6, 0.9, 0.8]
+    ncolums: 2
+    fill: True
+    
+
+  OmegaReco_noise_min:
+    variabs:
+      - Omega_GEN_SIGNAL_min
+      - Omega_SIGNAL_min
+      - Omega_BGMuon_min
+      - Omega_BGEle_min
+      - Omega_BGPion_min
+      - Omega_BGA1_min
+      - Omega_BGOther_min
+    labels:
+      - \omega \text{ Gen from } \rho \text{ decay} 
+      - \omega \text{ Reco from } \rho \text{ decay} 
+      - \omega \text{ Reco from BG Muon}
+      - \omega \text{ Reco from BG Electron}
+      - \omega \text{ Reco from BG Pion}
+      - \omega \text{ Reco from BG A1}
+      - \omega \text{ Reco from BG Other}
+    title: \text{Comparison of }\omega\text{ from Gen and Reco - Lower Syst. Limit}
+    x: \omega
+    y: "Events"
+    rebin: 2
+    logy: True
+    position: [0.2, 0.73, 0.9, 0.83]
+    ncolumns: 2
+
+
+  OmegaReco_max:
+    variabs:
+      - Omega_GEN_SIGNAL_max
+      - Omega_SIGNAL_max
+      - Omega_BG_max
+    labels:
+      - \omega \text{ Gen from } \rho \text{ decay} 
+      - \omega \text{ Reco from } \rho \text{ decay} 
+      - \omega \text{ Reco from BG}
+    title: \text{Comparison of }\omega\text{ from Gen and Reco - Upper Syst. Limit}
+    x: \omega
+    y: "Events"
+    rebin: 2
+    # logy: True
+    position: [0.6, 0.6, 0.9, 0.8]
+    ncolums: 2
+    fill: True
+
+  OmegaReco_noise_max:
+    variabs:
+      - Omega_GEN_SIGNAL_max
+      - Omega_SIGNAL_max
+      - Omega_BGMuon_max
+      - Omega_BGEle_max
+      - Omega_BGPion_max
+      - Omega_BGA1_max
+      - Omega_BGOther_max
+    labels:
+      - \omega \text{ Gen from } \rho \text{ decay} 
+      - \omega \text{ Reco from } \rho \text{ decay} 
+      - \omega \text{ Reco from BG Muon}
+      - \omega \text{ Reco from BG Electron}
+      - \omega \text{ Reco from BG Pion}
+      - \omega \text{ Reco from BG A1}
+      - \omega \text{ Reco from BG Other}
+    title: \text{Comparison of }\omega\text{ from Gen and Reco - Upper Syst. Limit}
+    x: \omega
+    y: "Events"
+    rebin: 2
+    logy: True
+    position: [0.2, 0.73, 0.9, 0.83]
+    ncolumns: 2
+
+
+
+  MesonEOverBeamE_original:
+    variabs:
+      - MesonEOverBeamE
+      - RecoMesonEOverBeamE_SIGNAL
+      - RecoMesonEOverBeamE_BG
+    labels:
+      - \frac{E_{\pi}^{Gen}}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (Signal)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG)}{E_{beam}}
+    title: \text{Comparison of } \frac{E_{\pi}}{E_{beam}} \text{ from Gen and Reco}
+    x: \frac{E_{\pi}}{E_{beam}}
+    y: "Events"
+    rebin: 2
+    position: [0.2, 0.23, 0.7, 0.53]
+    ncolumns: 3
+    legend_txt_size: 0.04
+
+
+  MesonEOverBeamE_original_noise:
+    variabs:
+      - MesonEOverBeamE
+      - RecoMesonEOverBeamE_SIGNAL
+      - RecoMesonEOverBeamE_BGMuon
+      - RecoMesonEOverBeamE_BGEle
+      - RecoMesonEOverBeamE_BGRho
+      - RecoMesonEOverBeamE_BGA1
+      - RecoMesonEOverBeamE_BGOther
+    labels:
+      - \frac{E_{\pi}^{Gen}}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (Signal)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Muon)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Electron)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Rho)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG A1)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Other)}{E_{beam}}
+    title: \text{Comparison of } \frac{E_{\pi}}{E_{beam}} \text{ from Gen and Reco}
+    x: \frac{E_{\pi}}{E_{beam}}
+    y: "Events"
+    rebin: 2  
+    logy: False
+    position: [0.2, 0.23, 0.7, 0.53]
+    ncolumns: 2
+    legend_txt_size: 0.04
+
+
+  MesonEOverBeamE_min:
+    variabs:
+      - MesonEOverBeamE_min
+      - RecoMesonEOverBeamE_SIGNAL_min
+      - RecoMesonEOverBeamE_BG_min
+    labels:
+      - \frac{E_{\pi}^{Gen}}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (Signal)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG)}{E_{beam}}
+    title: \text{Comparison of } \frac{E_{\pi}}{E_{beam}} \text{ from Gen and Reco - Lower Syst. Limit}
+    x: \frac{E_{\pi}}{E_{beam}}
+    y: "Events"
+    rebin: 2
+    # logy: True
+    position: [0.2, 0.23, 0.7, 0.53]
+    ncolumns: 3
+    legend_txt_size: 0.04
+
+
+  MesonEOverBeamE_noise_min:
+    variabs:
+      - MesonEOverBeamE_min
+      - RecoMesonEOverBeamE_SIGNAL_min
+      - RecoMesonEOverBeamE_BGMuon_min
+      - RecoMesonEOverBeamE_BGEle_min
+      - RecoMesonEOverBeamE_BGRho_min
+      - RecoMesonEOverBeamE_BGA1_min
+      - RecoMesonEOverBeamE_BGOther_min
+    labels:
+      - \frac{E_{\pi}^{Gen}}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (Signal)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Muon)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Electron)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Rho)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG A1)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Other)}{E_{beam}}
+    title: \text{Comparison of } \frac{E_{\pi}}{E_{beam}} \text{ from Gen and Reco - Lower Syst. Limit}
+    x: \frac{E_{\pi}}{E_{beam}}
+    y: "Events"
+    rebin: 2  
+    logy: False
+    position: [0.2, 0.23, 0.7, 0.53]
+    ncolumns: 2
+    legend_txt_size: 0.04
+
+
+  MesonEOverBeamE_max:
+    variabs:
+      - MesonEOverBeamE_max
+      - RecoMesonEOverBeamE_SIGNAL_max
+      - RecoMesonEOverBeamE_BG_max
+    labels:
+      - \frac{E_{\pi}^{Gen}}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (Signal)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG)}{E_{beam}}
+    title: \text{Comparison of } \frac{E_{\pi}}{E_{beam}} \text{ from Gen and Reco - Upper Syst. Limit}
+    x: \frac{E_{\pi}}{E_{beam}}
+    y: "Events"
+    rebin: 2
+    # logy: True
+    position: [0.2, 0.23, 0.7, 0.53]
+    ncolumns: 3
+    legend_txt_size: 0.04
+
+
+  MesonEOverBeamE_noise_max:
+    variabs:
+      - MesonEOverBeamE_max
+      - RecoMesonEOverBeamE_SIGNAL_max
+      - RecoMesonEOverBeamE_BGMuon_max
+      - RecoMesonEOverBeamE_BGEle_max
+      - RecoMesonEOverBeamE_BGRho_max
+      - RecoMesonEOverBeamE_BGA1_max
+      - RecoMesonEOverBeamE_BGOther_max
+    labels:
+      - \frac{E_{\pi}^{Gen}}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (Signal)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Muon)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Electron)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Rho)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG A1)}{E_{beam}}
+      - \frac{E_{\pi}^{Reco} (BG Other)}{E_{beam}}
+    title: \text{Comparison of } \frac{E_{\pi}}{E_{beam}} \text{ from Gen and Reco - Upper Syst. Limit}
+    x: \frac{E_{\pi}}{E_{beam}}
+    y: "Events"
+    rebin: 2  
+    logy: False
+    position: [0.2, 0.23, 0.7, 0.53]
+    ncolumns: 2
+    legend_txt_size: 0.04
+
+
+plot_titles_config_hist:
+  Omega_SIGNAL:
+    x: \omega \text{ from Reco (Signal)}
+    y: "Events"
+    title: \omega \text{ Distribution from Reco (Signal)}
+  Omega_BG:
+    x: \omega \text{ from Reco (Background)}
+    y: "Events"
+    title: \omega \text{ Distribution from Reco (Background)}
+  Omega_BGMuon:
+    x: \omega \text{ from Reco (BG Muon)}
+    y: "Events"
+    title: \omega \text{ Distribution from Reco (BG Muon)}
+  Omega_BGEle:
+    x: \omega \text{ from Reco (BG Electron)}
+    y: "Events"
+    title: \omega \text{ Distribution from Reco (BG Electron)}
+  Omega_BGPion:
+    x: \omega \text{ from Reco (BG Pion)}
+    y: "Events"
+    title: \omega \text{ Distribution from Reco (BG Pion)}
+  Omega_BGA1:
+    x: \omega \text{ from Reco (BG A1)}
+    y: "Events"
+    title: \omega \text{ Distribution from Reco (BG A1)}
+  Omega_BGOther:
+    x: \omega \text{ from Reco (BG Other)}
+    y: "Events"
+    title: \omega \text{ Distribution from Reco (BG Other)}
+
+# variabs_2d:
+#   - hRecoGenTypeMatched
+ 
+
+# plot_titles_config_2d:
+#   hRecoGenTypeMatched:
+#     x: "Gen Tau Type"
+#     y: "Reco Tau Type"
+#     title: "2D Histogram of Reco and Gen Tau Type"
+  

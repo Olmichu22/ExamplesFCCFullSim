@@ -1,12 +1,5 @@
-import sys, os, math 
-from array import array
+import math 
 import ROOT
-from ROOT import TFile, TTree, TH1F, TH2F
-import numpy as np
-from podio import root_io
-import edm4hep
-from pathlib import Path
-from modules import tauReco 
 
 def wVariab(genTauP4,genRhoP4,genPionP4,beamE, testAtau=0):
 
@@ -53,10 +46,10 @@ def wVariab(genTauP4,genRhoP4,genPionP4,beamE, testAtau=0):
 
     cosPsi= (x * (mtau*mtau + mRho*mRho) - 2*mRho*mRho)/((mtau*mtau-mRho*mRho)*math.sqrt(x*x-4*mRho*mRho/sqrts/sqrts))
     if cosPsi>1:
-       print ('What happened?', cosPsi)
+      #  print ('What happened?', cosPsi)
        cosPsi=1
     if cosPsi<-1:
-       print ('What happened?', cosPsi)
+      #  print ('What happened?', cosPsi)
        cosPsi=-1
     anglePsi=math.acos(cosPsi)
 

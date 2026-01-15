@@ -60,20 +60,6 @@ def recodify_key(key, photon=False):
 def plot_absolute(graphs, absolute_keys, colors, xaxis,
                              min_absolute_value, max_absolute_value,
                              title, outputpath, mig_str):
-    """
-    Grafica los datos absolutos utilizando matplotlib.
-    
-    Parámetros:
-      graphs            : diccionario donde cada valor es otro diccionario con las llaves 'x' e 'y'.
-      absolute_keys     : lista de claves a graficar.
-      colors            : lista de colores (pueden ser strings, ej. ['b','g','r',...]).
-      xaxis             : etiqueta para el eje X.
-      min_absolute_value: valor mínimo para definir el rango del eje Y.
-      max_absolute_value: valor máximo para definir el rango del eje Y.
-      title             : título a mostrar en la parte superior.
-      outputpath        : ruta donde se guardará la imagen.
-      mig_str           : sufijo para el nombre del archivo.
-    """
     fig, ax = plt.subplots()
     # fig.set_size_inches(8, 6)
     markers = ['v', 'x', '+', '*', "o"]
@@ -132,19 +118,6 @@ def plot_absolute(graphs, absolute_keys, colors, xaxis,
 
 def plot_metric(graphs, metric_keys, colors, xaxis,
                            title, outputpath, metric, mig_str):
-    """
-    Grafica los datos métricos utilizando matplotlib.
-    
-    Parámetros:
-      graphs       : diccionario con cada valor conteniendo 'x' e 'y'.
-      metric_keys  : lista de claves para iterar sobre los gráficos.
-      colors       : lista de colores.
-      xaxis        : etiqueta del eje X.
-      title        : título a mostrar.
-      outputpath   : ruta para guardar la imagen.
-      metric       : cadena para identificar el tipo de gráfica (parte del nombre del archivo).
-      mig_str      : sufijo adicional para el nombre del archivo.
-    """
     fig, ax = plt.subplots()
     markers = ['v', 'x', '+', '*', "o"]
     line_markers = ["solid", "dotted", "dashed", "dashdot", (0, (1, 10)), (0, (3, 5, 1, 5))]
