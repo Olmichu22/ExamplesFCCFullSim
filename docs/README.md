@@ -194,3 +194,30 @@ signal_process_id  std::string           1
 
 
 
+
+## Visualizador interactivo de eventos (PyVista + Trame)
+
+Se añadió un visualizador orientado a *debug visual* de eventos EDM4HEP:
+
+- Script: `HitAnalysis/event_display_pyvista_trame.py`
+- Abre uno o varios `.root`
+- Permite seleccionar evento
+- Muestra tablas de resumen:
+  - partículas generadas finales (`generatorStatus`, por defecto 1)
+  - PFOs reconstruidas (`PandoraPFOs`)
+  - asociaciones Gen↔PFO por `dR`
+- Dibuja en 3D los hits con color por asociación:
+  - modo asociación a partícula **gen**
+  - modo asociación a **PFO**
+  - hits no asociados (opcional)
+- Muestra vectores de momento para tracks de PFO (longitud proporcional a |p|).
+
+Uso:
+
+```bash
+python HitAnalysis/event_display_pyvista_trame.py \
+  -i /ruta/a/file1.root /ruta/a/file2.root \
+  --max-events 100 --dr-max 0.1 --port 8080
+```
+
+Luego abrir en navegador: `http://localhost:8080` (o el host/puerto configurado).
