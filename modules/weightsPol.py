@@ -57,7 +57,7 @@ def newAtauRHO(TauP4, RhoP4,beamE, TauConst, Type,New_Atau,sin2theta_effective= 
  
     if (Type!=1): # this is for RHOs
          weight=newAtau(TauP4, RhoP4,Type,New_Atau)                  
-         return weight  
+         return weight
  
     #sin2theta_effective= 0.2312
     gv_ga=  -1 + 4 *sin2theta_effective

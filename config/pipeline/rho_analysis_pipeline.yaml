@@ -1,0 +1,51 @@
+# Pipeline de configuración para análisis Rho
+# Este archivo define las ejecuciones de rhoHistFromTree.py y la configuración de CompareAlgs.py
+
+pipeline:
+  # Configuración base compartida por todas las ejecuciones
+  base_config:
+    hist_config: '/nfs/cms/arqolmo/ExamplesFCCFullSim/config/histograms/rho_analysis_config.yml'
+    reco_config: '/nfs/cms/arqolmo/ExamplesFCCFullSim/config/default/taurecolong_optimal.yaml'
+    verbose: true
+    # Cortes comunes (pueden ser sobrescritos en cada run)
+    ang: [3.06, 5.0]
+    meson_cut: [0.0, 45.57]
+    lepton_cut: [0.0, 41.16]
+
+  # Lista de ejecuciones de rhoHistFromTree.py
+  runs:
+    # Signal / Z -> tau tau
+    - name: "Signal_ztautau"
+      decay: 2
+      tree_file: '/nfs/cms/arqolmo/ExamplesFCCFullSim/Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root'
+      output_mapping:
+        - config_file: 'config/plots/Optimal_Variable/Rho Decay/OptimalVariableBK_d2 optimal.yaml'
+          dataset_label: "Signal"
+        - config_file: 'config/plots/Optimal_Variable/Rho Decay/OptimalVariableBK_d2 optimal.yaml'
+          dataset_label: "Migrations BG"
+        - config_file: 'config/plots/Optimal_Variable/Rho Decay/OptimalVariableBK_d2 optimal.yaml'
+          dataset_label: "Template P1"
+        - config_file: 'config/plots/Optimal_Variable/Rho Decay/OptimalVariableBK_d2 optimal.yaml'
+          dataset_label: "Template M1"
+
+    # Background: Z -> qq
+    - name: "Zqq_background"
+      decay: 2
+      tree_file: '/nfs/cms/arqolmo/ExamplesFCCFullSim/Results/RhoAnalysis/Zqq_sampletau_trained0.4_tph0.35_tpi0_n3_g0.0/tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root'
+      output_mapping:
+        - config_file: 'config/plots/Optimal_Variable/Rho Decay/OptimalVariableBK_d2 optimal.yaml'
+          dataset_label: "Zqq BG"
+
+    # Background: Bhabha
+    - name: "Bhabha_background"
+      decay: 2
+      tree_file: '/nfs/cms/arqolmo/ExamplesFCCFullSim/Results/RhoAnalysis/bhabha_sample_FULLtau_trained0.4_tph0.35_tpi0_n3_g0.0/tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root'
+      output_mapping:
+        - config_file: 'config/plots/Optimal_Variable/Rho Decay/OptimalVariableBK_d2 optimal.yaml'
+          dataset_label: "Bhabha BG"
+
+  # Configuración para la ejecución final de CompareAlgs.py
+  compare_algs:
+    enabled: true
+    config_file: 'config/plots/Optimal_Variable/Rho Decay/OptimalVariableBK_d2 optimal.yaml'
+    output_dir: 'OptimalBKd2'

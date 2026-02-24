@@ -1,0 +1,89 @@
+global:
+  luminosity: 6972
+datasets:
+- path: "Results/RhoAnalysis/PolSM_March24_2M_3tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.312e-07_inf_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root"
+  label: Template P1
+  color: ROOT.kGreen+4
+  linestyle: 10
+  markerstyle: 20
+  markersize: 1.0
+  linewidth: 3
+  xsec: 1476.58
+  n_events: 1644000
+- path: "Results/RhoAnalysis/PolSM_March24_2M_3tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.312e-07_inf_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root"
+  label: Template M1
+  color: ROOT.kGreen+4
+  linestyle: 7
+  markerstyle: 20
+  markersize: 1.0
+  linewidth: 3
+  xsec: 1476.58
+  n_events: 1644000
+
+- path: "Results/RhoAnalysis/PolSM_March24_2M_3tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.315e-07_inf_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root"
+  label: "Template P1 \\sin 0.2315"
+  color: ROOT.kRed
+  linestyle: 10
+  markerstyle: 20
+  markersize: 1.0
+  linewidth: 3
+  xsec: 1476.58
+  n_events: 1644000
+- path: "Results/RhoAnalysis/PolSM_March24_2M_3tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.315e-07_inf_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root"
+  label: "Template M1 \\sin 0.2315"
+  color: ROOT.kRed
+  linestyle: 7
+  markerstyle: 20
+  markersize: 1.0
+  linewidth: 3
+  xsec: 1476.58
+  n_events: 1644000
+
+plots:
+  templates_comp_sin_e:
+    rebin: 2
+    per_dataset:
+      # Signal: Omega_SIGNAL
+      "Template P1": Omega_SIGNAL_P1
+      "Template M1": Omega_SIGNAL_M1
+      "Template P1 \\sin 0.2315": Omega_SIGNAL_P1
+      "Template M1 \\sin 0.2315": Omega_SIGNAL_M1
+      # Zqq BG: Omega_BGOther
+      # Bhabha BG: Omega_BGOther
+      # Migrations BG: Omega_BG
+    title: \text{Templates Comparison} \omega \text{ (}\rho \text{ decay)}
+    x: \omega
+    y: Events
+    # sum_histos:
+    #   Pseudodata:
+    #     sources:
+    #     - from: Signal
+    #       histo: Omega_SIGNAL
+    #     - from: Migrations BG
+    #       histo: Omega_BG
+    #     - from: Bhabha BG
+    #       histo: Omega_BGOther
+    #     - from: Zqq BG
+    #       histo: Omega_BGOther
+    #     color: ROOT.kBlack
+    #     linestyle: 1
+    #     linewidth: 3
+    #     markerstyle: 20
+    #     markersize: 0.8
+    #     draw_with_errors: true
+    #     label: \text{Pseudodata, } \rho  \text{  }2\gamma\text{ channel}
+    show_entries: absolute
+    # y_range: [0, 100000]
+    # ignore_entries_for:
+    # - Template P1
+    # - Template M1
+    # - Pseudodata
+    legend:
+    - 0.55
+    - 0.5
+    - 0.9
+    - 0.85
+    legend_txt_size: 0.03
+    extra_legend:
+    - 7 fb^{-1}\text{  }\sqrt{s}=91GeV
+ 

@@ -52,7 +52,7 @@ outputbasepath = "Results/RhoAnalysis/"
 def my_hook(parser):
     parser.add_argument("--sys-err", type=str, default="config/systematics/err_sys.yml", help="YAML file with systematics errors to apply")
     parser.add_argument("--test-extremes", action="store_true", help="Test the extremes of the photon energy resolution")
-    
+    parser.add_argument("--sin-eff", type=float, default=None, help="Effective sin^2 theta_W to use in the weights calculation")
     
 general_configs = myutils.setup_analysis_config(default_config, outputbasepath, parser_hook=my_hook)
 
@@ -64,6 +64,9 @@ run_config = general_configs["config"]
 
 
 args =  general_configs["args"]
+
+if args.sin_eff is not None:
+    loggers["processing"].info(f"Using sin2theta_effective = {args.sin_eff} for weights calculation.")
 test_pfo = args.test_pfo
 # Cut Configuration
 dRMax=run_config["cuts"]["dRMax"]
@@ -450,7 +453,7 @@ for eventid, event in enumerate(reader.get("events")):
     # genPionP4.SetXYZM(genPion.getMomentum().x,genPion.getMomentum().y,genPion.getMomentum().z,genPion.getMass())
     if gen_taus:
       (gen_cos_theta,gen_cos_psi,gen_cos_beta,gen_w,weight_P1,weight_M1)=optimalVariabRho.wVariab(genTauP4,
-                                                                                                  genMesonP4,genPionP4,beamE)
+                                                                                                  genMesonP4,genPionP4,beamE, sin_eff=args.sin_eff)
       gen_cos_theta_tau=math.cos(genTauP4.Theta())
     else:
       gen_cos_theta=0
@@ -463,7 +466,8 @@ for eventid, event in enumerate(reader.get("events")):
     
     (cos_theta,cos_psi,cos_beta,w)=optimalVariabRho.wVariabRECO(recoMesonP4,
                                                                 recoPionP4,
-                                                                beamE)
+                                                                beamE,
+                                                                )
     cos_theta_rho=math.cos(recoMesonP4.Theta())
 
     #(gen_cos_theta,gen_cos_psi,gen_cos_beta,gen_w,weight_P1,weight_M1)=optimalVariabRho.wVariab(genTauP4,genRhoP4,genPionP4,beamE)

@@ -204,7 +204,7 @@ def compute_photonp4(entry, reco=True):
     key = "reco" if reco else "gen"
     n = len(getattr(entry, f"{key}_photons_E"))
     if n < 2:
-        return -1  # No hay suficientes fotones para formar pi0
+        return []  # No hay suficientes fotones para formar pi0
 
     p4_list = []
     for i in range(n):

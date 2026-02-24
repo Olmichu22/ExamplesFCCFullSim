@@ -1,7 +1,7 @@
-from modules import tauReco, electronReco, muonReco
+from modules import tauReco, electronReco, muonReco, NeutralRecover
 import ROOT
 import edm4hep
-
+from typing import Optional
 
 def extractTauDecays(gatr_results_path,
                      mlpf_results,
@@ -15,7 +15,9 @@ def extractTauDecays(gatr_results_path,
                      foton_config,
                      test_extremes,
                      test_pfo,
-                     logger_process):
+                     logger_process,
+                     neutral_recover_cfg: dict=dict(),
+                     event=None):
   if gatr_results_path is not None and not test_pfo:
     logger_process.debug("Using GATr results for event %d", eventid)
     particles = mlpf_results.get(eventid, {})
@@ -24,6 +26,12 @@ def extractTauDecays(gatr_results_path,
     logger_process.debug("Using PandoraPFO results for event %d", eventid)
     particles = pfos
     charge_condition = True
+  
+  # print(neutral_recover_cfg)
+  # exit(0)
+  if neutral_recover_cfg.get("enable", False):
+      logger_process.debug("Applying neutron recovery for event %d", eventid)
+      particles, recover_extra_info, extra_info_dict = NeutralRecover.recover_pion_from_neutrals(particles, event, eventid, logger_process, neutral_recover_cfg)
     
         
   recoTau = tauReco.findAllTaus(particles,
@@ -85,4 +93,7 @@ def extractTauDecays(gatr_results_path,
   else: 
       recoTau_max = None
       recoTau_min = None
+    
+  if neutral_recover_cfg.get("return_hit_type_map", False):
+      return recoTau, recoElectrons, recoMuons, recoTau_max, recoTau_min, recover_extra_info, extra_info_dict
   return recoTau, recoElectrons, recoMuons, recoTau_max, recoTau_min

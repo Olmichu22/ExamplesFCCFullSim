@@ -5,18 +5,18 @@ cuts:
   TauPionPCut: 0
   dRMax: 0.4
   generalPCut: 0.0
-  tauCut: 2
+  tauCut: 0
 general:
   decay:
   - -777
-  - 2
+  - 1
   matchedCM: 'True'
   outfile: tau_trained
   sample: zqq
   test: 'False'
 output:
   outputfile:
-  - tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  - tau_traineddecay1_0.4_tph0.35_tpi0_n3_g0.0.root
   outputlabels: null
   outputpath: Results/RhoAnalysis/Zqq_sample_extremes_tau_trained0.4_tph0.35_tpi0_n3_g0.0/
 systematics_errors:

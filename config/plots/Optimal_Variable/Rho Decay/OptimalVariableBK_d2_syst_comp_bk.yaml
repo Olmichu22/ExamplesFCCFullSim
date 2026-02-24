@@ -1,0 +1,238 @@
+# compare.yaml Histos_dRgt3.06_5.0_MesonPgt0.0_lt45.57_LeptonPgt0.0_lt41.16_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0
+global:
+  luminosity: 5000 # in pb-1
+datasets:
+  # - path: GATr_Results/RhoAnalysis/PFO_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  - path: Results/RhoAnalysis/bhabha_sample_FULLtau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Bhabha Original
+    color: ROOT.kRed          # kRed
+    linestyle: 1
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 4
+    xsec: 273500 # pb
+    n_events: 2396000
+
+  # - path: GATr_Results/RhoAnalysis/PFO_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  - path:  Results/RhoAnalysis/bhabha_sample_FULLtau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Bhabha Upper Syst
+    color: ROOT.kGreen          # kRed
+    linestyle: 2
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 4
+    xsec: 273500 # pb
+    n_events: 2396000
+
+
+  - path:  Results/RhoAnalysis/bhabha_sample_FULLtau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Bhabha Lower Syst
+    color: ROOT.kBlue-2           # kRed
+    linestyle: 2
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 4
+    xsec: 273500 # pb
+    n_events: 2396000
+
+    # - path: GATr_Results/RhoAnalysis/PFO_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  - path:  Results/RhoAnalysis/Zqq_sample_extremes_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Zqq Original
+    color: ROOT.kRed          # kRed
+    linestyle: 2
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+    xsec: 30170 # pb
+    n_events: 1000000
+  
+  - path:  Results/RhoAnalysis/Zqq_sample_extremes_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Zqq Upper Syst
+    color: ROOT.kGreen          # kRed
+    linestyle: 2
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+    xsec: 30170 # pb
+    n_events: 1000000
+  - path:  Results/RhoAnalysis/Zqq_sample_extremes_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Zqq Lower Syst
+    color: ROOT.kBlue-2          # kRed
+    linestyle: 2
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+    xsec: 30170 # pb
+    n_events: 1000000
+  
+  # - path:  Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  #   label: Template M1
+  #   color: ROOT.kRed +2          # kRed
+  #   linestyle: 2
+  #   markerstyle: 20
+  #   markersize: 1.
+  #   linewidth: 3
+  #   xsec: 1476.58 # pb
+  #   n_events: 2000000
+
+  # # - path: Results/RhoAnalysis/Zee_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  # #   label: Zee BG
+  # #   color: ROOT.kBlue          # kBlue
+  # #   linestyle: 1
+  # #   markerstyle: 21
+  # #   markersize: 1.
+  # #   linewidth: 3
+  # #   xsec: 1476.58 # pb
+  # #   n_events: 50000
+
+  # - path: Results/RhoAnalysis/Zqq_sampletau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  #   label: Zqq BG
+  #   color: ROOT.kBlue          # kBlue
+  #   linestyle: 1
+  #   markerstyle: 21
+  #   markersize: 1.
+  #   linewidth: 3
+  #   xsec: 30170  # pb
+  #   n_events: 1000000
+
+  # # - path: Results/RhoAnalysis/bhabha_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  # # # - path: Results/RhoAnalysis/bhabha_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt0.5_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root  
+  # #   label: Bhabha BG
+  # #   color: ROOT.kBlue-2          # kBlue
+  # #   linestyle: 1
+  # #   markerstyle: 21
+  # #   markersize: 1.
+  # #   linewidth: 3
+  # #   xsec:  273500 # pb
+  # #   n_events: 1000000
+
+  # - path:  Results/RhoAnalysis/bhabha_sample_FULLtau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root 
+  #   label: Bhabha BG
+  #   color: ROOT.kBlue-2          # kBlue
+  #   linestyle: 1
+  #   markerstyle: 21
+  #   markersize: 1.
+  #   linewidth: 3
+  #   xsec:  273500 # pb
+  #   n_events: 2396000
+plots:
+
+  # # si el histo se llama distinto según dataset:
+  signal_vs_pol_systematics_basecuts_background:
+    rebin: 2
+    per_dataset:
+      "Bhabha Original": "Omega_BGOther"
+      "Bhabha Upper Syst": "Omega_BGOther_max"
+      "Bhabha Lower Syst": "Omega_BGOther_min"
+      # "Zqq Original": "Omega_BGOther"
+      # "Zqq Upper Syst": "Omega_BGOther_max"
+      # "Zqq Lower Syst": "Omega_BGOther_min"
+    title: \text{Background Omega (}\rho \text{ decay, Syst. Comp.)}
+    x: \omega
+    y: "Events"
+    # sum_histos:
+    #   "Pseudodata channel":
+    #     sources:
+    #       - from: "Signal"
+    #         histo: "Omega_SIGNAL"
+    #       - from: "Migrations BG"
+    #         histo: "Omega_BG"
+    #         # weight: 1.0  # opcional
+    #       - from: "Bhabha BG"
+    #         histo: "Omega_BGOther"
+    #       - from: "Zqq BG"
+    #         histo: "Omega_BGOther"
+    #     color: ROOT.kBlack
+    #     linestyle: 1
+    #     linewidth: 3
+    #     # markerstyle: 20
+    #     # draw: "HIST PL"
+
+    #     label: \text{Pseudodata, } \rho  \text{  }2\gamma\text{ channel}
+    show_entries: "absolute" #absolute | percent | both
+    ignore_entries_for: ["Template P1", "Template M1", "Pseudodata channel"]
+    legend: [0.5, 0.5, 0.9, 0.85]
+    legend_txt_size: 0.03
+    extra_legend:
+      - 5 fb^{-1}\text{  }\sqrt{s}=91GeV
+
+
+  # signal_vs_BG_costheta_templates_basecuts:
+  #   rebin: 2
+
+  #   per_dataset:
+  #     Signal: "CosTheta_SIGNAL"
+  #     "Template P1": "CosTheta_SIGNAL_P1"
+  #     "Template M1": "CosTheta_SIGNAL_M1"
+  #     # "Zee BG": "Omega_BGOther"
+  #     "Zqq BG": "CosTheta_BGOther"
+  #     "Bhabha BG": "CosTheta_BGOther"
+  #     "Migrations BG": "CosTheta_BG"
+  #   title: \text{Signal vs Background} \cos\theta \text{(}\rho \text{ decay)} 
+  #   x: \cos\theta
+  #   y: "Events"
+  #   sum_histos:
+  #     "Pseudodata":
+  #       sources:
+  #         - from: "Signal"
+  #           histo: "CosTheta_SIGNAL"
+  #         - from: "Migrations BG"
+  #           histo: "CosTheta_BG"
+  #           # weight: 1.0  # opcional
+  #         - from: "Bhabha BG"
+  #           histo: "CosTheta_BGOther"
+  #         - from: "Zqq BG"
+  #           histo: "CosTheta_BGOther"
+  #       color: ROOT.kBlack
+  #       linestyle: 1
+  #       linewidth: 3
+  #       # markerstyle: 20
+  #       # draw: "HIST P"
+  #       label: \text{Pseudodata, } \rho  \text{  }2\gamma\text{ channel}
+  #   show_entries: "absolute" #absolute | percent | both
+  #   ignore_entries_for: ["Template P1", "Template M1"]
+  #   legend: [0.65, 0.6, 0.9, 0.9]
+  #   legend_txt_size: 0.02
+  #   extra_legend:
+  #     - 5 fb^{-1}\text{  }\sqrt{s}=91GeV
+  
+  # signal_vs_BG_cospsi_templates_basecuts:
+  #   rebin: 2
+
+  #   per_dataset:
+  #     Signal: "CosPsi_SIGNAL"
+  #     "Template P1": "CosPsi_SIGNAL_P1"
+  #     "Template M1": "CosPsi_SIGNAL_M1"
+  #     # "Zee BG": "Omega_BGOther"
+  #     "Zqq BG": "CosPsi_BGOther"
+  #     "Bhabha BG": "CosPsi_BGOther"
+  #     "Migrations BG": "CosPsi_BG"
+  #   title: \text{Signal vs Background} \cos\psi \text{(}\rho \text{ decay)}
+  #   x: \cos\psi
+  #   y: "Events"
+  #   sum_histos:
+  #     "Pseudodata":
+  #       sources:
+  #         - from: "Signal"
+  #           histo: "CosPsi_SIGNAL"
+  #         - from: "Migrations BG"
+  #           histo: "CosPsi_BG"
+  #           # weight: 1.0  # opcional
+  #         - from: "Bhabha BG"
+  #           histo: "CosPsi_BGOther"
+  #         - from: "Zqq BG"
+  #           histo: "CosPsi_BGOther"
+  #       color: ROOT.kBlack
+  #       linestyle: 1
+  #       linewidth: 3
+  #       # markerstyle: 20
+  #       # draw: "HIST P"
+  #       label: \text{Pseudodata, } \rho  \text{  }2\gamma\text{ channel}
+  #   show_entries: "absolute" #absolute | percent | both
+  #   ignore_entries_for: ["Template P1", "Template M1"]
+  #   legend: [0.35, 0.5, 0.9, 0.85]
+  #   legend_txt_size: 0.04
+  #   extra_legend:
+  #     - 5 fb^{-1}\text{  }\sqrt{s}=91GeV
+
+

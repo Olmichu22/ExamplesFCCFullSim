@@ -1,8 +1,8 @@
 # compare.yaml
 global:
-  luminosity: 5000 # in pb-1
+  luminosity: 6972 # in pb-1
 datasets:
-  - path: Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  - path: Results/RhoAnalysis/FULL_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
     label: Signal
     color: ROOT.kRed          # kRed
     linestyle: 1
@@ -10,65 +10,60 @@ datasets:
     markersize: 1.
     linewidth: 3
     xsec: 1476.58 # pb
-    n_events: 1000000
-
-  - path: Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
-    label: Migrations BG
-    color: ROOT.kViolet          # kRed
-    linestyle: 1
-    markerstyle: 20
-    markersize: 1.
-    linewidth: 3
-    xsec: 1476.58 # pb
-    n_events: 1000000
-
-  - path: Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+    n_events: 10296000
+  - path: Results/RhoAnalysis/FULL_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
     label: Template P1
-    color: ROOT.kRed +2          # kRed
+    color: ROOT.kGreen+4          # kRed
     linestyle: 1
     markerstyle: 20
     markersize: 1.
     linewidth: 3
     xsec: 1476.58 # pb
-    n_events: 2000000
-  - path: Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+    n_events: 20592000
+  - path: Results/RhoAnalysis/FULL_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
     label: Template M1
-    color: ROOT.kRed +2          # kRed
+    color: ROOT.kGreen+4          # kRed
     linestyle: 2
     markerstyle: 20
     markersize: 1.
     linewidth: 3
     xsec: 1476.58 # pb
-    n_events: 2000000
-
-  # - path: Results/RhoAnalysis/Zee_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
-  #   label: Zee BG
-  #   color: 4          # kBlue
-  #   linestyle: 1
-  #   markerstyle: 21
-  #   markersize: 1.
-  #   linewidth: 3
-  #   xsec: 1476.58 # pb
-  #   n_events: 50000
-
-  - path: Results/RhoAnalysis/Zqq_sampletau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
-    label: Zqq BG
-    color: ROOT.kBlue          # kBlue
-    linestyle: 1
-    markerstyle: 21
-    markersize: 1.
-    linewidth: 3
-    xsec: 30170  # pb
-    n_events: 1000000
-
-  - path: Results/RhoAnalysis/bhabha_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+    n_events: 20592000
+  - path: Results/RhoAnalysis/bhabha_sample_FULLtau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root 
     label: Bhabha BG
     color: ROOT.kBlue-2          # kBlue
     linestyle: 1
     markerstyle: 21
     markersize: 1.
     linewidth: 3
+    fill: true
+    fillstyle: 1001      # Sólido
+    fillalpha: 0.5  
     xsec:  273500 # pb
+    n_events: 2396000
+  - path: Results/RhoAnalysis/FULL_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Migrations BG
+    color: ROOT.kViolet          # kRed
+    linestyle: 1
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+    fill: true
+    fillstyle: 1001      # Sólido
+    fillalpha: 0.5  
+    xsec: 1476.58 # pb
+    n_events: 10296000
+  - path: Results/RhoAnalysis/Zqq_sampletau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_dRgt2.87_4.0_MesonPgt0.0_lt44.0_LeptonPgt0.0_lt41.69_Zmassgt15.28_lt86.86_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Zqq BG
+    color: ROOT.kOrange+7          # kBlue
+    linestyle: 1
+    markerstyle: 21
+    markersize: 1.
+    linewidth: 3
+    fill: true
+    fillstyle: 1001      # Sólido
+    fillalpha: 0.5  
+    xsec: 30170  # pb
     n_events: 1000000
 
 
@@ -76,6 +71,7 @@ plots:
 
   # # si el histo se llama distinto según dataset:
   signal_vs_BG_pol_templates_optimal:
+    rebin: 2
     per_dataset:
       Signal: "RecoMesonEOverBeamE_SIGNAL"
       "Template P1": "RecoMesonEOverBeamE_SIGNAL_P1"
@@ -87,7 +83,30 @@ plots:
     title: \text{Signal vs Background }\frac{E_{meson}}{E_{beam}} (\pi \text{ decay})
     x: \frac{E_{meson}}{E_{beam}}
     y: "Events"
+    sum_histos:
+      "Pseudodata":
+        sources:
+          - from: "Signal"
+            histo: "RecoMesonEOverBeamE_SIGNAL"
+          - from: "Migrations BG"
+            histo: "RecoMesonEOverBeamE_BG"
+            # weight: 1.0  # opcional
+          - from: "Bhabha BG"
+            histo: "RecoMesonEOverBeamE_BG"
+          - from: "Zqq BG"
+            histo: "RecoMesonEOverBeamE_BG"
+        color: ROOT.kBlack
+        color: ROOT.kBlack
+        linestyle: 1
+        linewidth: 3
+        markerstyle: 20
+        markersize: 1
+        draw_with_errors: true
+        # markerstyle: 20
+        # draw: "HIST P"
+        label: \text{Pseudodata, } \pi  \text{ channel}
     show_entries: "absolute" #absolute | percent | both
-    ignore_entries_for: ["Template P1", "Template M1"]
-
-    legend: [0.6, 0.65, 0.9, 0.9]
+    ignore_entries_for: ["Template P1", "Template M1", "Pseudodata"]
+    extra_legend:
+      - 7 fb^{-1}\text{  }\sqrt{s}=91GeV
+    legend: [0.45, 0.7, 0.7, 0.9]

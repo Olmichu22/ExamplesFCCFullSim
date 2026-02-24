@@ -37,6 +37,326 @@ RA1 = "a_{1}"
 import ROOT
 import numpy as np
 
+
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Funciones de plotting
+# ──────────────────────────────────────────────────────────────────────────────
+
+def plot_energy_ratio(df, level_label, output_dir, pdg_name):
+    """Histogramas de fracción de energía ECAL y HCAL por tipo de partícula."""
+    if df.empty or "E_ecal" not in df.columns or "E_hcal" not in df.columns:
+        return
+
+    pids = sorted(df["pid"].unique())
+    n = len(pids)
+    if n == 0:
+        return
+
+    ncols = min(4, n)
+    nrows = (n + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4 * ncols, 3.5 * nrows), squeeze=False)
+
+    for idx, pid in enumerate(pids):
+        ax = axes[idx // ncols][idx % ncols]
+        subset = df[df["pid"] == pid].copy()
+        
+        # Calcular energía total de calorímetros y fracciones
+        E_total = subset["E_ecal"] + subset["E_hcal"]
+        mask = E_total > 0  # Evitar división por cero
+        
+        frac_ecal = (subset.loc[mask, "E_ecal"] / E_total[mask]).dropna()
+        frac_hcal = (subset.loc[mask, "E_hcal"] / E_total[mask]).dropna()
+        
+        if frac_ecal.empty and frac_hcal.empty:
+            ax.set_title(f"{pdg_name(pid)} (no data)")
+            ax.set_xlim(0, 1)
+            continue
+        
+        # Histogramas superpuestos
+        bins = np.linspace(0, 1, 51)
+        if not frac_ecal.empty:
+            ax.hist(frac_ecal, bins=bins, alpha=0.6, label="ECAL", 
+                    color="tab:blue", edgecolor="black", linewidth=0.5)
+        if not frac_hcal.empty:
+            ax.hist(frac_hcal, bins=bins, alpha=0.6, label="HCAL", 
+                    color="tab:orange", edgecolor="black", linewidth=0.5)
+        
+        ax.set_xlim(0, 1)
+        ax.set_xlabel("E / E_total")
+        ax.set_ylabel("Particles")
+        ax.set_title(f"{pdg_name(pid)} (N={mask.sum()})")
+        ax.legend(fontsize=8)
+
+    for idx in range(n, nrows * ncols):
+        axes[idx // ncols][idx % ncols].set_visible(False)
+
+    fig.suptitle(f"ECAL / HCAL fraction — {level_label}", fontsize=14, y=1.02)
+    fig.tight_layout()
+    fname = os.path.join(output_dir, f"energy_fraction_{level_label.lower().replace(' ', '_')}.png")
+    fig.savefig(fname, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  → {fname}")
+
+
+def plot_hit_distributions(df, level_label, output_dir, pdg_name):
+    """Histogramas del nº de hits por subdetector para cada tipo de partícula."""
+    if df.empty:
+        return
+    colors = {"n_track": "tab:green", "n_ecal": "tab:blue", "n_hcal": "tab:orange", "n_muon": "tab:purple"}
+    hit_cols = [c for c in df.columns if c.startswith("n_") and c not in ["n_total"]]
+    if not hit_cols:
+        return
+
+    pids = sorted(df["pid"].unique())
+    n = len(pids)
+    if n == 0:
+        return
+
+    ncols = min(4, n)
+    nrows = (n + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4 * nrows), squeeze=False)
+
+    for idx, pid in enumerate(pids):
+        ax = axes[idx // ncols][idx % ncols]
+        subset = df[df["pid"] == pid]
+        name = pdg_name(pid)
+
+        # -------- NUEVO: binning común por PID --------
+        max_global = 0
+        for col in hit_cols:
+            if col in subset.columns:
+                vals = subset[col].dropna()
+                if not vals.empty:
+                    max_global = max(max_global, int(vals.max()))
+
+        if max_global == 0:
+            continue
+
+        # bins = np.arange(0, max_global + 2, 20)
+        bins = np.linspace(0, max_global + 1, 50)
+        # ----------------------------------------------
+
+        # -------- CAMBIO: acumular y apilar --------
+        data = []
+        labels = []
+        cols = []
+
+        for col in hit_cols:
+            if col in subset.columns:
+                vals = subset[col].dropna()
+                if vals.empty or vals.max() == 0:
+                    continue
+                data.append(vals)
+                labels.append(col.replace("n_", "").upper())
+                cols.append(colors.get(col, "gray"))
+
+        if data:
+            ax.hist(
+                data,
+                bins=bins,
+                stacked=True,
+                alpha=0.6,
+                edgecolor="black",
+                linewidth=0.5,
+                color=cols,
+                align="left",
+                label=labels,
+            )
+        # -------------------------------------------
+
+        ax.set_xlabel("Nº hits")
+        ax.set_ylabel("Particles")
+        ax.set_yscale("log")
+        ax.set_title(f"{name} (N={len(subset)})")
+        ax.legend(fontsize=7)
+
+    for idx in range(n, nrows * ncols):
+        axes[idx // ncols][idx % ncols].set_visible(False)
+
+    fig.suptitle(f"Hits per subdetector — {level_label}", fontsize=14, y=1.02)
+    fig.tight_layout()
+    fname = os.path.join(output_dir, f"hits_per_subdet_{level_label.lower().replace(' ', '_')}.png")
+    fig.savefig(fname, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  → {fname}")
+
+
+
+def plot_energy_by_subdet(df, level_label, output_dir, pdg_name):
+    """Histograms of E_ECAL and E_HCAL by particle type."""
+    if df.empty:
+        return
+    
+    energy_cols = [c for c in ["E_ecal", "E_hcal"] if c in df.columns]
+    if not energy_cols:
+        return
+
+    pids = sorted(df["pid"].unique())
+    n = len(pids)
+    if n == 0:
+        return
+
+    ncols = min(4, n)
+    nrows = (n + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4 * nrows), squeeze=False)
+
+    colors = {"E_ecal": "tab:blue", "E_hcal": "tab:orange"}
+
+    for idx, pid in enumerate(pids):
+        ax = axes[idx // ncols][idx % ncols]
+        subset = df[df["pid"] == pid]
+        name = pdg_name(pid)
+
+        # -------- NUEVO: bins comunes por PID --------
+        max_global = 0.0
+        for col in energy_cols:
+            vals = subset[col].dropna()
+            if not vals.empty:
+                max_global = max(max_global, vals.max())
+
+        if max_global == 0:
+            continue
+
+        bins = np.linspace(0, max_global, 50)
+        # --------------------------------------------
+
+        for col in energy_cols:
+            vals = subset[col].dropna()
+            if vals.empty:
+                continue
+
+            ax.hist(
+                vals,
+                bins=bins,
+                alpha=0.6,
+                label=col.replace("E_", "").upper(),
+                color=colors.get(col, "gray"),
+                edgecolor="black",
+                linewidth=0.5,
+            )
+
+        ax.set_xlabel("Energy [GeV]")
+        ax.set_ylabel("Particles")
+        ax.set_title(f"{name} (N={len(subset)})")
+        ax.legend(fontsize=8)
+
+    for idx in range(n, nrows * ncols):
+        axes[idx // ncols][idx % ncols].set_visible(False)
+
+    fig.suptitle(f"ECAL / HCAL energy by particle — {level_label}", fontsize=14, y=1.02)
+    fig.tight_layout()
+    fname = os.path.join(output_dir, f"energy_ecal_hcal_{level_label.lower().replace(' ', '_')}.png")
+    fig.savefig(fname, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  → {fname}")
+
+
+def plot_ecal_hcal_ratio(df, level_label, output_dir, pdg_name):
+    """Histograma del ratio E_ECAL / E_HCAL por tipo de partícula."""
+    if df.empty or "E_ecal" not in df.columns or "E_hcal" not in df.columns:
+        return
+
+    pids = sorted(df["pid"].unique())
+    n = len(pids)
+    if n == 0:
+        return
+
+    ncols = min(4, n)
+    nrows = (n + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4 * ncols, 3.5 * nrows), squeeze=False)
+
+    for idx, pid in enumerate(pids):
+        ax = axes[idx // ncols][idx % ncols]
+        subset = df[df["pid"] == pid].copy()
+        
+        # Calcular ratio ECAL/HCAL (solo donde HCAL > 0)
+        mask = subset["E_hcal"] > 0
+        ratio = (subset.loc[mask, "E_ecal"] / subset.loc[mask, "E_hcal"]).dropna()
+        
+        if ratio.empty:
+            ax.set_title(f"{pdg_name(pid)} (no data)")
+            continue
+        
+        # Limitar ratio para visualización (valores muy altos -> ECAL dominante)
+        ratio_clipped = ratio.clip(upper=10)
+        
+        ax.hist(ratio_clipped, bins=50, alpha=0.75, color="tab:green", 
+                edgecolor="black", linewidth=0.5)
+        ax.set_xlabel("E_ECAL / E_HCAL")
+        ax.set_ylabel("Particles")
+        ax.set_title(f"{pdg_name(pid)} (N={len(ratio)})")
+        ax.axvline(x=1, color="red", linestyle="--", linewidth=1, alpha=0.7)
+
+    for idx in range(n, nrows * ncols):
+        axes[idx // ncols][idx % ncols].set_visible(False)
+
+    fig.suptitle(f"E_ECAL / E_HCAL ratio — {level_label}", fontsize=14, y=1.02)
+    fig.tight_layout()
+    fname = os.path.join(output_dir, f"ratio_ecal_hcal_{level_label.lower().replace(' ', '_')}.png")
+    fig.savefig(fname, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  → {fname}")
+
+
+def plot_hits_ecal_vs_hcal(df, level_label, output_dir, pdg_name):
+    """Histograma comparativo de número de hits ECAL vs HCAL por tipo de partícula."""
+    if df.empty or "n_ecal" not in df.columns or "n_hcal" not in df.columns:
+        return
+
+    pids = sorted(df["pid"].unique())
+    n = len(pids)
+    if n == 0:
+        return
+
+    ncols = min(4, n)
+    nrows = (n + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4 * nrows), squeeze=False)
+
+    for idx, pid in enumerate(pids):
+        ax = axes[idx // ncols][idx % ncols]
+        subset = df[df["pid"] == pid]
+        name = pdg_name(pid)
+        
+        n_ecal = subset["n_ecal"].dropna()
+        n_hcal = subset["n_hcal"].dropna()
+        
+        if n_ecal.empty and n_hcal.empty:
+            ax.set_title(f"{name} (no data)")
+            continue
+        
+        # Bins comunes
+        max_val = max(n_ecal.max() if not n_ecal.empty else 0, 
+                      n_hcal.max() if not n_hcal.empty else 0)
+        if max_val == 0:
+            continue
+        bins = np.linspace(0, max_val + 1, 50)
+        
+        if not n_ecal.empty:
+            ax.hist(n_ecal, bins=bins, alpha=0.6, label="ECAL", 
+                    color="tab:blue", edgecolor="black", linewidth=0.5)
+        if not n_hcal.empty:
+            ax.hist(n_hcal, bins=bins, alpha=0.6, label="HCAL", 
+                    color="tab:orange", edgecolor="black", linewidth=0.5)
+        
+        ax.set_xlabel("Nº hits")
+        ax.set_ylabel("Particles")
+        ax.set_yscale("log")
+        ax.set_title(f"{name} (N={len(subset)})")
+        ax.legend(fontsize=8)
+
+    for idx in range(n, nrows * ncols):
+        axes[idx // ncols][idx % ncols].set_visible(False)
+
+    fig.suptitle(f"ECAL vs HCAL hits — {level_label}", fontsize=14, y=1.02)
+    fig.tight_layout()
+    fname = os.path.join(output_dir, f"hits_ecal_vs_hcal_{level_label.lower().replace(' ', '_')}.png")
+    fig.savefig(fname, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  → {fname}")
+
+
 def plot_sigma_vs_energy_root(hist_dict, bin_edges, energy_bins, region_order=None):
     """
     Compute sigma for each (region, energy bin) histogram and
@@ -1195,10 +1515,22 @@ def plot_metric(canvas, graphs, metric_keys, colors, xaxis,
 
 
 def _draw_one_object_1d(obj, first, draw_as_scatter):
+    """
+    Dibuja un objeto ROOT 1D (TH1 o TGraph) con la opción adecuada.
+    
+    Si el histograma tiene fill configurado (FillStyle != 0), se fuerza
+    el uso de 'HIST' para que el relleno sea visible.
+    """
     if isinstance(obj, ROOT.TGraphAsymmErrors):
         opt = "AP" if first else "P same"
     else:
-        if draw_as_scatter:
+        # Detectar si el histograma tiene fill configurado
+        has_fill = isinstance(obj, ROOT.TH1) and obj.GetFillStyle() != 0
+        
+        if has_fill:
+            # Con fill, siempre usar HIST para que se vea el relleno
+            opt = "HIST" if first else "HIST same"
+        elif draw_as_scatter:
             opt = "P" if first else "P same"
         else:
             opt = "HIST" if first else "HIST same"
@@ -1214,14 +1546,75 @@ def get_total_entries(obj):
         return obj.GetN()
     return 0
 
-def _apply_style_1d(obj, color, linestyle, markerstyle, markersize, linewidth):
-    # print(color)
-    obj.SetLineColor(eval(color))
-    obj.SetMarkerColor(eval(color))
+def save_entries_csv(entries_per_dataset, percentages, total_entries, outdir, fig_name):
+    """
+    Saves histogram entries data (absolute and percentage) to a CSV file.
+    
+    Args:
+        entries_per_dataset: dict with label -> number of entries
+        percentages: dict with label -> percentage of total
+        total_entries: total number of entries across all datasets
+        outdir: output directory path
+        fig_name: name of the figure (used for CSV filename)
+    """
+    if not entries_per_dataset:
+        return
+    
+    csv_data = []
+    for label in entries_per_dataset.keys():
+        n_entries = entries_per_dataset[label]
+        pct = percentages.get(label, 0.0)
+        csv_data.append({
+            "Label": label,
+            "Entries": int(n_entries),
+            "Percentage": round(pct, 2)
+        })
+    
+    # Add total row
+    csv_data.append({
+        "Label": "TOTAL",
+        "Entries": int(total_entries),
+        "Percentage": 100.0
+    })
+    
+    df = pd.DataFrame(csv_data)
+    csv_path = os.path.join(outdir, f"{fig_name}_entries.csv")
+    df.to_csv(csv_path, index=False)
+    print(f"[OK] Saved entries CSV: {csv_path}")
+
+def _apply_style_1d(obj, color, linestyle, markerstyle, markersize, linewidth,
+                    fill=False, fillstyle=3004, fillalpha=1.0):
+    """
+    Aplica estilo a un objeto ROOT (TH1 o TGraph).
+    
+    Args:
+        obj: Objeto ROOT (TH1 o TGraph)
+        color: Color de línea y marcador (string evaluable, e.g. 'ROOT.kRed')
+        linestyle: Estilo de línea (int)
+        markerstyle: Estilo de marcador (int)
+        markersize: Tamaño del marcador (float)
+        linewidth: Grosor de línea (int)
+        fill: Si True, aplica relleno al histograma (bool)
+        fillstyle: Estilo del relleno (int, default 3004 = rayado diagonal)
+        fillalpha: Transparencia del relleno 0.0 (transparente) a 1.0 (opaco)
+    """
+    line_color = eval(color)
+    obj.SetLineColor(line_color)
+    obj.SetMarkerColor(line_color)
     obj.SetLineStyle(linestyle)
     obj.SetMarkerStyle(markerstyle)
     obj.SetMarkerSize(markersize)
     obj.SetLineWidth(linewidth)
+    
+    # Aplicar fill si está habilitado y el objeto es TH1
+    if fill and isinstance(obj, ROOT.TH1):
+        if fillalpha < 1.0:
+            # Usar transparencia (requiere ROOT >= 6)
+            # SetFillColorAlpha toma color y alpha (0-1)
+            obj.SetFillColorAlpha(line_color, fillalpha)
+        else:
+            obj.SetFillColor(line_color)
+        obj.SetFillStyle(fillstyle)
 
 def plot_compare_1D_across_files(files_info, plots, outdir):
     if not os.path.exists(outdir):
@@ -1266,6 +1659,137 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
         entries_per_dataset = {}
 
         ignore_entries_for  = cfg.get("ignore_entries_for", [])
+        # --- Procesar entradas con "sum_histos" (histogramas sumados de uno o varios archivos) ---
+        sum_entries = cfg.get("sum_histos", {})
+        # Crear diccionario de datasets por label para acceso rápido
+        ds_by_label = {ds["label"]: ds for ds in files_info}
+        
+        for sum_label, sum_cfg in sum_entries.items():
+            # sum_cfg puede tener:
+            #   histos: lista de nombres de histogramas (todos del mismo archivo "from")
+            #   O
+            #   sources: lista de {from: "dataset_label", histo: "histo_name", weight: opcional}
+            
+            sum_histo = None
+            
+            if "sources" in sum_cfg:
+                # Modo multi-archivo: cada source especifica de qué dataset y qué histograma
+                for src_entry in sum_cfg["sources"]:
+                    src_label = src_entry.get("from")
+                    hname = src_entry.get("histo")
+                    
+                    if src_label not in ds_by_label:
+                        print(f"[WARN] Plot '{fig_name}': sum_histos source from='{src_label}' no coincide con ningún dataset.")
+                        continue
+                    
+                    src_ds = ds_by_label[src_label]
+                    f_src = src_ds["file"]
+                    h = f_src.Get(hname)
+                    
+                    src_weight = src_entry.get("weight", src_ds.get("weight", 1.0))
+                    if not h:
+                        print(f"[WARN] '{hname}' not found in '{src_label}' for sum '{sum_label}'.")
+                        continue
+                    
+                    if sum_histo is None:
+                        sum_histo = h.Clone(f"sum_{sum_label}_clone")
+                        if src_weight != 1.0:
+                            sum_histo.Scale(src_weight)
+                    else:
+                        h_clone = h.Clone(f"{hname}_{src_label}_temp")
+                        if src_weight != 1.0:
+                            h_clone.Scale(src_weight)
+                        sum_histo.Add(h_clone)
+            
+            elif "histos" in sum_cfg:
+                # Modo archivo único: todos los histogramas del mismo dataset
+                histo_names = sum_cfg["histos"]
+                src_label = sum_cfg.get("from", files_info[0]["label"] if files_info else None)
+                
+                if src_label not in ds_by_label:
+                    print(f"[WARN] Plot '{fig_name}': sum_histos.from='{src_label}' no coincide con ningún dataset.")
+                    continue
+                
+                src_ds = ds_by_label[src_label]
+                f_src = src_ds["file"]
+                
+                for i, hname in enumerate(histo_names):
+                    h = f_src.Get(hname)
+                    if not h:
+                        print(f"[WARN] '{hname}' not found in '{src_label}' for sum '{sum_label}'.")
+                        continue
+                    
+                    if sum_histo is None:
+                        sum_histo = h.Clone(f"sum_{sum_label}_clone")
+                    else:
+                        sum_histo.Add(h)
+            
+            if sum_histo is None:
+                print(f"[WARN] No se pudo crear histograma sumado '{sum_label}'.")
+                continue
+            
+            # Aplicar peso global si está definido
+            global_weight = sum_cfg.get("weight", 1.0)
+            if global_weight != 1.0 and isinstance(sum_histo, ROOT.TH1):
+                sum_histo.Scale(global_weight)
+            
+            # Aplicar estilo (usar valores por defecto si no se especifican)
+            s_color = sum_cfg.get("color", "ROOT.kBlack")
+            s_linestyle = sum_cfg.get("linestyle", 1)
+            s_markerstyle = sum_cfg.get("markerstyle", 20)
+            s_markersize = sum_cfg.get("markersize", 1.5)
+            s_linewidth = sum_cfg.get("linewidth", 2)
+            s_fill = sum_cfg.get("fill", False)
+            s_fillstyle = sum_cfg.get("fillstyle", 3004)
+            s_fillalpha = sum_cfg.get("fillalpha", 1.0)
+            _apply_style_1d(
+                sum_histo, s_color, s_linestyle, s_markerstyle, s_markersize, s_linewidth,
+                fill=s_fill, fillstyle=s_fillstyle, fillalpha=s_fillalpha
+            )
+            
+            if sum_label not in ignore_entries_for:
+                entries_per_dataset[sum_label] = get_total_entries(sum_histo)
+            
+            # Normalización
+            if isinstance(sum_histo, ROOT.TH1):
+                if norm_main == "max":
+                    m = sum_histo.GetMaximum()
+                    if m > 0:
+                        sum_histo.Scale(1.0 / m)
+                elif norm_main == "integral":
+                    integ = sum_histo.Integral()
+                    if integ > 0:
+                        sum_histo.Scale(1.0 / integ)
+                if rebin and isinstance(rebin, int) and rebin > 1:
+                    sum_histo.Rebin(rebin)
+                global_max = max(global_max, sum_histo.GetMaximum())
+                ymin = sum_histo.GetMinimum()
+                global_min = ymin if global_min is None else min(global_min, ymin)
+            
+            if sum_cfg.get("label"):
+              sum_label_name = sum_cfg["label"]
+            else:
+              sum_label_name = sum_label
+            
+            # Determinar modo de dibujo
+            # draw_with_errors: dibuja solo puntos con barras de error estadísticas (sin histograma en bins)
+            sum_draw_mode = sum_cfg.get("draw", "")
+            draw_errors_overlay = False
+            if not sum_draw_mode:
+                if sum_cfg.get("draw_with_errors", False):
+                    # Solo puntos con errores en X e Y, sin histograma en bins
+                    sum_draw_mode = "E1 P"
+                    draw_errors_overlay = False
+                elif sum_cfg.get("markerstyle"):
+                    sum_draw_mode = "HIST P"  # Mostrar línea + puntos
+            
+            objs.append((sum_histo, sum_label_name, "sum", sum_draw_mode))
+            
+            # Ya no necesitamos el overlay porque dibujamos directamente con errores
+            if draw_errors_overlay:
+                sum_histo_errors = sum_histo.Clone(f"sum_{sum_label}_errors_clone")
+                # El clon hereda el estilo, solo cambiamos el modo de dibujo
+                objs.append((sum_histo_errors, None, "sum_errors_overlay", "E1 P"))
         for ds in files_info:
             label = ds["label"]
             f = ds["file"]
@@ -1304,7 +1828,17 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
     # Guarda también errores (low/high)
               list_graph_values[label] = (x_vals, y_vals, y_err_lo, y_err_hi)
               # list_graph_values[label] = (x_vals, y_vals)
-            _apply_style_1d(o, ds["color"], ds["linestyle"], ds["markerstyle"], ds["markersize"], ds.get("linewidth", 2))
+            _apply_style_1d(
+                o,
+                ds["color"],
+                ds["linestyle"],
+                ds["markerstyle"],
+                ds["markersize"],
+                ds.get("linewidth", 2),
+                fill=ds.get("fill", False),
+                fillstyle=ds.get("fillstyle", 3004),
+                fillalpha=ds.get("fillalpha", 1.0)
+            )
             if label not in ignore_entries_for:
               entries_per_dataset[label] = get_total_entries(o)
 
@@ -1372,8 +1906,14 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                           c_markerstyle = common_cfg.get("markerstyle", 24)
                           c_markersize  = common_cfg.get("markersize", 1.5)
                           c_linewidth   = common_cfg.get("linewidth", 2)
+                          c_fill        = common_cfg.get("fill", False)
+                          c_fillstyle   = common_cfg.get("fillstyle", 3004)
+                          c_fillalpha   = common_cfg.get("fillalpha", 1.0)
 
-                          _apply_style_1d(oc, c_color, c_linestyle, c_markerstyle, c_markersize, c_linewidth)
+                          _apply_style_1d(
+                              oc, c_color, c_linestyle, c_markerstyle, c_markersize, c_linewidth,
+                              fill=c_fill, fillstyle=c_fillstyle, fillalpha=c_fillalpha
+                          )
 
                           # Normalización específica del común (si falta, hereda la principal)
                           norm_c = common_cfg.get("normalize", norm_main).lower()
@@ -1525,7 +2065,14 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
             # dibujo normal en el canvas completo
             if cfg.get("logy", False):
                 c.SetLogy()
-
+                # --- Añadir entradas extra a la leyenda (solo texto, sin marca ni línea) ---
+        extra_legend = cfg.get("extra_legend", [])
+        if isinstance(extra_legend, str):
+            extra_legend = [extra_legend]  # permite pasar un único string
+        for extra_text in extra_legend:
+            # Creamos un objeto "nulo" invisible para añadir solo texto
+            null_obj = ROOT.TObject()
+            legend.AddEntry(null_obj, extra_text, "")
         # Ejes/títulos se toman del primer objeto que dibujamos
         for i, (o, label, kind, force_draw) in enumerate(objs):
             if i == 0:
@@ -1593,7 +2140,7 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
 
 
                 # Dibujo primero
-                if force_draw in ("HIST", "P"):
+                if force_draw:
                     o.Draw(force_draw)
                 else:
                     _draw_one_object_1d(o, True, draw_as_scatter)
@@ -1603,16 +2150,36 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                   # Asegúrate de que ya haya un marco (algún objeto 2D) dibujado antes.
                   # Si es el primero (raro), tendrías que crear un frame, pero aquí asumimos que NO es el primero.
                   o.Draw("same")
-                elif force_draw in ("HIST", "P"):
+                elif force_draw:
                     o.Draw(f"{force_draw} same")
                 else:
                     _draw_one_object_1d(o, False, draw_as_scatter)
 
             # Leyenda (si es TGraph, usamos 'lp'; si forzó "P", 'p'; si histo, 'l')
+            # Saltar objetos de overlay (sin etiqueta) para la leyenda
+            if label is None:
+                continue
+                
             if isinstance(o, ROOT.TGraphAsymmErrors):
                 legopt = "lp"
             else:
-                legopt = "p" if force_draw == "P" else ("l" if not draw_as_scatter else "lp")
+                # Detectar si el histograma tiene fill configurado
+                has_fill = isinstance(o, ROOT.TH1) and o.GetFillStyle() != 0 and o.GetFillColor() != 0
+                
+                # Si force_draw contiene "P", mostrar punto en leyenda
+                if force_draw and "P" in force_draw.upper():
+                    legopt = "lp" if ("HIST" in force_draw.upper() or "L" in force_draw.upper()) else "p"
+                    if has_fill:
+                        legopt = "f" + legopt  # Añadir fill a la leyenda
+                elif kind == "sum" and any(obj[2] == "sum_errors_overlay" and obj[0].GetName().startswith(f"sum_{label}") for obj in objs):
+                    # Este histograma tiene un overlay de errores, mostrar como lp
+                    legopt = "lep"
+                    if has_fill:
+                        legopt = "f" + legopt
+                else:
+                    legopt = "l" if not draw_as_scatter else "lp"
+                    if has_fill:
+                        legopt = "f" + legopt  # Añadir fill a la leyenda
             if isinstance(o, ROOT.TLine):
               legend.AddEntry(o, label, "l")
             else:
@@ -1632,6 +2199,15 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                   label_ext = label
 
               legend.AddEntry(o, label_ext, legopt)
+
+        # --- Añadir entradas extra a la leyenda (solo texto, sin marca ni línea) ---
+        # extra_legend = cfg.get("extra_legend", [])
+        # if isinstance(extra_legend, str):
+        #     extra_legend = [extra_legend]  # permite pasar un único string
+        # for extra_text in extra_legend:
+        #     # Creamos un objeto "nulo" invisible para añadir solo texto
+        #     null_obj = ROOT.TObject()
+        #     legend.AddEntry(null_obj, extra_text, "")
 
         legend.Draw()
         if have_diff_panel:
@@ -1668,6 +2244,11 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
 
           pad_bot.Update()
         c.Update()
+
+        # Guardar CSV con datos de entradas si show_entries está activo
+        show_entries = cfg.get("show_entries", False)
+        if show_entries and entries_per_dataset:
+            save_entries_csv(entries_per_dataset, percentages, total_entries, outdir, fig_name)
 
         # Guardar
         os.makedirs(outdir, exist_ok=True)

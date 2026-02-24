@@ -101,6 +101,10 @@ variabs_hist:
 - hNRecoPionsInCluster
 - hRecoAllPionsP
 - hRecoAllPionsTheta
+- hMatchedRecoPionsBGe
+- hMatchedRecoPionsBGmu
+- hMatchedRecoPionsBGn
+- hMatchedRecoPionsBGother
 plot_titles_config_hist:
   hGenClusteredPionsMaxPvsDR:
     title: ''
@@ -911,6 +915,38 @@ plot_titles_config_hist:
     - 0
     - 0
   hRecoAllPionsTheta:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedRecoPionsBGe:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedRecoPionsBGmu:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedRecoPionsBGn:
+    title: ''
+    x: ''
+    y: ''
+    fit: false
+    fitrange:
+    - 0
+    - 0
+  hMatchedRecoPionsBGother:
     title: ''
     x: ''
     y: ''

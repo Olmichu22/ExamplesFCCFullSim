@@ -459,6 +459,62 @@ Matched:
 
 Reco:
   Events:
+    RecoMeson_P_BGPion:
+      type: "1D"
+      name: RecoMeson_P_BGPion
+      range: [0, 50]
+      bins: 50
+    RecoMeson_P_BGOther:
+      type: "1D"
+      name: RecoMeson_P_BGOther
+      range: [0, 50]
+      bins: 50
+    RecoMeson_P_BGA1:
+      type: "1D"
+      name: RecoMeson_P_BGA1
+      range: [0, 50]
+      bins: 50
+    RecoMeson_P_BGRho:
+      type: "1D"
+      name: RecoMeson_P_BGRho
+      range: [0, 50]
+      bins: 50
+    RecoMeson_P_BGEle:
+      type: "1D"
+      name: RecoMeson_P_BGEle
+      range: [0, 50]
+      bins: 50
+    RecoMeson_P_BGMuon:
+      type: "1D"
+      name: RecoMeson_P_BGMuon
+      range: [0, 50]
+      bins: 50
+    RecoMeson_P_SIGNAL:
+      type: "1D"
+      name: RecoMeson_P_SIGNAL
+      range: [0, 50]
+      bins: 50
+
+    CosTheta_Tau_SIGNAL:
+      type: "1D"
+      name: CosTheta_Tau_SIGNAL
+      range: [-1, 1]
+      bins: 100
+    CosTheta_Tau_BG:
+      type: "1D"
+      name: CosTheta_Tau_BG
+      range: [-1, 1]
+      bins: 100
+    CosTheta_Tau_P1:
+      type: "1D"
+      name: CosTheta_Tau_P1
+      range: [-1, 1]
+      bins: 100
+    CosTheta_Tau_M1:
+      type: "1D"
+      name: CosTheta_Tau_M1
+      range: [-1, 1]
+      bins: 100
     LeptonP_SIGNAL:
       type: "1D"
       name: LeptonP_SIGNAL

@@ -55,6 +55,10 @@ for ds in cfg.get("datasets", []):
         "markersize": ds.get("markersize", 1.5),
         "linewidth": ds.get("linewidth", 2),
         "weight": weight,
+        # Opciones de fill
+        "fill": ds.get("fill", False),
+        "fillstyle": ds.get("fillstyle", 3004),
+        "fillalpha": ds.get("fillalpha", 1.0),
     })
 
 # --- Salida

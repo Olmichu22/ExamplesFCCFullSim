@@ -1,7 +1,7 @@
 import math 
 import ROOT
 
-def wVariab(genTauP4,genRhoP4,genPionP4,beamE, testAtau=0):
+def wVariab(genTauP4,genRhoP4,genPionP4,beamE, testAtau=0, sin_eff=None):
 
     # GEN 
     boostGEN=ROOT.TVector3()
@@ -61,8 +61,10 @@ def wVariab(genTauP4,genRhoP4,genPionP4,beamE, testAtau=0):
     w= (w_a+w_b)/w_c
 
     # is it the weights?
-
-    sin2theta_effective= 0.2312
+    if sin_eff is not None:
+      sin2theta_effective = sin_eff
+    else:  
+      sin2theta_effective= 0.2312
     gv_ga=  -1 + 4 *sin2theta_effective
     Ae_sm=  2* gv_ga / (1+gv_ga*gv_ga)
     Atau_sm= Ae_sm

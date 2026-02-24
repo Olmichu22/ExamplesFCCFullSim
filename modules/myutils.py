@@ -463,7 +463,7 @@ def setup_analysis_config(
     parser.add_argument("-d", "--decay", type=int)
     parser.add_argument("-p", "--TauPhotonPCut", type=float)
     parser.add_argument("-i", "--TauPionPCut", type=float)
-    parser.add_argument("-t","--tauCut",default=2,type=float)
+    parser.add_argument("-t","--tauCut",default=0,type=float)
     parser.add_argument("-R", "--dRMax", type=float)
     parser.add_argument("-n", "--NeutronCut", type=float)
     parser.add_argument("-g", "--generalPCut", type=float)
@@ -476,8 +476,7 @@ def setup_analysis_config(
     )
     parser.add_argument(
         "--test",
-        type=str,
-        help="Run in test mode with limited number of files",
+        action="store_true",
     )
     parser.add_argument(
         "-c", "--config", type=str, help="Configuration file"
@@ -629,7 +628,7 @@ def setup_analysis_config(
 
     # Convert flags
     matched_cm = True if config["general"]["matchedCM"] == "True" else False
-    test_mode = True if config["general"]["test"] == "True" else False
+    test_mode = args.test 
 
     
     return {
@@ -734,18 +733,24 @@ def get_root_trees_path(sample, gatr_results_path, loggers, test, args=None):
                 sample_path = "Zee_50k"
             elif sample.lower() == "bhabha":
                 sample_path = "bhabha_1M" # bhabha_1M gives 1M events
+            elif sample.lower() == "bhabha_1M3":
+                sample_path = "bhabha_1M_3"
             else:
                 loggers["io"].error("Sample %s not recognized.", sample)
                 sys.exit(1)
         dir_path = path + "/" + sample_path
 
-        nfiles = len(os.listdir(dir_path))
+        nfiles = sum(
+            1
+            for f in os.listdir(dir_path)
+            if f.endswith(".root") and os.path.isfile(os.path.join(dir_path, f))
+        )
 
-        nfiles = 1000
+        # nfiles = 1000
         if test == True:
             nfiles = 100
 
-        loggers["io"].info("Reading files from %s", dir_path)
+        loggers["io"].info("Reading files from %s (%d files)", dir_path, nfiles)
         for i in range(1, nfiles + 1):
             filename = dir_path + "/" + file + "_{}.root".format(i)
             loggers["io"].debug("Reading file %s", filename)

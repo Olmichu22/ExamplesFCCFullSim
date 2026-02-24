@@ -335,6 +335,19 @@ for eventid, event in enumerate(reader.get("events")):
             root_histograms["Matched"]["Events"]["IsolatedPionsUnmatchedGenP"].Fill(gen_pion.getMomentum().P())
             root_histograms["Matched"]["Events"]["IsolatedPionsUnmatchedGenTheta"].Fill(gen_pion.getMomentum().Theta())
 
+    for match_obj in matching_pions.reco_matched_with_other:
+        reco_pion = match_obj.getMatchedRecoParticle()
+        gen_part = match_obj.getGenParticle()
+        gen_part_PDG = match_obj.getGenPDG()
+        # root_histograms["Matched"]["Events"]["MissmatchedRecoPionsRecoP"].Fill(reco_pion.getMomentum().P())
+        if abs(gen_part_PDG)==11:
+            root_histograms["Matched"]["Events"]["RecoPions_BG_e"].Fill(reco_pion.getMomentum().P())
+        elif abs(gen_part_PDG)==13:
+            root_histograms["Matched"]["Events"]["RecoPions_BG_mu"].Fill(reco_pion.getMomentum().P())
+        elif abs(gen_part_PDG)==2112:
+            root_histograms["Matched"]["Events"]["RecoPions_BG_n"].Fill(reco_pion.getMomentum().P())
+        else:
+            root_histograms["Matched"]["Events"]["RecoPions_BG_other"].Fill(reco_pion.getMomentum().P())
     for match_obj in matching_pions.gen_matched_with_other:
         confusion_events["Event"].append(eventid)
         genPion = match_obj.getGenParticle()

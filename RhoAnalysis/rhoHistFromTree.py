@@ -34,6 +34,8 @@ from ROOT import TFile
 from modules import myutils  # mismo sistema de config que el código original
 from modules import pi0Reco
 from modules.plotting import plot_sigma_vs_energy_root
+from modules import optimalVariabRho
+
 # ---------------------------------------------------------------------
 # Función auxiliar: escribir recursivamente todos los histogramas ROOT
 # contenidos en diccionarios anidados.
@@ -100,6 +102,12 @@ def my_hook(parser):
         default=[0.0, np.inf],
         nargs="+",
         help="Z mass cut range (default: 0.0 to infinity)",
+    )
+    parser.add_argument("--compute-weights", action="store_true", 
+        help="Compute weights for polarization variations"
+    )
+    parser.add_argument("--sin-eff", type=float, default=None,
+        help="Effective sin^2 theta_W to use in weight calculations"
     )
 
 
@@ -252,7 +260,7 @@ def main():
     if selectDecay == 2:
         selectGEN = 1
     
-
+    other_BG_id = dict()
     for tree_key, tree in trees.items():
         root_histograms = root_histograms_super[tree_key]
         logger_process.info(
@@ -295,9 +303,6 @@ def main():
                 genTauID = int(entry.genTauID)
                 recoTauID = int(entry.recoTauID)
 
-                # Pesos almacenados en el árbol
-                weight_P1 = float(entry.weight_P1)
-                weight_M1 = float(entry.weight_M1)
                 
                 leptonP = float(entry.lepP)
                 leptonE = float(entry.lepE)
@@ -317,6 +322,41 @@ def main():
                     leptonP * math.sin(leptonTheta) * math.sin(leptonPhi),
                     leptonP * math.cos(leptonTheta), leptonE
                 )
+                # Pesos almacenados en el árbol
+                if args.compute_weights:
+                    gentauP = float(entry.genTauP)
+                    gentauTheta = float(entry.genTauTheta)
+                    gentauPhi = float(entry.genTauPhi)
+                    gentauE = float(entry.genTauE)
+                    genTauP4 = ROOT.TLorentzVector()
+                    genTauP4.SetPxPyPzE(
+                        gentauP * math.sin(gentauTheta) * math.cos(gentauPhi),
+                        gentauP * math.sin(gentauTheta) * math.sin(gentauPhi),
+                        gentauP * math.cos(gentauTheta),
+                        gentauE)
+                    genMesonP = float(entry.genMesonP)
+                    genMesonPhi = float(entry.genMesonPhi)
+                    genMesonTheta = float(entry.genMesonTheta)
+                    genMesonP4 = ROOT.TLorentzVector()
+                    genMesonP4.SetPxPyPzE(
+                        genMesonP * math.sin(genMesonTheta) * math.cos(genMesonPhi),
+                        genMesonP * math.sin(genMesonTheta) * math.sin(genMesonPhi),
+                        genMesonP * math.cos(genMesonTheta),
+                        genMesonE)
+                    genPionP = float(entry.genPionP)
+                    genPionPhi = float(entry.genPionPhi)
+                    genPionTheta = float(entry.genPionTheta)
+                    genPionE = float(entry.genPionE)
+                    genPionP4 = ROOT.TLorentzVector()
+                    genPionP4.SetPxPyPzE(
+                        genPionP * math.sin(genPionTheta) * math.cos(genPionPhi),
+                        genPionP * math.sin(genPionTheta) * math.sin(genPionPhi),
+                        genPionP * math.cos(genPionTheta),
+                        genPionE)
+                    (_,_,_,_,weight_P1,weight_M1)=optimalVariabRho.wVariab(genTauP4, genMesonP4,genPionP4,beamE, sin_eff=args.sin_eff)
+                else:
+                    weight_P1 = float(entry.weight_P1)
+                    weight_M1 = float(entry.weight_M1)
 
             except AttributeError as e:
                 logger_process.error(
@@ -348,10 +388,15 @@ def main():
                 root_histograms["Reco"]["Events"]["DeltaR_LepMeson_SIGNAL"].Fill(dR_between)
                 root_histograms["Reco"]["Events"]["MesonP_SIGNAL"].Fill(recoMesonP)
                 root_histograms["Reco"]["Events"]["LeptonP_SIGNAL"].Fill(leptonP)
+                root_histograms["Reco"]["Events"]["CosTheta_Tau_SIGNAL"].Fill(cos_theta_rho)
+                root_histograms["Reco"]["Events"]["CosTheta_Tau_P1"].Fill(cos_theta_rho, weight_P1 * weight)
+                root_histograms["Reco"]["Events"]["CosTheta_Tau_M1"].Fill(cos_theta_rho, weight_M1 * weight)
             else:
                 root_histograms["Reco"]["Events"]["DeltaR_LepMeson_BG"].Fill(dR_between)
                 root_histograms["Reco"]["Events"]["MesonP_BG"].Fill(recoMesonP)
                 root_histograms["Reco"]["Events"]["LeptonP_BG"].Fill(leptonP)
+                root_histograms["Reco"]["Events"]["CosTheta_Tau_BG"].Fill(cos_theta_rho)
+                
             
             
             # pt a partir de P y theta
@@ -575,6 +620,7 @@ def main():
                 root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_SIGNAL_M1"].Fill(
                     recoMesonE / beamE, weight_M1 * weight
                 )
+                # root_histograms["Reco"]["Events"]["RecoMesonE"]
 
                 root_histograms["Reco"]["Events"]["RecoMeson_X"].Fill(
                     x, weight
@@ -595,7 +641,9 @@ def main():
                 root_histograms["Reco"]["Events"]["RecoMesonCosTheta_SIGNAL_M1"].Fill(
                     math.cos(recoMesonTheta), weight_M1 * weight
                 )
-
+                root_histograms["Reco"]["Events"]["RecoMeson_P_SIGNAL"].Fill(
+                    recoMesonP, weight
+                )
             else:
                 # Fondo (BG) - misma lógica de categorías que en el análisis original
                 root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_BG"].Fill(
@@ -696,8 +744,15 @@ def main():
                     root_histograms["Gen"]["Events"]["CosPsi_GEN_BGMuon"].Fill(
                         gen_cos_psi, weight
                     )
+                    root_histograms["Reco"]["Events"]["RecoMeson_P_BGMuon"].Fill(
+                    recoMesonP, weight
+                    )
 
                 elif genTauID == -11:  # electrones
+                    root_histograms["Reco"]["Events"]["RecoMeson_P_BGEle"].Fill(
+                    recoMesonP, weight
+                    )
+
                     root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_BGEle"].Fill(
                         recoMesonE / beamE, weight
                     )
@@ -745,6 +800,10 @@ def main():
                     )
 
                 elif genTauID == 0:  # piones
+                    root_histograms["Reco"]["Events"]["RecoMeson_P_BGPion"].Fill(
+                    recoMesonP, weight
+                    )
+
                     root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_BGPion"].Fill(
                         recoMesonE / beamE, weight
                     )
@@ -787,6 +846,9 @@ def main():
                     )
 
                 elif genTauID == 1:  # rho
+                    root_histograms["Reco"]["Events"]["RecoMeson_P_BGRho"].Fill(
+                        recoMesonP, weight
+                    )
                     root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_BGRho"].Fill(
                         recoMesonE / beamE, weight
                     )
@@ -829,6 +891,9 @@ def main():
                     )
 
                 elif genTauID == 10:  # a1
+                    root_histograms["Reco"]["Events"]["RecoMeson_P_BGA1"].Fill(
+                        recoMesonP, weight
+                    )
                     root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_BGA1"].Fill(
                         recoMesonE / beamE, weight
                     )
@@ -871,6 +936,11 @@ def main():
                     )
 
                 else:  # other BG
+                    other_BG_id[genTauID] = other_BG_id.get(genTauID, 0) + 1 # Pythonic!
+                    
+                    root_histograms["Reco"]["Events"]["RecoMeson_P_BGOther"].Fill(
+                        recoMesonP, weight
+                    )
                     root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_BGOther"].Fill(
                         recoMesonE / beamE, weight
                     )
@@ -969,6 +1039,13 @@ def main():
     #         # output_png = os.path.join(outputpath, f"PhotonPRes_vs_Energy_{res_hist_key}_d{selectDecay}.png")
     #         # canvas.SaveAs(output_png)
     outfile.Close()
+    other_BG_id_list = sorted(other_BG_id.items())
+    # Save as csv
+    output_name = fileOutName.replace(".root", "_otherBGid.csv")
+    import pandas as pd
+    df_other_BG = pd.DataFrame(other_BG_id_list, columns=["genTauID", "count"])
+    df_other_BG.to_csv(output_name, index=False)
+    logger_io.info(f"Other BG IDs saved to {output_name}")
     logger_io.info(f"All histograms written and file closed. Results in {fileOutName}")
 
 

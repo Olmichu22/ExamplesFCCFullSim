@@ -1,0 +1,117 @@
+# compare.yaml
+global:
+  luminosity: 5000 # in pb-1
+datasets:
+  - path: Results/RhoAnalysis/Extremes_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Signal Original
+    color: ROOT.kRed          # kRed
+    linestyle: 1
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+    xsec: 1476.58 # pb
+    n_events: 1000000
+
+  - path: Results/RhoAnalysis/Extremes_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Signal Upper Syst
+    color: ROOT.kViolet          # kRed
+    linestyle: 1
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+    xsec: 1476.58 # pb
+    n_events: 1000000
+
+  - path:  Results/RhoAnalysis/Extremes_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: Signal Lower Syst
+    color: ROOT.kRed +2          # kRed
+    linestyle: 3
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+    xsec: 1476.58 # pb
+    n_events: 1000000
+  # - path: Results/RhoAnalysis/tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  #   label: Template M1
+  #   color: ROOT.kRed +2          # kRed
+  #   linestyle: 2
+  #   markerstyle: 20
+  #   markersize: 1.
+  #   linewidth: 3
+  #   xsec: 1476.58 # pb
+  #   n_events: 2000000
+
+  # # - path: Results/RhoAnalysis/Zee_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  # #   label: Zee BG
+  # #   color: 4          # kBlue
+  # #   linestyle: 1
+  # #   markerstyle: 21
+  # #   markersize: 1.
+  # #   linewidth: 3
+  # #   xsec: 1476.58 # pb
+  # #   n_events: 50000
+
+  # - path: Results/RhoAnalysis/Zqq_sampletau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  #   label: Zqq BG
+  #   color: ROOT.kBlue          # kBlue
+  #   linestyle: 1
+  #   markerstyle: 21
+  #   markersize: 1.
+  #   linewidth: 3
+  #   xsec: 30170  # pb
+  #   n_events: 1000000
+
+  # # - path: Results/RhoAnalysis/bhabha_sample_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  # #   label: Bhabha BG
+  # #   color: ROOT.kBlue-2          # kBlue
+  # #   linestyle: 1
+  # #   markerstyle: 21
+  # #   markersize: 1.
+  # #   linewidth: 3
+  # #   xsec:  273500 # pb
+  # #   n_events: 1000000
+
+  # - path:  Results/RhoAnalysis/bhabha_sample_FULLtau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root 
+  #   label: Bhabha BG
+  #   color: ROOT.kBlue-2          # kBlue
+  #   linestyle: 1
+  #   markerstyle: 21
+  #   markersize: 1.
+  #   linewidth: 3
+  #   xsec:  273500 # pb
+  #   n_events: 2396000
+plots:
+
+  # # si el histo se llama distinto según dataset:
+  signal_vs_pol_systematics_basecuts:
+    rebin: 2
+    per_dataset:
+      "Signal Original": "RecoMesonEOverBeamE_SIGNAL"
+      "Signal Upper Syst": "RecoMesonEOverBeamE_SIGNAL_max"
+      "Signal Lower Syst": "RecoMesonEOverBeamE_SIGNAL_min"
+    title: \text{Signal}\frac{E_{meson}}{E_{beam}} (\pi \text{ decay, Syst. Comp.})
+    x: \frac{E_{meson}}{E_{beam}}
+    y: "Events"
+    # sum_histos:
+    #   "Pseudodata":
+    #     sources:
+    #       - from: "Signal"
+    #         histo: "RecoMesonEOverBeamE_SIGNAL"
+    #       - from: "Migrations BG"
+    #         histo: "RecoMesonEOverBeamE_BG"
+    #         # weight: 1.0  # opcional
+    #       - from: "Bhabha BG"
+    #         histo: "RecoMesonEOverBeamE_BG"
+    #       - from: "Zqq BG"
+    #         histo: "RecoMesonEOverBeamE_BG"
+    #     color: ROOT.kBlack
+    #     linestyle: 1
+    #     linewidth: 3
+    #     # markerstyle: 20
+    #     # draw: "HIST P"
+    #     label: \text{Pseudodata, } \pi  \text{ channel}
+    show_entries: "absolute" #absolute | percent | both
+    # ignore_entries_for: ["Template P1", "Template M1", "Pseudodata"]
+    extra_legend:
+      - 5 fb^{-1}\text{  }\sqrt{s}=91GeV
+    legend: [0.25, 0.6, 0.5, 0.85]

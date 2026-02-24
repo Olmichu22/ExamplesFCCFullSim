@@ -86,8 +86,29 @@ variabs_hist:
   - effGenTrackPionClusterDREfficiency
   - hMatchedGenPionClusterDr
   - hGenPionClusterDr
+  - effMatchedPionPBGeefficiency
+  - effMatchedPionPBGmuefficiency
+  - effMatchedPionPBGnefficiency
+  - effMatchedPionPBGotherefficiency
 
 plot_together:
+  FakePionsEfficiency:
+    variabs:
+      - effMatchedPionPBGeefficiency
+      - effMatchedPionPBGmuefficiency
+      - effMatchedPionPBGnefficiency
+      - effMatchedPionPBGotherefficiency
+    labels:
+      - e+/- Background
+      - mu+/- Background
+      - neutron Background
+      - other Background
+    title: "Fake Pion Reconstruction Efficiency from Background vs Pion P"
+    x: "Pion P [GeV/c]"
+    y: "Efficiency"
+    position: [0.25, 0.4, 0.4, 0.6]
+    gridy: true
+    logy: true
   ClusteredPionsDREfficiency:
     variabs:
       - effGenClusterPionDREfficiency

@@ -5,7 +5,7 @@ cuts:
   TauPionPCut: 0.0
   dRMax: 0.4
   generalPCut: 0.0
-  tauCut: 2
+  tauCut: 0
 general:
   decay:
   - -777

@@ -390,7 +390,7 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
       #       f"Tau ID is -1, which is unexpected. "
       #       f"chargeTau: {chargeTau}, countPhotons: {countPhotons}, countPions: {countPions}, countNeutrons: {countNeutrons}"
       #    )
-      return (tauP4,tauID,chargeTau,maxConeTau,nConsts,const), None
+      return (tauP4, tauID, chargeTau, maxConeTau, nConsts, const), None
 
    else:
       # logger.debug(
@@ -398,7 +398,7 @@ def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutro
       #    f"chargeTau: {chargeTau}, countPhotons: {countPhotons}, countPions: {countPions}, countNeutrons: {countNeutrons}"
       # )
       tauP4.SetXYZM(0,0,0,0) # safety, always return an object 
-      return (tauP4,-1,0,0,0,dict()), None
+      return (tauP4,-1,0,0,nConsts,const), None
 
 def normal_sample(mean, stddev, size=1):
    """Generate samples from a normal distribution.
