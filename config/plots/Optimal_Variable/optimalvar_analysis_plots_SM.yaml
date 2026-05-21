@@ -1,0 +1,208 @@
+variabs_hist:
+- Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.188
+- Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.187
+- Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.186
+- Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.188_M1
+- Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.187_M1
+- Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.186_M1
+- Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.188_P1
+- Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.187_P1
+- Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.186_P1
+- GenZMass_SIGNAL
+
+variabs_2d:
+- Omega_GEN_ZGenMass_SIGNAL
+# plot_together:
+#   Pi0mass_smearing:
+#     variabs:
+#       - PhotonPResMatched
+#     labels:
+#       # - \omega \text{ Gen from } \rho \text{ decay} 
+#       - \text{Photon Energy Resolution}
+#     title: \text{Photon Energy Resolution Distribution}
+#     x: \frac{\Delta E}{E}
+#     y: "Events norm"
+#     rebin: 2
+#     # logy: True
+#     position: [0.46, 0.65, 0.8, 0.9]
+#     norm: True
+
+    # ncolums: 2
+    # fill_between:
+    #   reference: Omega_SIGNAL
+    #   histos:
+    #     - Omega_SIGNAL_max
+    #     - Omega_SIGNAL_min
+    #   colors:
+    #     - 632
+    #     - 416
+    #   fillstyle: 3020
+    # # draw_mode: line
+    # markersize: 1
+    # linewidth: 2
+
+
+plot_together:
+  Omega_GEN_SIGNAL_ZGenMass_SM:
+    variabs:
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.186
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.187
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.188
+    labels:
+      - bin 91.186-91.187 GeV
+      - bin 91.187-91.188 GeV
+      - bin 91.188-91.189 GeV
+    x: \omega
+    y: "Events norm"
+    title: \omega \text{ distribution regarding Gen Z Mass for SIGNAL (SM Sample)}
+    norm: True
+    gridy: True
+    gradient: True
+    rebin: 8
+    position: [0.66, 0.65, 0.86, 0.90]
+
+  Omega_GEN_SIGNAL_ZGenMass_SM_effis:
+    variabs:
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.186
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.187
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.188
+    labels:
+      - bin 91.186-91.187 GeV
+      - bin 91.187-91.188 GeV
+      - bin 91.188-91.189 GeV
+    x: \omega
+    y: "Events norm"
+    title: \omega \text{ distribution regarding Gen Z Mass for SIGNAL (SM Sample)}
+    norm: True
+    gridy: True
+    gradient: True
+    # rebin: 8
+    position: [0.66, 0.65, 0.86, 0.90]
+
+
+  Omega_GEN_SIGNAL_ZGenMass_M1:
+    variabs:
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.186_M1
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.187_M1
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.188_M1
+    labels:
+      - bin 91.186-91.187 GeV
+      - bin 91.187-91.188 GeV
+      - bin 91.188-91.189 GeV
+    rebin: 8
+    x: \omega
+    y: "Events norm"
+    title: \omega \text{ distribution regarding Gen Z Mass for SIGNAL (M1 weight)}
+    norm: True
+    gridy: True
+    gradient: True
+    position: [0.36, 0.15, 0.56, 0.36]
+
+  Omega_GEN_SIGNAL_ZGenMass_M1_effis:
+    variabs:
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.186_M1
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.187_M1
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.188_M1
+    labels:
+      - bin 91.186-91.187 GeV
+      - bin 91.187-91.188 GeV
+      - bin 91.188-91.189 GeV
+    # rebin: 8
+    x: \omega
+    y: "Events norm"
+    title: \omega \text{ distribution regarding Gen Z Mass for SIGNAL (M1 weight)}
+    norm: True
+    gridy: True
+    gradient: True
+    position: [0.36, 0.15, 0.56, 0.36]
+
+  Omega_GEN_SIGNAL_ZGenMass_P1:
+    variabs:
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.186_P1
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.187_P1
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.188_P1
+    labels:
+      - bin 91.186-91.187 GeV
+      - bin 91.187-91.188 GeV
+      - bin 91.188-91.189 GeV
+    rebin: 8
+    x: \omega
+    y: "Events norm"
+    title: \omega \text{ distribution regarding Gen Z Mass for SIGNAL (P1 weight)}
+    norm: True
+    gridy: True
+    gradient: True
+    position: [0.56, 0.55, 0.76, 0.86]
+
+
+
+
+
+  Omega_GEN_SIGNAL_ZGenMass_P1_effis:
+    variabs:
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.186_P1
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.187_P1
+      - Omega_GEN_SIGNAL_ZGenMass_ProjBin_91.188_P1
+    labels:
+      - bin 91.186-91.187 GeV
+      - bin 91.187-91.188 GeV
+      - bin 91.188-91.189 GeV
+    # rebin: 8
+    x: \omega
+    y: "Events norm"
+    title: \omega \text{ distribution regarding Gen Z Mass for SIGNAL (P1 weight)}
+    norm: True
+    gridy: True
+    gradient: True
+    position: [0.56, 0.55, 0.76, 0.86]
+    # fill: True
+    # logy: True
+    # fit: True
+    # fitrange: [-0.2, 0.2]
+    # norm: True
+# variabs_2d:
+#   - hRecoGenTypeMatched
+
+  ZMass_GEN_VIS_SIGNAL:
+    variabs:
+      - GenVisZMass_SIGNAL
+      - GenZMass_SIGNAL
+    labels:
+      - Gen Z Mass (visible)
+      - Gen Z Mass (full)
+    x: "Gen Z Mass (visible) [GeV/c^2]"
+    y: "Events norm"
+    title: "Gen Z Mass (visible and gen) Distribution for SIGNAL (SM Sample)"
+    norm: True
+    gridy: True
+    # gradient: True
+    # rebin: 8
+    position: [0.36, 0.15, 0.66, 0.30]
+
+ 
+plot_titles_config_hist:
+  GenZMass_SIGNAL:
+    # name: "GenZMass_SIGNAL"       # TH1 o TGraphAsymmErrors
+    # title: \text{Reco }\pi^\pm \text{ no emparejados vs P}
+    title: \text{Gen Z Mass Distribution }
+    x: "Gen Z Mass [GeV/c^2]"
+    y: "Events"
+    # y: "Eventos"
+    # y: "Events"
+    # normalize: "none"
+    logy: true
+    # legend: [0.65, 0.8, 0.9, 0.9]
+    # rebin: 2
+
+plot_titles_config_2d:
+  Omega_GEN_ZGenMass_SIGNAL:
+    x: \omega
+    y: "Gen Z Mass [GeV/c^2]"
+    title: \text{Gen Z Mass vs Omega for SIGNAL (SM Sample)}
+    rebiny: 10
+# plot_titles_config_2d:
+#   hRecoGenTypeMatched:
+#     x: "Gen Tau Type"
+#     y: "Reco Tau Type"
+#     title: "2D Histogram of Reco and Gen Tau Type"
+  

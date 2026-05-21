@@ -1,0 +1,12 @@
+# request_cpus           = 8
++CieRunInGpu3=True
+requirements = TARGET.Machine == "gaew0120.ciemat.es"
+# +CieMediumJob = Tr
+output                 = //nfs/cms/arqolmo/SDHCAL_Energy/GATrAutoencoder/logs/job_int.out
+log                    = //nfs/cms/arqolmo/SDHCAL_Energy/GATrAutoencoder/logs/job_int.log
+error                  = //nfs/cms/arqolmo/SDHCAL_Energy/GATrAutoencoder/logs/job_int.err
+# arguments              = python /nfs/cms/arqolmo/SDHCAL_Energy/Complete_data_reading.py -i /nfs/cms/arqolmo/SDHCAL_Energy/DatosSDHCAL/Electrones/*.root -c /nfs/cms/arqolmo/SDHCAL_Energy/config_electrones.yml
+# max_retries            = 1
+# executable             = /nfs/cms/arqolmo/SDHCAL_Energy/GATrAutoencoder/condorExecutable.sh
+
+queue

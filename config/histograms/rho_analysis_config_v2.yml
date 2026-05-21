@@ -1,0 +1,342 @@
+# rho_analysis_config_v2.yml
+#
+# Formato compacto: cada entrada declara la variable base y sus categorías.
+# El factory (build_histogram_registry en myutils.py) expande automáticamente
+# los sufijos _CATEGORIA y _CATEGORIA_PESO.
+#
+# categories como lista  → usa los pesos del bloque `defaults`
+# categories como dict   → permite sobrescribir los pesos por variable
+#
+# Histogramas con lógica especial (Pi0Mass, ZVisMass bins) se listan
+# en la sección `special` y se crean directamente sin expansión.
+
+defaults:
+  categories:
+    ALL:     {weights: []}
+    SIGNAL:  {weights: [P1, M1, corr_P1, corr_M1]}
+    BG:      {weights: []}
+    BGMuon:  {weights: []}
+    BGEle:   {weights: []}
+    BGPion:  {weights: []}
+    BGRho:   {weights: []}
+    BGA1:    {weights: []}
+    BGOther: {weights: []}
+
+histograms:
+  # ────────────────────────────────────────────────────────────────────────────
+  # Nivel Gen
+  # ────────────────────────────────────────────────────────────────────────────
+  Gen:
+    GenMuOmegaVar:
+      type: "1D"
+      range: [0, 1.1]
+      bins: 100
+      categories:
+        SIGNAL: {weights: [lep_P1, lep_M1, corr_LEP_P1, corr_LEP_M1]}
+
+    GenElOmegaVar:
+      type: "1D"
+      range: [0, 1.1]
+      bins: 100
+      categories:
+        SIGNAL: {weights: [lep_P1, lep_M1, corr_LEP_P1, corr_LEP_M1]}
+
+    MesonPvsLeptonP_GEN:
+      type: 2D
+      x_bins: 50
+      x_range: [0, 50]
+      y_bins: 50
+      y_range: [0, 50]
+      categories: [SIGNAL]
+      
+    Omega_GEN:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: [ALL, SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+    OmegaCosThetaTau_GEN:
+      type: 2D
+      x_bins: 100
+      x_range: [-1, 1]
+      y_bins: 100
+      y_range: [-1, 1]
+      categories: [ALL, SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+    
+    Omega_GEN_Gen_LepP:
+      type: 2D
+      x_bins: 200
+      x_range: [-1, 1]
+      y_bins: 100
+      y_range: [0, 50]
+      categories: [SIGNAL]
+
+    # 2D Omega vs Z-mass (reordenado: variable_ZX_CATEGORIA en lugar de variable_CATEGORIA_ZX)
+    Omega_GEN_ZGenMass:
+      type: 2D
+      x_bins: 200
+      x_range: [-1, 1]
+      y_bins: 300
+      y_range: [91, 91.19]
+      categories: [SIGNAL]     # defaults → genera _SIGNAL, _SIGNAL_P1, _SIGNAL_M1
+
+    Omega_GEN_ZVisMass:
+      type: 2D
+      x_bins: 200
+      x_range: [-1, 1]
+      y_bins: 200
+      y_range: [0, 100]
+      categories:
+        SIGNAL: {weights: []}  # solo nominal, sin P1/M1
+
+    CosTheta_GEN:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: [ALL, SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+    CosPsi_GEN:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: [ALL, SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+    CosThetaTau_GEN:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: [ALL]
+
+    CosThetaRho_GEN:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: [ALL]
+
+    # Usa theta reco pero se almacena en nivel Gen (naming histórico)
+    CosThetaRho:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: [ALL]
+
+    GenVisZMass:
+      type: 1D
+      bins: 200
+      range: [0, 100]
+      categories:
+        SIGNAL: {weights: []}  # solo nominal
+    GenZMass:
+      type: 1D
+      bins: 300
+      range: [91, 91.19]
+      categories:
+        SIGNAL: {weights: []}  # solo nominal
+
+    MesonType:
+      type: 1D
+      bins: 31
+      range: [-15, 15]
+      categories:
+        SIGNAL: {weights: []}
+        BG:     {weights: []}
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Nivel Reco
+  # ────────────────────────────────────────────────────────────────────────────
+  Reco:
+
+    Omega:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: [ALL, SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+    OmegaCosTheta:
+      type: 2D
+      x_bins: 100
+      x_range: [-1, 1]
+      y_bins: 100
+      y_range: [-1, 1]
+      categories: [ALL, SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+    CosTheta:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: [ALL, SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+    CosPsi:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: [ALL, SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+    RecoMesonEOverBeamE:
+      type: 1D
+      bins: 50
+      range: [0, 1.1]
+      categories: [ALL, SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+    RecoMesonCosTheta:
+      type: 1D
+      bins: 201
+      range: [-1, 1]
+      categories: [ALL, SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+    # Energía absoluta del mesón: solo BGMuon
+    RecoMesonE:
+      type: 1D
+      bins: 50
+      range: [0, 50]
+      categories:
+        BGMuon: {weights: []}
+
+    # 2D angulares: solo BGMuon y BGEle
+    RecoMesonPhiTheta:
+      type: 2D
+      x_bins: 100
+      x_range: [0, 3.15]
+      y_bins: 100
+      y_range: [-3.15, 3.15]
+      categories:
+        BGMuon: {weights: []}
+        BGEle:  {weights: []}
+
+    RecoMesonPtTheta:
+      type: 2D
+      x_bins: 100
+      x_range: [0, 3.15]
+      y_bins: 100
+      y_range: [0, 50]
+      categories:
+        BGMuon: {weights: []}
+        BGEle:  {weights: []}
+
+    RecoMeson_X:
+      type: 1D
+      bins: 50
+      range: [-1.5, 1.5]
+      categories:
+        ALL:    {weights: []}
+        SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+        BG:     {weights: []}
+
+    # Sin ALL ni BG genérico; no hay variantes de peso para ninguna subcategoría
+    RecoMeson_P:
+      type: 1D
+      bins: 50
+      range: [0, 50]
+      categories:
+        SIGNAL:  {weights: []}
+        BGMuon:  {weights: []}
+        BGEle:   {weights: []}
+        BGPion:  {weights: []}
+        BGRho:   {weights: []}
+        BGA1:    {weights: []}
+        BGOther: {weights: []}
+
+    RecoZMass:
+      type: 1D
+      bins: 200
+      range: [0, 100]
+      categories:
+        SIGNAL: {weights: []}
+
+    RecoMesonType:
+      type: 1D
+      bins: 31
+      range: [-15, 15]
+      categories:
+        SIGNAL: {weights: []}
+        BG:     {weights: []}
+
+    DeltaR_LepMeson:
+      type: 1D
+      bins: 100
+      range: [0, 5]
+      categories:
+        SIGNAL: {weights: []}
+        BG:     {weights: []}
+
+    MesonP:
+      type: 1D
+      bins: 100
+      range: [0, 100]
+      categories:
+        SIGNAL: {weights: []}
+        BG:     {weights: []}
+
+    LeptonP:
+      type: 1D
+      bins: 100
+      range: [0, 100]
+      categories:
+        SIGNAL: {weights: []}
+        BG:     {weights: []}
+
+    CosTheta_Tau:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+        BG:     {weights: []}
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Nivel Matched
+  # ────────────────────────────────────────────────────────────────────────────
+  Matched:
+
+    MesonEOverBeamE:
+      type: 1D
+      bins: 50
+      range: [0, 1.1]
+      categories: [SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+    MesonCosTheta:
+      type: 1D
+      bins: 201
+      range: [-1, 1]
+      categories: [SIGNAL, BG, BGMuon, BGEle, BGPion, BGRho, BGA1, BGOther]
+
+# ────────────────────────────────────────────────────────────────────────────
+# Histogramas especiales: requieren lógica de evento adicional.
+# Se crean con set_up_root_histograms (formato v1) y se rellenan en
+# fill_special_signal_histograms de temp_functions.py.
+# ────────────────────────────────────────────────────────────────────────────
+special:
+  Gen:
+    Events:
+      Pi0Mass_GEN_SIGNAL:
+        type: "1D"
+        name: Pi0Mass_GEN_SIGNAL
+        range: [0, 0.35]
+        bins: 140
+      Pi0Mass_GEN_SIGNAL_smeared:
+        type: "1D"
+        name: Pi0Mass_GEN_SIGNAL_smeared
+        range: [0, 0.35]
+        bins: 140
+      Omega_GEN_SIGNAL_ZVisMass_Bin1:
+        type: "1D"
+        name: Omega_GEN_SIGNAL_ZVisMass_Bin1
+        range: [-1, 1]
+        bins: 50
+      Omega_GEN_SIGNAL_ZVisMass_Bin2:
+        type: "1D"
+        name: Omega_GEN_SIGNAL_ZVisMass_Bin2
+        range: [-1, 1]
+        bins: 50
+      Omega_GEN_SIGNAL_ZVisMass_Bin3:
+        type: "1D"
+        name: Omega_GEN_SIGNAL_ZVisMass_Bin3
+        range: [-1, 1]
+        bins: 50
+  Reco:
+    Events:
+      Pi0Mass_SIGNAL:
+        type: "1D"
+        name: Pi0Mass_SIGNAL
+        range: [0, 0.35]
+        bins: 140

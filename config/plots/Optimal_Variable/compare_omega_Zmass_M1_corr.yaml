@@ -1,0 +1,105 @@
+# compare.yaml
+datasets:
+  # - path: Results/RhoAnalysis/PolAnalysis_SM_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  - path: /nfs/cms/arqolmo/ExamplesFCCFullSim/Results/RhoAnalysis/PolAnalysis_GEN_SM_corr_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: SM (weight M1)
+    color: ROOT.kRed          # kRed
+    linestyle: 1
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+
+
+  # - path: Results/RhoAnalysis/PolAnalysis_P1_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  #   label: P1
+  #   color: ROOT.kBlue          # kBlue
+  #   linestyle: 1
+  #   markerstyle: 21
+  #   markersize: 1.
+  #   linewidth: 3
+  
+  - path: /nfs/cms/arqolmo/ExamplesFCCFullSim/Results/RhoAnalysis/PolAnalysis_GEN_M1_corr_tau_trained0.4_tph0.35_tpi0_n3_g0.0/Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: M1
+    color: ROOT.kBlue          # kBlue
+    linestyle: 1
+    markerstyle: 21
+    markersize: 1.
+    linewidth: 3
+
+plots: 
+  Omega_GEN_SIGNAL_ALL_M1_CORR:
+    per_dataset:
+      SM (weight M1): Omega_GEN_SIGNAL_corr_P1
+      M1: Omega_GEN_SIGNAL
+    title: \omega \text{ distribution for all Z Mass bins}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.65, 0.62, 0.9, 0.82]
+    rebin: 4
+    legend_txt_size: 0.03
+
+  Omega_GEN_SIGNAL_ALL_M1:
+    per_dataset:
+      SM (weight M1): Omega_GEN_SIGNAL_P1
+      M1: Omega_GEN_SIGNAL
+    title: \omega \text{ distribution for all Z Mass bins}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.65, 0.62, 0.9, 0.82]
+    rebin: 4
+    legend_txt_size: 0.03
+
+
+  Optimal_var_Muon_SIGNAL_ALL_M1_CORR:
+    per_dataset:
+      SM (weight M1): GenMuOmegaVar_SIGNAL_corr_LEP_P1
+      M1: GenMuOmegaVar_SIGNAL
+    title: x_{\mu} \text{ distribution for muons at Gen level}
+    x: x_{\mu}
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.65, 0.62, 0.9, 0.82]
+    rebin: 4
+    legend_txt_size: 0.03
+
+  
+  Optimal_var_Muon_SIGNAL_ALL_M1:
+    per_dataset:
+      SM (weight M1): GenMuOmegaVar_SIGNAL_lep_P1
+      M1: GenMuOmegaVar_SIGNAL
+    title: x_{\mu} \text{ distribution for muons at Gen level}
+    x: x_{\mu}
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.65, 0.62, 0.9, 0.82]
+    rebin: 4
+    legend_txt_size: 0.03
+
+
+  
+  Optimal_var_Electron_SIGNAL_ALL_M1_CORR:
+    per_dataset:
+      SM (weight M1): GenElOmegaVar_SIGNAL_corr_LEP_P1
+      M1: GenElOmegaVar_SIGNAL
+    title: x_{e} \text{ distribution for electrons at Gen level}
+    x: x_{e}
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.65, 0.62, 0.9, 0.82]
+    rebin: 4
+    legend_txt_size: 0.03
+
+  
+  Optimal_var_Electron_SIGNAL_ALL_M1:
+    per_dataset:
+      SM (weight M1): GenElOmegaVar_SIGNAL_lep_P1
+      M1: GenElOmegaVar_SIGNAL
+    title: x_{e} \text{ distribution for electrons at Gen level}
+    x: x_{e}
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.65, 0.62, 0.9, 0.82]
+    rebin: 4
+    legend_txt_size: 0.03
