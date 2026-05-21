@@ -1,3 +1,5 @@
+
+*.db
 *.root
 *.png
 *.csv
@@ -9,3 +11,8 @@
 ExamplesFCCFullSim.code-workspace
 nohup.out
 tmp
+key4hep_extra/
+tabpfn/
+*.sh
+*.pt
+*.npz

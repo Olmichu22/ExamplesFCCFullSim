@@ -21,7 +21,7 @@ def wVariab(genTauP4,genRhoP4,genPionP4,beamE, testAtau=0, sin_eff=None):
     v1 = genRho_TauRes.Vect()
     v2 = genTauP4.Vect()
     gen_theta_Rho= v1.Angle(v2)
-    z = math.cos( gen_theta_Rho)
+    z = math.cos(gen_theta_Rho)
     #print (theta_Rho,z)
 
     x=genRhoP4.E()/genTauP4.E()

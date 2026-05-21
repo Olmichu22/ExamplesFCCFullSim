@@ -63,6 +63,7 @@ input_file = None
 labels_file = None
 # Look for the output file in the outputfile list
 for outputfile in config["output"]["outputfile"]:
+
   if decay_str in outputfile:
     input_file = str(outputfile)  # Ensure file is a string
     break
@@ -78,10 +79,10 @@ if input_file == None:
   raise Exception(f"Output file not found for decay {decay_str}")
 if labels_file == None:
   # Warning if labels file is not found
-  warnings.warn(f"Labels file not found for decay {decay_str}. CM plot will not be generated.")
+  warnings.warn(f"\n\n==============\n Labels file not found for decay {decay_str}. CM plot will not be generated.\n==============\n")
 
 file_path = config["output"]["outputpath"]+"Histos_"+input_file
-print(file_path)
+print("\n=====\n Trying to open file: ", file_path, "\n=====\n")
 if not os.path.exists(file_path):
   file_path = config["output"]["outputpath"]+input_file
   if not os.path.exists(file_path):

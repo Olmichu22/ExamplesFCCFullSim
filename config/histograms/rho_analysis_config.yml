@@ -1,11 +1,101 @@
 Gen:
   Events:
+
+    GenMuOmegaVar:
+      type: "1D"
+      name: GenMuOmegaVar
+      range: [-1, 1]
+      bins: 100
+    
+    GenMuOmegaVar_P1:
+      type: "1D"
+      name: GenMuOmegaVar_P1
+      range: [-1, 1]
+      bins: 100
+    
+    GenMuOmegaVar_M1:
+      type: "1D"
+      name: GenMuOmegaVar_M1
+      range: [-1, 1]
+      bins: 100
+    
+    GenMuOmegaVar_corr_P1:
+      type: "1D"
+      name: GenMuOmegaVar_corr_P1
+      range: [-1, 1]
+      bins: 100
+    
+    GenMuOmegaVar_corr_M1:
+      type: "1D"
+      name: GenMuOmegaVar_corr_M1
+      range: [-1, 1]
+      bins: 100
+    
+    GenElOmegaVar:
+      type: "1D"
+      name: GenElOmegaVar
+      range: [-1, 1]
+      bins: 100
+    
+    GenElOmegaVar_P1:
+      type: "1D"
+      name: GenElOmegaVar_P1
+      range: [-1, 1]
+      bins: 100
+    
+    GenElOmegaVar_M1:
+      type: "1D"
+      name: GenElOmegaVar_M1
+      range: [-1, 1]
+      bins: 100
+    
+    GenElOmegaVar_corr_P1:
+      type: "1D"
+      name: GenElOmegaVar_corr_P1
+      range: [-1, 1]
+      bins: 100
+    
+    GenElOmegaVar_corr_M1:
+      type: "1D"
+      name: GenElOmegaVar_corr_M1
+      range: [-1, 1]
+      bins: 100
+
     PhotonPRes:
       type: "1D"
       name: PhotonPResGen
       range: [-1, 1]
       bins: 100
 
+    Omega_GEN_SIGNAL_ZVisMass:
+      type: "2D"
+      name: Omega_GEN_SIGNAL_ZVisMass
+      x_range: [-1, 1]
+      x_bins: 200
+      y_range: [0, 100]
+      y_bins: 200
+    
+    Omega_GEN_SIGNAL_ZGenMass:
+      type: "2D"
+      name: Omega_GEN_SIGNAL_ZGenMass
+      x_range: [-1, 1]
+      x_bins: 200
+      y_range: [50, 100]
+      y_bins: 250
+    Omega_GEN_SIGNAL_ZGenMass_M1:
+      type: "2D"
+      name: Omega_GEN_SIGNAL_ZGenMass_M1
+      x_range: [-1, 1]
+      x_bins: 200
+      y_range: [50, 100]
+      y_bins: 250
+    Omega_GEN_SIGNAL_ZGenMass_P1:
+      type: "2D"
+      name: Omega_GEN_SIGNAL_ZGenMass_P1
+      x_range: [-1, 1]
+      x_bins: 200
+      y_range: [50, 100]
+      y_bins: 250
     Pi0Mass_GEN_SIGNAL_smeared:
       type: "1D"
       name: Pi0Mass_GEN_SIGNAL_smeared
@@ -21,6 +111,22 @@ Gen:
       name: GenVisZMass
       range: [0, 100]
       bins: 200
+    Omega_GEN_SIGNAL_ZVisMass_Bin1:
+      type: "1D"
+      name: Omega_GEN_SIGNAL_ZVisMass_Bin1
+      range: [-1, 1]
+      bins: 50
+    Omega_GEN_SIGNAL_ZVisMass_Bin2:
+      type: "1D"
+      name: Omega_GEN_SIGNAL_ZVisMass_Bin2
+      range: [-1, 1]
+      bins: 50
+    Omega_GEN_SIGNAL_ZVisMass_Bin3:
+      type: "1D"
+      name: Omega_GEN_SIGNAL_ZVisMass_Bin3
+      range: [-1, 1]
+      bins: 50
+
     MesonType_BG:
       type: "1D"
       name: MesonType_BG

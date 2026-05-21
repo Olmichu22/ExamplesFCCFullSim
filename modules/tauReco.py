@@ -249,6 +249,55 @@ def electromagnetic_energy_error_p4_extremes(p4, cfg):
 
    return make_p4_from_E(Emax), make_p4_from_E(Emin)
 
+ 
+def electromagnetic_direction_error_p4_extremes(p4, cfg):
+    """
+    Return one TLorentzVector constructed with SetPxPyPzE:
+      - p4_smeeared :  theta smeared (along the direction) and phi random (0, 2pi)
+    """
+    # Get unitary vector of the original momentum
+    x = p4.x
+    y = p4.y
+    z = p4.z
+    p = np.sqrt(x**2 + y**2 + z**2)
+    v0 = np.array([x/(p + 1e-8), y/(p + 1e-8), z/(p + 1e-8)])
+
+    # random theta with std from cfg
+    theta = np.random.normal(0, cfg.get("sigma_theta", 0.01))
+    phi   = np.random.uniform(0, 2 * np.pi)
+
+    # --- Rotate v0 inside a cone ---
+    def get_orthogonal(v):
+        if abs(v[0]) <= abs(v[1]) and abs(v[0]) <= abs(v[2]):
+            ref = np.array([1., 0., 0.])
+        elif abs(v[1]) <= abs(v[2]):
+            ref = np.array([0., 1., 0.])
+        else:
+            ref = np.array([0., 0., 1.])
+        orth = np.cross(v, ref)
+        return orth / np.linalg.norm(orth)
+
+    def rotate_around_axis(v, axis, angle):
+        """Rodrigues' rotation formula"""
+        axis = axis / np.linalg.norm(axis)
+        return (v * np.cos(angle)
+                + np.cross(axis, v) * np.sin(angle)
+                + axis * np.dot(axis, v) * (1 - np.cos(angle)))
+
+    orth      = get_orthogonal(v0)
+    perp_axis = rotate_around_axis(orth, v0, phi)   # eje perp aleatorio
+    new_dir   = rotate_around_axis(v0, perp_axis, theta)  # desviación theta
+
+    # Rebuild p4 keeping original magnitude
+    px = p * new_dir[0]
+    py = p * new_dir[1]
+    pz = p * new_dir[2]
+    E  = p4.E()
+
+    out = ROOT.TLorentzVector()
+    out.SetPxPyPzE(px, py, pz, E)
+    return out
+
 
 def buildTauFromPion(lead, allPfs, DRCone=1, minP_photon=0, minP_pion=0, PNeutron=1, genminP = 0.5, charge_condition=True):
    """ Starting from a pion, find particles in a cone around it, and build the tau.

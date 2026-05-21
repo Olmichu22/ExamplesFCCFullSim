@@ -102,6 +102,7 @@ logger_config.info("Systematics errors: %s", pprint.pformat(sys_errors, indent=4
 sample=run_config["general"]["sample"]
 matched_cm_arg = general_configs["flags"]["matched_cm"]
 test_arg = general_configs["flags"]["test"]
+gen_taus_sample = general_configs.get("has_gen_taus", False)
 
 logger_config.info("Configuration loaded!")
 logger_config.info("Configuration:\n%s", pprint.pformat(general_configs, indent=4))
@@ -126,17 +127,15 @@ pfobjects = "PandoraPFOs"
 
 histogram_config = general_configs.get("histograms_config", {})
 root_histograms = myutils.set_up_root_histograms(histogram_config)
+root_histograms_super = {"original": root_histograms}
 if test_extremes:
     logger_process.info("Testing extremes is enabled.")
-
-    root_histograms_super = {
-        "original": root_histograms,
-        "min_err": myutils.clone_histograms_with_suffix(root_histograms, "_min"),
-        "max_err": myutils.clone_histograms_with_suffix(root_histograms, "_max")
-    }
-
-else:
-    root_histograms_super = {"original": root_histograms}
+    if photon_config.get("energy", {}):
+        root_histograms_super["energy_max_err"] = myutils.clone_histograms_with_suffix(root_histograms, "_energy_max")
+        root_histograms_super["energy_min_err"] = myutils.clone_histograms_with_suffix(root_histograms, "_energy_min")
+    if photon_config.get("direction", {}):
+        root_histograms_super["direction_max_err"] = myutils.clone_histograms_with_suffix(root_histograms, "_direction_max")
+        # root_histograms_super["direction_min_err"] = myutils.clone_histograms_with_suffix(root_histograms, "_direction_min")
 # miss_matched_histograms_p = dict()
 # miss_matched_histograms_theta = dict()
 
@@ -152,7 +151,11 @@ variabs=["genTauP","genMesonP","genPionP","genTauE",
          "recoPionM","cos_theta","cos_psi","cos_beta",
          "omega","cos_theta_rho","genTauID","recoTauID",
          "ZMass","GenZMass","GenZVisMass","beamE",
-         "nPhotonsReco", "nPhotonsGen", "isElectron", "lepP", "lepE", "lepTheta", "lepPhi", "lepPDG"]
+         "nPhotonsReco", "nPhotonsGen", "isElectron", "lepP",
+         "lepE", "lepTheta", "lepPhi", "lepPDG",
+         "genLepP", "genLepE", "genLepTheta", "genLepPhi", "genLepPDG",
+         "genLepTauP", "genLepTauE", "genLepTauTheta", "genLepTauPhi", "genLepTauM",
+         "weight_lep_P1", "weight_lep_M1"]
 outfile=ROOT.TFile(fileOutName,"RECREATE")
 
 
@@ -212,7 +215,7 @@ for eventid, event in enumerate(reader.get("events")):
   beamE=mc_particles[0].getEnergy()
 
   ## get GEN level info
-  if sample in ("ZTauTau_SMPol_25Sept_MuonFix", "ztt"):
+  if gen_taus_sample:
     genTaus=tauReco.findAllGenTaus(mc_particles)
     nGenTaus=len(genTaus)
 
@@ -242,26 +245,27 @@ for eventid, event in enumerate(reader.get("events")):
   pfos = event.get(pfobjects)
   #hGenVisZMass.Fill(ZVisGen.M(),weight)
   #hGenZMass.Fill(ZGen.M(),weight)
-  # TODO adaptar el resto del código para sistemáticos
-  recoTau, recoElectrons, recoMuons, recoTau_max, recoTau_min = extractTauDecays(gatr_results_path,
-                                                                                  mlpf_results,
-                                                                                  eventid,
-                                                                                  pfos,
-                                                                                  dRMax,
-                                                                                  minPTauPhoton,
-                                                                                  minPTauPion,
-                                                                                  PNeutron,
-                                                                                  generalPCut,
-                                                                                  photon_config,
-                                                                                  test_extremes,
-                                                                                  test_pfo,
-                                                                                  logger_process)
+  recoTau, recoElectrons, recoMuons, tau_extremes = extractTauDecays(gatr_results_path,
+                                                                      mlpf_results,
+                                                                      eventid,
+                                                                      pfos,
+                                                                      dRMax,
+                                                                      minPTauPhoton,
+                                                                      minPTauPion,
+                                                                      PNeutron,
+                                                                      generalPCut,
+                                                                      photon_config,
+                                                                      test_extremes,
+                                                                      test_pfo,
+                                                                      logger_process)
 
-  recoTaus_extremes = {
-      "original": recoTau,
-      "min_err": recoTau_min,
-      "max_err": recoTau_max
-  }
+  recoTaus_extremes = {"original": recoTau}
+  if tau_extremes["energy"]["max"] is not None:
+      recoTaus_extremes["energy_max_err"] = tau_extremes["energy"]["max"]
+      recoTaus_extremes["energy_min_err"] = tau_extremes["energy"]["min"]
+  if tau_extremes["direction"]["max"] is not None:
+      recoTaus_extremes["direction_max_err"] = tau_extremes["direction"]["max"]
+      # recoTaus_extremes["direction_min_err"] = tau_extremes["direction"]["min"]
   
   for tree_key in trees:
     # print(f"Processing tree key: {tree_key}")
@@ -392,7 +396,7 @@ for eventid, event in enumerate(reader.get("events")):
     # if recoMesonP4.Theta()>1.565 and recoMesonP4.Theta()<1.575 :  # stupid cut to remove high momentum muons at pi/2
       # continue 
 
-    ZMass=0 #ZP4.M()
+    ZMass=(recoMesonP4+lepP4).M()
 
 
 
@@ -400,7 +404,7 @@ for eventid, event in enumerate(reader.get("events")):
     genIndex=-1
     # closestDR=10 # find always one
     closestDR=10 # find always one
-    for g in range(0,nGenTaus):
+    for g in genTaus.keys():
         #if genTaus[g][1]!=1: continue
         genP4=genTaus[g].getMomentum()
         dR=myutils.dRAngle(genP4,recoMesonP4)
@@ -408,9 +412,20 @@ for eventid, event in enumerate(reader.get("events")):
           closestDR=dR
           genIndex=g 
 
+    
+    # TODO  REVISAR ESTE CORTE DE MATCH
     if genIndex==-1 and gen_taus:
       loggers["processing"].debug("No matching gen tau found. Skipping event...\n")
       continue 
+    
+    lepton_genIndex=-1
+    closestDRLepton=5
+    for g in genTaus.keys():
+        genP4=genTaus[g].getMomentum()
+        dR=myutils.dRAngle(genP4,lepP4)
+        if dR<closestDRLepton:
+          closestDRLepton=dR
+          lepton_genIndex=g
     # print(gen_taus)
     if gen_taus:
       genMesonP4=genTaus[genIndex].getvisMomentum()
@@ -437,6 +452,19 @@ for eventid, event in enumerate(reader.get("events")):
                               genPion.getMass())
           loggers["processing"].debug("Found gen pion with PDG %d and momentum %s", const_PDG, genPionP4)
           break
+
+      # Find gen lepton from the leptonic tau (the other gen tau)
+      genLepP4 = ROOT.TLorentzVector()
+      genLepP4.SetXYZM(0, 0, 0, 0)
+      genLepTauP4 = ROOT.TLorentzVector()
+      genLepTauP4.SetXYZM(0, 0, 0, 0)
+      genLepPDG = 0
+      if nGenTaus >= 2:
+        lepton_index = genTaus[lepton_genIndex]
+        genLepP4 = lepton_index.getvisMomentum()       # leptón visible (e/μ), para x = E_lep/E_beam
+        genLepTauP4 = lepton_index.getMomentum()       # tau leptónico completo, para dirección polarización
+        genLepPDG = abs(genTaus[lepton_genIndex].getID())
+        
     else:
       genMesonP4=ROOT.TLorentzVector()
       genMesonP4.SetXYZM(0,0,0,0)
@@ -448,6 +476,9 @@ for eventid, event in enumerate(reader.get("events")):
       genTauConst={}
       genRhoP4=ROOT.TLorentzVector()
       genRhoP4.SetXYZM(0,0,0,0)
+      genLepP4=ROOT.TLorentzVector()
+      genLepP4.SetXYZM(0,0,0,0)
+      genLepPDG=0
     # genPion=genTauConst[0]        
     # genPionP4=ROOT.TLorentzVector()
     # genPionP4.SetXYZM(genPion.getMomentum().x,genPion.getMomentum().y,genPion.getMomentum().z,genPion.getMass())
@@ -586,6 +617,24 @@ for eventid, event in enumerate(reader.get("events")):
     branches["lepTheta"].value=lepP4.Theta()
     branches["lepPhi"].value=lepP4.Phi()
     branches["lepPDG"].value=lepPDG
+    branches["genLepP"].value=genLepP4.P()
+    branches["genLepE"].value=genLepP4.E()
+    branches["genLepTheta"].value=genLepP4.Theta()
+    branches["genLepPhi"].value=genLepP4.Phi()
+    branches["genLepPDG"].value=genLepPDG
+    branches["genLepTauP"].value=genLepTauP4.P()
+    branches["genLepTauE"].value=genLepTauP4.E()
+    branches["genLepTauTheta"].value=genLepTauP4.Theta()
+    branches["genLepTauPhi"].value=genLepTauP4.Phi()
+    branches["genLepTauM"].value=genLepTauP4.M()
+    if abs(int(genLepPDG)) in [11, 13] and genLepTauP4.E() > 0:
+        weight_lep_P1 = weightsPol.newAtauLep(genLepP4, genLepTauP4, beamE, +1)
+        weight_lep_M1 = weightsPol.newAtauLep(genLepP4, genLepTauP4, beamE, -1)
+    else:
+        weight_lep_P1 = 1.0
+        weight_lep_M1 = 1.0
+    branches["weight_lep_P1"].value=weight_lep_P1
+    branches["weight_lep_M1"].value=weight_lep_M1
     new_tree.Fill()
 
     root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_ALL"].Fill(recoMesonP4.E()/beamE,weight)
@@ -621,8 +670,8 @@ for eventid, event in enumerate(reader.get("events")):
       #print("RECO %d %4.2f %4.2f %4.2f %4.2f %4.2f" %(recoTauID,cos_theta,cos_theta_rho, cos_beta, cos_psi,w))
 
       if genTauID==selectGEN:
-        weight_P1 = weightsPol.newAtauRHO(genTauP4, genMesonP4 , beamE, genTauConst, genTauID, +1)
-        weight_M1 = weightsPol.newAtauRHO(genTauP4, genMesonP4 , beamE, genTauConst, genTauID, -1)
+        weight_P1 = weightsPol.newAtauRHO(genTauP4, genMesonP4, beamE, genTauConst, genTauID, +1)
+        weight_M1 = weightsPol.newAtauRHO(genTauP4, genMesonP4, beamE, genTauConst, genTauID, -1)
         root_histograms["Matched"]["Events"]["MesonEOverBeamE"].Fill(genMesonP4.E()/beamE,weight)
         root_histograms["Matched"]["Events"]["MesonEOverBeamE_P1"].Fill(genMesonP4.E()/beamE,weight_P1*weight)
         root_histograms["Matched"]["Events"]["MesonEOverBeamE_M1"].Fill(genMesonP4.E()/beamE,weight_M1*weight)
@@ -644,21 +693,21 @@ for eventid, event in enumerate(reader.get("events")):
         root_histograms["Gen"]["Events"]["OmegaCosThetaTau_GEN_SIGNAL_M1"].Fill(gen_w,gen_cos_theta_tau,weight*weight_M1)
     
         root_histograms["Reco"]["Events"]["CosTheta_SIGNAL"].Fill(cos_theta,weight)
-        root_histograms["Reco"]["Events"]["CosTheta_SIGNAL_P1"].Fill(cos_theta,weight_M1*weight)
-        root_histograms["Reco"]["Events"]["CosTheta_SIGNAL_M1"].Fill(cos_theta,weight_P1*weight)
-        
+        root_histograms["Reco"]["Events"]["CosTheta_SIGNAL_P1"].Fill(cos_theta,weight_P1*weight)
+        root_histograms["Reco"]["Events"]["CosTheta_SIGNAL_M1"].Fill(cos_theta,weight_M1*weight)
+
         root_histograms["Gen"]["Events"]["CosTheta_GEN_SIGNAL"].Fill(cos_theta,weight)
-        root_histograms["Gen"]["Events"]["CosTheta_GEN_SIGNAL_P1"].Fill(cos_theta,weight_M1*weight)
-        root_histograms["Gen"]["Events"]["CosTheta_GEN_SIGNAL_M1"].Fill(cos_theta,weight_P1*weight)
-        
-          
+        root_histograms["Gen"]["Events"]["CosTheta_GEN_SIGNAL_P1"].Fill(cos_theta,weight_P1*weight)
+        root_histograms["Gen"]["Events"]["CosTheta_GEN_SIGNAL_M1"].Fill(cos_theta,weight_M1*weight)
+
+
         root_histograms["Reco"]["Events"]["CosPsi_SIGNAL"].Fill(cos_psi,weight)
-        root_histograms["Reco"]["Events"]["CosPsi_SIGNAL_P1"].Fill(cos_psi,weight_M1*weight)
-        root_histograms["Reco"]["Events"]["CosPsi_SIGNAL_M1"].Fill(cos_psi,weight_P1*weight)
+        root_histograms["Reco"]["Events"]["CosPsi_SIGNAL_P1"].Fill(cos_psi,weight_P1*weight)
+        root_histograms["Reco"]["Events"]["CosPsi_SIGNAL_M1"].Fill(cos_psi,weight_M1*weight)
         
         root_histograms["Gen"]["Events"]["CosPsi_GEN_SIGNAL"].Fill(gen_cos_psi,weight)
-        root_histograms["Gen"]["Events"]["CosPsi_GEN_SIGNAL_P1"].Fill(gen_cos_psi,weight_M1*weight)
-        root_histograms["Gen"]["Events"]["CosPsi_GEN_SIGNAL_M1"].Fill(gen_cos_psi,weight_P1*weight)
+        root_histograms["Gen"]["Events"]["CosPsi_GEN_SIGNAL_P1"].Fill(gen_cos_psi,weight_P1*weight)
+        root_histograms["Gen"]["Events"]["CosPsi_GEN_SIGNAL_M1"].Fill(gen_cos_psi,weight_M1*weight)
         
         root_histograms["Matched"]["Events"]["MesonCosTheta"].Fill(math.cos(genMesonP4.Theta()), weight)
         root_histograms["Matched"]["Events"]["MesonCosTheta_P1"].Fill(math.cos(genMesonP4.Theta()), weight_P1 * weight)

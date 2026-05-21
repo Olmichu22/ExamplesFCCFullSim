@@ -695,7 +695,8 @@ def plot_1D_hist(file, variabs, labels, outputpath, normalize):
           print("===============================")
           print(f"Mean of histogram '{var}': {mean}")
           print("===============================")
-          
+        if cfg.get("logy", False):
+          c.SetLogy()
         c.SaveAs(out_file)
         print(f"Saved histogram '{var}' as '{out_file}'")
     ROOT.gStyle.SetOptFit()
@@ -971,6 +972,12 @@ def plot_hist_together(file, together_config, outputpath):
         markersize = cfg.get("markersize", 1.2)
         drawn_histos = {}
         fill_graphs = []
+        if cfg.get("gradient", False):
+            # seet gStylePalette
+            ROOT.gStyle.SetPalette(ROOT.kSolar)
+            
+            # n_vars = len(cfg["variabs"])
+            # gradient_colors = [ROOT.TColor.GetColorGradient(i / max(1, n_vars - 1), 3) for i in range(n_vars)]
         for i, var in enumerate(cfg["variabs"]):
             histo = file.Get(var)
             if not histo:
@@ -978,89 +985,93 @@ def plot_hist_together(file, together_config, outputpath):
                 continue
             # Set the common X and Y axis titles from the group config
 
-            
+            if not cfg.get("gradient", False):
             # Assign a distinct line color for each histogram (simple scheme)
-            if i == 0:
-              # histo.SetLineWidth(linewidth)
-              if scatter_plot:
-                histo.SetMarkerStyle(20)
-              if cfg.get("fill", False):
-                histo.SetFillColor(ROOT.kBlue)
-              histo.SetLineColor(ROOT.kBlue)
-              histo.SetMarkerColor(ROOT.kBlue)
-            elif i == 1:
-              if not scatter_plot:
-                histo.SetLineStyle(1)
-              else:
-                histo.SetMarkerStyle(20)   # círculos sólidos
-              if cfg.get("fill", False):
-                histo.SetFillColor(ROOT.kRed)
-              histo.SetLineColor(ROOT.kRed)
-              histo.SetMarkerColor(ROOT.kRed)
-              # histo.SetLineWidth(linewidth)
-            elif i == 2:
-              if not scatter_plot:
-                histo.SetLineStyle(1)
-              else:
-                histo.SetMarkerStyle(20)   # círculos sólidos
-              if cfg.get("fill", False):
-                histo.SetFillColor(ROOT.kGreen+2)
-              histo.SetLineColor(ROOT.kGreen+2)
-              histo.SetMarkerColor(ROOT.kGreen+2)
-              # histo.SetLineWidth(linewidth)
-            elif i == 3:
-                if not scatter_plot:
-                    histo.SetLineStyle(2)
-                else:
-                    histo.SetMarkerStyle(21)
-                # histo.SetLineColor(ROOT.kOrange+7)
-                histo.SetLineColor(ROOT.kBlue)
-                histo.SetMarkerColor(ROOT.kOrange+7)
-                if cfg.get("fill", False):
-                    histo.SetFillColor(ROOT.kOrange-3)
+                if i == 0:
+                  # histo.SetLineWidth(linewidth)
+                  if scatter_plot:
+                    histo.SetMarkerStyle(20)
+                  if cfg.get("fill", False):
+                    histo.SetFillColor(ROOT.kBlue)
+                  histo.SetLineColor(ROOT.kBlue)
+                  histo.SetMarkerColor(ROOT.kBlue)
+                elif i == 1:
+                  if not scatter_plot:
+                    histo.SetLineStyle(1)
+                  else:
+                    histo.SetMarkerStyle(20)   # círculos sólidos
+                  if cfg.get("fill", False):
+                    histo.SetFillColor(ROOT.kRed)
+                  histo.SetLineColor(ROOT.kRed)
+                  histo.SetMarkerColor(ROOT.kRed)
+                  # histo.SetLineWidth(linewidth)
+                elif i == 2:
+                  if not scatter_plot:
+                    histo.SetLineStyle(1)
+                  else:
+                    histo.SetMarkerStyle(20)   # círculos sólidos
+                  if cfg.get("fill", False):
+                    histo.SetFillColor(ROOT.kGreen+2)
+                  histo.SetLineColor(ROOT.kGreen+2)
+                  histo.SetMarkerColor(ROOT.kGreen+2)
+                  # histo.SetLineWidth(linewidth)
+                elif i == 3:
+                    if not scatter_plot:
+                        histo.SetLineStyle(2)
+                    else:
+                        histo.SetMarkerStyle(21)
+                    # histo.SetLineColor(ROOT.kOrange+7)
+                    histo.SetLineColor(ROOT.kOrange+7)
+                    histo.SetMarkerColor(ROOT.kOrange+7)
+                    if cfg.get("fill", False):
+                        histo.SetFillColor(ROOT.kOrange-3)
 
-            elif i == 4:
-              if not scatter_plot:
-                  histo.SetLineStyle(2)
-              else:
-                  histo.SetMarkerStyle(22)
-              histo.SetLineColor(ROOT.kRed)
-              # histo.SetLineColor(ROOT.kViolet+1)
-              histo.SetMarkerColor(ROOT.kViolet+1)
-              if cfg.get("fill", False):
-                  histo.SetFillColor(ROOT.kViolet-5)
+                elif i == 4:
+                  if not scatter_plot:
+                      histo.SetLineStyle(2)
+                  else:
+                      histo.SetMarkerStyle(22)
+                  histo.SetLineColor(ROOT.kViolet+1)
+                  # histo.SetLineColor(ROOT.kViolet+1)
+                  histo.SetMarkerColor(ROOT.kViolet+1)
+                  if cfg.get("fill", False):
+                      histo.SetFillColor(ROOT.kViolet-5)
 
-            elif i == 5:
-              if not scatter_plot:
-                  histo.SetLineStyle(2)
-              else:
-                  histo.SetMarkerStyle(23)
-              histo.SetLineColor(ROOT.kGreen+2) 
-              # histo.SetLineColor(ROOT.kTeal+2)
-              histo.SetMarkerColor(ROOT.kTeal+2)
-              if cfg.get("fill", False):
-                  histo.SetFillColor(ROOT.kTeal-5)
+                elif i == 5:
+                  if not scatter_plot:
+                      histo.SetLineStyle(2)
+                  else:
+                      histo.SetMarkerStyle(23)
+                  histo.SetLineColor(ROOT.kTeal+2) 
+                  # histo.SetLineColor(ROOT.kTeal+2)
+                  histo.SetMarkerColor(ROOT.kTeal+2)
+                  if cfg.get("fill", False):
+                      histo.SetFillColor(ROOT.kTeal-5)
 
-            elif i == 6:
-              if not scatter_plot:
-                  histo.SetLineStyle(9)
-              else:
-                  histo.SetMarkerStyle(24)
-              histo.SetLineColor(ROOT.kPink+9)   # rojo vino oscuro
-              histo.SetMarkerColor(ROOT.kPink+9)
-              if cfg.get("fill", False):
-                  histo.SetFillColor(ROOT.kPink-2)
-            elif i == 7:
-                if not scatter_plot:
-                    histo.SetLineStyle(3)
-                else:
-                    histo.SetMarkerStyle(25)
-                histo.SetLineColor(ROOT.kBlue+3)
-                histo.SetMarkerColor(ROOT.kBlue+3)
-                if cfg.get("fill", False):
-                    histo.SetFillColor(ROOT.kBlue-7)
-
+                elif i == 6:
+                  if not scatter_plot:
+                      histo.SetLineStyle(9)
+                  else:
+                      histo.SetMarkerStyle(24)
+                  histo.SetLineColor(ROOT.kPink+9)   # rojo vino oscuro
+                  histo.SetMarkerColor(ROOT.kPink+9)
+                  if cfg.get("fill", False):
+                      histo.SetFillColor(ROOT.kPink-2)
+                elif i == 7:
+                    if not scatter_plot:
+                        histo.SetLineStyle(3)
+                    else:
+                        histo.SetMarkerStyle(25)
+                    histo.SetLineColor(ROOT.kBlue+3)
+                    histo.SetMarkerColor(ROOT.kBlue+3)
+                    if cfg.get("fill", False):
+                        histo.SetFillColor(ROOT.kBlue-7)
+            # else:
+                # histo.SetLineColor(gradient_colors[i])
+                # histo.SetMarkerColor(gradient_colors[i])
+                # if cfg.get("fill", False):
                 
+                    # histo.SetFillColor(gradient_colors[i])
             histo.SetLineWidth(linewidth)
             histo.SetMarkerSize(markersize)
             if cfg.get("fill", False):
@@ -1104,18 +1115,27 @@ def plot_hist_together(file, together_config, outputpath):
               if scatter_plot:
                 # histo.Sumw2()
                 if isinstance(histo, ROOT.TGraphAsymmErrors):
-                  histo.Draw("AP")
+                    draw_opt = "AP PMC PLC" if cfg.get("gradient", False) else "AP"
+                    if cfg.get("fill", False) and cfg.get("gradient", False):
+                        draw_opt += "PFC"
+                #   histo.Draw("AP")
                 else:
-                  histo.Draw("P")
+                    draw_opt = "P PMC" if cfg.get("gradient", False) else "P"
+                    # histo.Draw("P")
                 # histo.Draw("L SAME")
               else:
                 if draw_mode == "points":
                     histo.SetMarkerStyle(20)
-                    histo.Draw("P")
+                    draw_opt = "P PMC" if cfg.get("gradient", False) else "P"
+
                 elif draw_mode == "line":
-                    histo.Draw("L")
+                    draw_opt = "L PLC" if cfg.get("gradient", False) else "L"
+
                 else:  # hist por defecto
-                    histo.Draw("HIST")
+                    draw_opt = "HIST PLC" if cfg.get("gradient", False) else "HIST"
+                    if cfg.get("fill", False) and cfg.get("gradient", False):
+                        draw_opt += " PFC"
+              histo.Draw(draw_opt)
               first = False
             else:
               max_val = histo.GetMaximum()
@@ -1127,16 +1147,22 @@ def plot_hist_together(file, together_config, outputpath):
                 
               if scatter_plot:
                 # histo.Sumw2()
-                histo.Draw("P same")
+                draw_opt = "P SAME PMC PLC" if cfg.get("gradient", False) else "P SAME"
+                if cfg.get("fill", False) and cfg.get("gradient", False):
+                    draw_opt += "PFC"
+                # histo.Draw("P same")
                 # histo.Draw("L same")
               else:
                 if draw_mode == "points":
                     histo.SetMarkerStyle(20)
-                    histo.Draw("P SAME")
+                    draw_opt = "P SAME PMC" if cfg.get("gradient", False) else "P SAME"
                 elif draw_mode == "line":
-                    histo.Draw("L SAME")
+                    draw_opt = "L SAME PLC" if cfg.get("gradient", False) else "L SAME"
                 else:
-                    histo.Draw("HIST SAME")
+                    draw_opt = "HIST SAME PLC" if cfg.get("gradient", False) else "HIST SAME"
+                    if cfg.get("fill", False) and cfg.get("gradient", False):
+                        draw_opt += " PFC"
+              histo.Draw(draw_opt)
 
                 # Set axis from 0 to 1
                 
@@ -1262,7 +1288,7 @@ def plot_2D_hist(file, variabs, labels, outputpath):
     out_dir = os.path.join(outputpath, "2D")
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    
+    ROOT.gStyle.SetPalette(ROOT.kViridis)
     c = ROOT.TCanvas("c_2D", "2D Histograms", 900, 700)
     for var in variabs:
         histo = file.Get(var)
@@ -1274,6 +1300,10 @@ def plot_2D_hist(file, variabs, labels, outputpath):
             histo.SetXTitle(cfg.get("x", ""))
             histo.SetYTitle(cfg.get("y", ""))
             histo.SetTitle(cfg.get("title", ""))
+            if cfg.get("rebinx", None):
+                histo.RebinX(cfg["rebinx"])
+            if cfg.get("rebiny", None):
+                histo.RebinY(cfg["rebiny"])
         c.Clear()
         histo.Draw("COLZ")
         out_file = os.path.join(out_dir, f"{var}.png")
@@ -1341,7 +1371,7 @@ def plot_cm(results_df, outputpath, plotphotons=False, plot_config={}):
     cm_dir = os.path.join(outputpath, "CM")
     if not os.path.exists(cm_dir):
         os.makedirs(cm_dir)
-    
+
     # --- Absolute values plot ---
     if "decays" in plot_config:
       plt.figure(figsize=(8, 6))

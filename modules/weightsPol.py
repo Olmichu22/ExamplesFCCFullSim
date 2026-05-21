@@ -5,12 +5,14 @@ from array import array
 from podio import root_io
 import edm4hep 
  
-def newAtau(TauP4, MesonP4,Type,New_Atau):
+def newAtau(TauP4, MesonP4,Type,New_Atau, sin_eff=None):
  
     if (Type!=0 and Type!=1 and Type!=10): # muons/electrons and others not implemented yet
          return 1 
-
-    sin2theta_effective= 0.2312
+    if sin_eff is not None:
+        sin2theta_effective= sin_eff
+    else:
+        sin2theta_effective= 0.2312
     gv_ga=  -1 + 4 *sin2theta_effective
     Ae_sm=  2* gv_ga / (1+gv_ga*gv_ga)
     Atau_sm= Ae_sm    
@@ -54,9 +56,9 @@ def newAtau(TauP4, MesonP4,Type,New_Atau):
 
 
 def newAtauRHO(TauP4, RhoP4,beamE, TauConst, Type,New_Atau,sin2theta_effective= 0.2312):
- 
+
     if (Type!=1): # this is for RHOs
-         weight=newAtau(TauP4, RhoP4,Type,New_Atau)                  
+         weight=newAtau(TauP4, RhoP4,Type,New_Atau, sin_eff=sin2theta_effective)
          return weight
  
     #sin2theta_effective= 0.2312
@@ -157,26 +159,24 @@ def newAtauRHO(TauP4, RhoP4,beamE, TauConst, Type,New_Atau,sin2theta_effective= 
 
 
 def newAtauRHO2(TauP4, RhoP4,pionP4,beamE, Type,New_Atau,sin2theta_effective= 0.2312):
- 
+
     if (Type!=1): # this is for RHOs
-         weight=newAtau(TauP4, RhoP4,Type,New_Atau)                  
-         return weight  
- 
+         weight=newAtau(TauP4, RhoP4,Type,New_Atau, sin_eff=sin2theta_effective)
+         return weight
+
     #sin2theta_effective= 0.2312
     gv_ga=  -1 + 4 *sin2theta_effective
     Ae_sm=  2* gv_ga / (1+gv_ga*gv_ga)
-    Atau_sm= Ae_sm    
+    Atau_sm= Ae_sm
 
     Ae=  Ae_sm
 
     # Polarization depends on cos(Theta):
-    costheta_tau=math.cos(TauP4.Theta()) # this is the theta of the Tau, not the meson 
+    costheta_tau=math.cos(TauP4.Theta()) # this is the theta of the Tau, not the meson
     Ptau_sm= - (Atau_sm * (1+  costheta_tau*costheta_tau) + 2*Ae_sm*costheta_tau) / (1+costheta_tau*costheta_tau + 2*Ae_sm*Atau_sm*costheta_tau)
     Pnew = - ( New_Atau   * (1+  costheta_tau*costheta_tau) + 2*Ae*costheta_tau) / (1+costheta_tau*costheta_tau + 2*Ae* New_Atau *costheta_tau)
 
-    # pion?
-
-    mtau=TauP4.M()
+    mtau=1.7769
     mRho=RhoP4.M()
 
     # rest frame of the tau?
@@ -195,13 +195,13 @@ def newAtauRHO2(TauP4, RhoP4,pionP4,beamE, Type,New_Atau,sin2theta_effective= 0.
     Pion_RhoRes.SetPxPyPzE(pionP4.Px(),pionP4.Py(),pionP4.Pz(),pionP4.E())
     Pion_RhoRes.Boost(-boostRho)
 
-#    We have θ = cos-1 [ (a · b) / (|a| |b|) ].e.  
+#    We have θ = cos-1 [ (a · b) / (|a| |b|) ].e.
     v1 = Rho_TauRes.Vect()
     v2 = TauP4.Vect()
     theta_Rho= v1.Angle(v2)
-    z = math.cos( theta_Rho) 
+    z = math.cos( theta_Rho)
     #print (theta_Rho,z)
-    
+
     v1 = Pion_RhoRes.Vect()
     v2 = RhoP4.Vect()
     beta= v1.Angle(v2)
@@ -211,7 +211,7 @@ def newAtauRHO2(TauP4, RhoP4,pionP4,beamE, Type,New_Atau,sin2theta_effective= 0.
     x=RhoP4.E()/TauP4.E()
 
     sqrts=beamE*2
- 
+
     cosPsi= (x * (mtau*mtau + mRho*mRho) - 2*mRho*mRho)/((mtau*mtau-mRho*mRho)*math.sqrt(x*x-4*mRho*mRho/sqrts/sqrts))
 
     if cosPsi>1:
@@ -224,9 +224,9 @@ def newAtauRHO2(TauP4, RhoP4,pionP4,beamE, Type,New_Atau,sin2theta_effective= 0.
     anglePsi=math.acos(cosPsi)
 
 
-    # more complex version that takes into account the dependence on Q, B, Theta: 
+    # more complex version that takes into account the dependence on Q, B, Theta:
 
-     
+
     ratioMass2= mtau*mtau/mRho/mRho
 
     term_a= 2/3*((1-Ptau_sm*z)- ratioMass2*(1+Ptau_sm*z)) + ratioMass2* (1+Ptau_sm*z)
@@ -243,3 +243,38 @@ def newAtauRHO2(TauP4, RhoP4,pionP4,beamE, Type,New_Atau,sin2theta_effective= 0.
     return weight_Pnew
 
 
+def newAtauLep(lepP4, lepTauP4, beamE, New_Atau, sin_eff=None):
+    """
+    lepP4    : 4-vector del leptón visible (e/μ) — para x = E_lep/E_beam
+    lepTauP4 : 4-vector del tau leptónico completo — para la dirección de polarización
+    """
+    if sin_eff is not None:
+        sin2theta_effective = sin_eff
+    else:
+        sin2theta_effective = 0.2312
+
+    if beamE <= 0:
+        return 1.0
+
+    x = lepP4.E() / beamE
+    x = max(0.0, min(1.0, x))
+
+    a = 1.0/3.0 * (5.0 - 9.0*x*x + 4.0*x*x*x)
+    b = 1.0/3.0 * (1.0 - 9.0*x*x + 8.0*x*x*x)
+
+    if abs(a) < 1e-10:
+        return 1.0
+
+    gv_ga   = -1 + 4*sin2theta_effective
+    Ae_sm   = 2*gv_ga / (1 + gv_ga*gv_ga)
+    Atau_sm = Ae_sm
+    Ae      = Ae_sm
+
+    costheta = math.cos(lepTauP4.Theta())  # dirección del tau leptónico completo
+
+    Ptau_sm = -(Atau_sm*(1+costheta*costheta) + 2*Ae_sm*costheta) / \
+               (1+costheta*costheta + 2*Ae_sm*Atau_sm*costheta)
+    Pnew    = -(New_Atau*(1+costheta*costheta) + 2*Ae*costheta) / \
+               (1+costheta*costheta + 2*Ae*New_Atau*costheta)
+
+    return (1 + Pnew * b/a) / (1 + Ptau_sm * b/a)

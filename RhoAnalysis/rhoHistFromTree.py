@@ -35,6 +35,7 @@ from modules import myutils  # mismo sistema de config que el código original
 from modules import pi0Reco
 from modules.plotting import plot_sigma_vs_energy_root
 from modules import optimalVariabRho
+from modules import weightsPol
 
 # ---------------------------------------------------------------------
 # Función auxiliar: escribir recursivamente todos los histogramas ROOT
@@ -322,6 +323,9 @@ def main():
                     leptonP * math.sin(leptonTheta) * math.sin(leptonPhi),
                     leptonP * math.cos(leptonTheta), leptonE
                 )
+                ZGenMass = float(entry.GenZMass)
+                ZGenVisMass = float(entry.GenZVisMass)
+                ZRecoMass = float(entry.ZMass)
                 # Pesos almacenados en el árbol
                 if args.compute_weights:
                     gentauP = float(entry.genTauP)
@@ -353,10 +357,48 @@ def main():
                         genPionP * math.sin(genPionTheta) * math.sin(genPionPhi),
                         genPionP * math.cos(genPionTheta),
                         genPionE)
-                    (_,_,_,_,weight_P1,weight_M1)=optimalVariabRho.wVariab(genTauP4, genMesonP4,genPionP4,beamE, sin_eff=args.sin_eff)
+                    # Dispatch on decay type so each decay uses its correct weight formula
+                    if genTauID == 1:  # rho: full formula (needs pion in rho RF)
+                        (_,_,_,_,weight_P1,weight_M1) = optimalVariabRho.wVariab(
+                            genTauP4, genMesonP4, genPionP4, beamE, sin_eff=args.sin_eff)
+                    elif genTauID in (0, 10):  # pion (alpha=1) or a1 (alpha=0.12)
+                        weight_P1 = weightsPol.newAtau(genTauP4, genMesonP4, genTauID, +1, sin_eff=args.sin_eff)
+                        weight_M1 = weightsPol.newAtau(genTauP4, genMesonP4, genTauID, -1, sin_eff=args.sin_eff)
+                    else:  # lepton backgrounds: no polarization sensitivity
+                        weight_P1 = 1.0
+                        weight_M1 = 1.0
+                    genLepE        = float(entry.genLepE)
+                    genLepTheta    = float(entry.genLepTheta)
+                    genLepPhi      = float(entry.genLepPhi)
+                    genLepP        = float(entry.genLepP)
+                    genLepPDG      = int(float(entry.genLepPDG))
+                    genLepTauE     = float(entry.genLepTauE)
+                    genLepTauTheta = float(entry.genLepTauTheta)
+                    genLepTauPhi   = float(entry.genLepTauPhi)
+                    genLepTauP     = float(entry.genLepTauP)
+                    genLepP4 = ROOT.TLorentzVector()
+                    genLepP4.SetPxPyPzE(
+                        genLepP * math.sin(genLepTheta) * math.cos(genLepPhi),
+                        genLepP * math.sin(genLepTheta) * math.sin(genLepPhi),
+                        genLepP * math.cos(genLepTheta),
+                        genLepE)
+                    genLepTauP4 = ROOT.TLorentzVector()
+                    genLepTauP4.SetPxPyPzE(
+                        genLepTauP * math.sin(genLepTauTheta) * math.cos(genLepTauPhi),
+                        genLepTauP * math.sin(genLepTauTheta) * math.sin(genLepTauPhi),
+                        genLepTauP * math.cos(genLepTauTheta),
+                        genLepTauE)
+                    if abs(genLepPDG) in [11, 13] and genLepTauE > 0:
+                        weight_lep_P1 = weightsPol.newAtauLep(genLepP4, genLepTauP4, beamE, +1, sin_eff=args.sin_eff)
+                        weight_lep_M1 = weightsPol.newAtauLep(genLepP4, genLepTauP4, beamE, -1, sin_eff=args.sin_eff)
+                    else:
+                        weight_lep_P1 = 1.0
+                        weight_lep_M1 = 1.0
                 else:
-                    weight_P1 = float(entry.weight_P1)
-                    weight_M1 = float(entry.weight_M1)
+                    weight_P1     = float(entry.weight_P1)
+                    weight_M1     = float(entry.weight_M1)
+                    weight_lep_P1 = float(entry.weight_lep_P1)
+                    weight_lep_M1 = float(entry.weight_lep_M1)
 
             except AttributeError as e:
                 logger_process.error(
@@ -372,8 +414,10 @@ def main():
             if recoMesonP < tauPCut:
                 continue
             
-            z_p4 = mesonp4 + leptonp4 
+            z_p4 = mesonp4 + leptonp4
+            
             zmass = z_p4.M()
+            
             if recoMesonP < meson_cut[0] or recoMesonP > meson_cut[1]:
                 continue # Ignoring this event to get the bk
             if leptonP < lepton_cut[0] or leptonP > lepton_cut[1]:
@@ -391,6 +435,8 @@ def main():
                 root_histograms["Reco"]["Events"]["CosTheta_Tau_SIGNAL"].Fill(cos_theta_rho)
                 root_histograms["Reco"]["Events"]["CosTheta_Tau_P1"].Fill(cos_theta_rho, weight_P1 * weight)
                 root_histograms["Reco"]["Events"]["CosTheta_Tau_M1"].Fill(cos_theta_rho, weight_M1 * weight)
+                root_histograms["Reco"]["Events"]["CosTheta_Tau_corr_P1"].Fill(cos_theta_rho, weight_P1 * weight_lep_P1 * weight)
+                root_histograms["Reco"]["Events"]["CosTheta_Tau_corr_M1"].Fill(cos_theta_rho, weight_M1 * weight_lep_M1 * weight)
             else:
                 root_histograms["Reco"]["Events"]["DeltaR_LepMeson_BG"].Fill(dR_between)
                 root_histograms["Reco"]["Events"]["MesonP_BG"].Fill(recoMesonP)
@@ -452,7 +498,7 @@ def main():
             )
 
             # -----------------------------------------------------------------
-            # Clasificación SIGNAL vs BG, igual que en el código original
+            # Clasificación SIGNAL vs BG
             # (usando genTauID y selectGEN)
             # -----------------------------------------------------------------
             if genTauID == selectGEN:
@@ -506,6 +552,12 @@ def main():
                 root_histograms["Matched"]["Events"]["MesonEOverBeamE_M1"].Fill(
                     genMesonE / beamE, weight_M1 * weight
                 )
+                root_histograms["Matched"]["Events"]["MesonEOverBeamE_corr_P1"].Fill(
+                    genMesonE / beamE, weight_P1 * weight_lep_P1 * weight
+                )
+                root_histograms["Matched"]["Events"]["MesonEOverBeamE_corr_M1"].Fill(
+                    genMesonE / beamE, weight_M1 * weight_lep_M1 * weight
+                )
 
                 # Reco omega
                 root_histograms["Reco"]["Events"]["Omega_SIGNAL"].Fill(
@@ -517,16 +569,73 @@ def main():
                 root_histograms["Reco"]["Events"]["Omega_SIGNAL_M1"].Fill(
                     w, weight * weight_M1
                 )
+                root_histograms["Reco"]["Events"]["Omega_SIGNAL_corr_P1"].Fill(
+                    w, weight * weight_P1 * weight_lep_P1
+                )
+                root_histograms["Reco"]["Events"]["Omega_SIGNAL_corr_M1"].Fill(
+                    w, weight * weight_M1 * weight_lep_M1
+                )
 
                 # Gen omega
                 root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL"].Fill(
                     gen_w, weight
                 )
+                # Z bins
+                
+                root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_ZVisMass"].Fill(
+                    gen_w, ZGenVisMass, weight
+                )
+                root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_ZGenMass"].Fill(
+                    gen_w, ZGenMass, weight
+                )
+                
+                root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_ZGenMass_M1"].Fill(
+                    gen_w, ZGenMass, weight * weight_M1
+                )
+
+                root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_ZGenMass_P1"].Fill(
+                    gen_w, ZGenMass, weight * weight_P1
+                )
+                root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_ZGenMass_corr_M1"].Fill(
+                    gen_w, ZGenMass, weight * weight_M1 * weight_lep_M1
+                )
+                root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_ZGenMass_corr_P1"].Fill(
+                    gen_w, ZGenMass, weight * weight_P1 * weight_lep_P1
+                )
+                root_histograms["Gen"]["Events"]["GenVisZMass"].Fill(
+                    ZGenVisMass, weight
+                )
+                root_histograms["Reco"]["Events"]["RecoZMass"].Fill(
+                    zmass, weight
+                )
+                # # Bin 1 [0,45]
+                # if 0 <= ZGenVisMass < 45:
+                #     root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_ZVisMass_Bin1"].Fill(
+                #         gen_w, weight
+                #     )
+                # # Bin 2 [45,80]
+                # elif 45 <= ZGenVisMass < 80:
+                #     root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_ZVisMass_Bin2"].Fill(
+                #         gen_w, weight
+                #     )
+                
+                # # Bin 3 [80,100]
+                # elif 80 <= ZGenVisMass < 100:
+                #     root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_ZVisMass_Bin3"].Fill(
+                #         gen_w, weight
+                #     )
+                
                 root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_P1"].Fill(
                     gen_w, weight * weight_P1
                 )
                 root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_M1"].Fill(
                     gen_w, weight * weight_M1
+                )
+                root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_corr_P1"].Fill(
+                    gen_w, weight * weight_P1 * weight_lep_P1
+                )
+                root_histograms["Gen"]["Events"]["Omega_GEN_SIGNAL_corr_M1"].Fill(
+                    gen_w, weight * weight_M1 * weight_lep_M1
                 )
 
                 # Omega vs cos(theta_rho)
@@ -539,6 +648,12 @@ def main():
                 root_histograms["Reco"]["Events"]["OmegaCosTheta_SIGNAL_M1"].Fill(
                     w, cos_theta_rho, weight * weight_M1
                 )
+                root_histograms["Reco"]["Events"]["OmegaCosTheta_SIGNAL_corr_P1"].Fill(
+                    w, cos_theta_rho, weight * weight_P1 * weight_lep_P1
+                )
+                root_histograms["Reco"]["Events"]["OmegaCosTheta_SIGNAL_corr_M1"].Fill(
+                    w, cos_theta_rho, weight * weight_M1 * weight_lep_M1
+                )
 
                 root_histograms["Gen"]["Events"]["OmegaCosThetaTau_GEN_SIGNAL"].Fill(
                     gen_w, gen_cos_theta_tau, weight
@@ -549,26 +664,44 @@ def main():
                 root_histograms["Gen"]["Events"]["OmegaCosThetaTau_GEN_SIGNAL_M1"].Fill(
                     gen_w, gen_cos_theta_tau, weight * weight_M1
                 )
+                root_histograms["Gen"]["Events"]["OmegaCosThetaTau_GEN_SIGNAL_corr_P1"].Fill(
+                    gen_w, gen_cos_theta_tau, weight * weight_P1 * weight_lep_P1
+                )
+                root_histograms["Gen"]["Events"]["OmegaCosThetaTau_GEN_SIGNAL_corr_M1"].Fill(
+                    gen_w, gen_cos_theta_tau, weight * weight_M1 * weight_lep_M1
+                )
 
                 # CosTheta
                 root_histograms["Reco"]["Events"]["CosTheta_SIGNAL"].Fill(
                     cos_theta, weight
                 )
                 root_histograms["Reco"]["Events"]["CosTheta_SIGNAL_P1"].Fill(
-                    cos_theta, weight_M1 * weight
+                    cos_theta, weight_P1 * weight
                 )
                 root_histograms["Reco"]["Events"]["CosTheta_SIGNAL_M1"].Fill(
-                    cos_theta, weight_P1 * weight
+                    cos_theta, weight_M1 * weight
+                )
+                root_histograms["Reco"]["Events"]["CosTheta_SIGNAL_corr_P1"].Fill(
+                    cos_theta, weight_P1 * weight_lep_P1 * weight
+                )
+                root_histograms["Reco"]["Events"]["CosTheta_SIGNAL_corr_M1"].Fill(
+                    cos_theta, weight_M1 * weight_lep_M1 * weight
                 )
 
                 root_histograms["Gen"]["Events"]["CosTheta_GEN_SIGNAL"].Fill(
                     cos_theta, weight
                 )
                 root_histograms["Gen"]["Events"]["CosTheta_GEN_SIGNAL_P1"].Fill(
-                    cos_theta, weight_M1 * weight
+                    cos_theta, weight_P1 * weight
                 )
                 root_histograms["Gen"]["Events"]["CosTheta_GEN_SIGNAL_M1"].Fill(
-                    cos_theta, weight_P1 * weight
+                    cos_theta, weight_M1 * weight
+                )
+                root_histograms["Gen"]["Events"]["CosTheta_GEN_SIGNAL_corr_P1"].Fill(
+                    cos_theta, weight_P1 * weight_lep_P1 * weight
+                )
+                root_histograms["Gen"]["Events"]["CosTheta_GEN_SIGNAL_corr_M1"].Fill(
+                    cos_theta, weight_M1 * weight_lep_M1 * weight
                 )
 
                 # CosPsi
@@ -576,20 +709,32 @@ def main():
                     cos_psi, weight
                 )
                 root_histograms["Reco"]["Events"]["CosPsi_SIGNAL_P1"].Fill(
-                    cos_psi, weight_M1 * weight
+                    cos_psi, weight_P1 * weight
                 )
                 root_histograms["Reco"]["Events"]["CosPsi_SIGNAL_M1"].Fill(
-                    cos_psi, weight_P1 * weight
+                    cos_psi, weight_M1 * weight
+                )
+                root_histograms["Reco"]["Events"]["CosPsi_SIGNAL_corr_P1"].Fill(
+                    cos_psi, weight_P1 * weight_lep_P1 * weight
+                )
+                root_histograms["Reco"]["Events"]["CosPsi_SIGNAL_corr_M1"].Fill(
+                    cos_psi, weight_M1 * weight_lep_M1 * weight
                 )
 
                 root_histograms["Gen"]["Events"]["CosPsi_GEN_SIGNAL"].Fill(
                     gen_cos_psi, weight
                 )
                 root_histograms["Gen"]["Events"]["CosPsi_GEN_SIGNAL_P1"].Fill(
-                    gen_cos_psi, weight_M1 * weight
+                    gen_cos_psi, weight_P1 * weight
                 )
                 root_histograms["Gen"]["Events"]["CosPsi_GEN_SIGNAL_M1"].Fill(
-                    gen_cos_psi, weight_P1 * weight
+                    gen_cos_psi, weight_M1 * weight
+                )
+                root_histograms["Gen"]["Events"]["CosPsi_GEN_SIGNAL_corr_P1"].Fill(
+                    gen_cos_psi, weight_P1 * weight_lep_P1 * weight
+                )
+                root_histograms["Gen"]["Events"]["CosPsi_GEN_SIGNAL_corr_M1"].Fill(
+                    gen_cos_psi, weight_M1 * weight_lep_M1 * weight
                 )
 
                 # Tipos de mesón (GEN vs RECO)
@@ -601,6 +746,12 @@ def main():
                 )
                 root_histograms["Matched"]["Events"]["MesonCosTheta_M1"].Fill(
                     math.cos(genMesonTheta), weight_M1 * weight
+                )
+                root_histograms["Matched"]["Events"]["MesonCosTheta_corr_P1"].Fill(
+                    math.cos(genMesonTheta), weight_P1 * weight_lep_P1 * weight
+                )
+                root_histograms["Matched"]["Events"]["MesonCosTheta_corr_M1"].Fill(
+                    math.cos(genMesonTheta), weight_M1 * weight_lep_M1 * weight
                 )
 
                 root_histograms["Gen"]["Events"]["MesonType"].Fill(
@@ -620,6 +771,12 @@ def main():
                 root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_SIGNAL_M1"].Fill(
                     recoMesonE / beamE, weight_M1 * weight
                 )
+                root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_SIGNAL_corr_P1"].Fill(
+                    recoMesonE / beamE, weight_P1 * weight_lep_P1 * weight
+                )
+                root_histograms["Reco"]["Events"]["RecoMesonEOverBeamE_SIGNAL_corr_M1"].Fill(
+                    recoMesonE / beamE, weight_M1 * weight_lep_M1 * weight
+                )
                 # root_histograms["Reco"]["Events"]["RecoMesonE"]
 
                 root_histograms["Reco"]["Events"]["RecoMeson_X"].Fill(
@@ -631,6 +788,12 @@ def main():
                 root_histograms["Reco"]["Events"]["RecoMeson_X_M1"].Fill(
                     x, weight * weight_M1
                 )
+                root_histograms["Reco"]["Events"]["RecoMeson_X_corr_P1"].Fill(
+                    x, weight * weight_P1 * weight_lep_P1
+                )
+                root_histograms["Reco"]["Events"]["RecoMeson_X_corr_M1"].Fill(
+                    x, weight * weight_M1 * weight_lep_M1
+                )
 
                 root_histograms["Reco"]["Events"]["RecoMesonCosTheta_SIGNAL"].Fill(
                     math.cos(recoMesonTheta), weight
@@ -640,6 +803,12 @@ def main():
                 )
                 root_histograms["Reco"]["Events"]["RecoMesonCosTheta_SIGNAL_M1"].Fill(
                     math.cos(recoMesonTheta), weight_M1 * weight
+                )
+                root_histograms["Reco"]["Events"]["RecoMesonCosTheta_SIGNAL_corr_P1"].Fill(
+                    math.cos(recoMesonTheta), weight_P1 * weight_lep_P1 * weight
+                )
+                root_histograms["Reco"]["Events"]["RecoMesonCosTheta_SIGNAL_corr_M1"].Fill(
+                    math.cos(recoMesonTheta), weight_M1 * weight_lep_M1 * weight
                 )
                 root_histograms["Reco"]["Events"]["RecoMeson_P_SIGNAL"].Fill(
                     recoMesonP, weight
@@ -1024,7 +1193,34 @@ def main():
     for tree_key in root_histograms_super:
         write_histograms_recursive(root_histograms_super[tree_key])
 
+    # Generate bins of Omega_GEN_SIGNAL_ZGenMass
     
+    hist2d_hist = root_histograms_super["original"]["Gen"]["Events"]["Omega_GEN_SIGNAL_ZGenMass"]
+    hist2d_hist_P1 = root_histograms_super["original"]["Gen"]["Events"]["Omega_GEN_SIGNAL_ZGenMass_P1"]
+    hist2d_hist_M1 = root_histograms_super["original"]["Gen"]["Events"]["Omega_GEN_SIGNAL_ZGenMass_M1"]
+    nbins = hist2d_hist.GetNbinsY()
+    # get bin edges
+    bin_edges = [hist2d_hist.GetYaxis().GetBinLowEdge(i) for i in range(1, nbins+2)]
+    # Get last bin with content
+    last_bin_with_content = 0
+    for i in range(1, nbins+1):
+        if hist2d_hist.ProjectionX(f"Omega_GEN_SIGNAL_ZGenMass_ProjBin_{bin_edges[i]}", i, i).GetEntries() > 0:
+            last_bin_with_content = i
+    logger_io.info(f"Last bin with content in Omega_GEN_SIGNAL_ZGenMass: {bin_edges[last_bin_with_content]} GeV")
+    
+    # Get the las n bins
+    n = 10
+    for i in range(last_bin_with_content-n, last_bin_with_content+1):
+        TH1D_proj = hist2d_hist.ProjectionX(f"Omega_GEN_SIGNAL_ZGenMass_ProjBin_{bin_edges[i]}", i, i)
+        TH1D_proj.Write(f"Omega_GEN_SIGNAL_ZGenMass_ProjBin_{bin_edges[i]}")
+    
+    for i in range(last_bin_with_content-n, last_bin_with_content+1):
+        TH1D_proj = hist2d_hist_M1.ProjectionX(f"Omega_GEN_SIGNAL_ZGenMass_ProjBin_{bin_edges[i]}_M1", i, i)
+        TH1D_proj.Write(f"Omega_GEN_SIGNAL_ZGenMass_ProjBin_{bin_edges[i]}_M1")
+    
+    for i in range(last_bin_with_content-n, last_bin_with_content+1):
+        TH1D_proj = hist2d_hist_P1.ProjectionX(f"Omega_GEN_SIGNAL_ZGenMass_ProjBin_{bin_edges[i]}_P1", i, i)
+        TH1D_proj.Write(f"Omega_GEN_SIGNAL_ZGenMass_ProjBin_{bin_edges[i]}_P1")
     # for res_hist_key in resolution_histograms:
     #     # for region in resolution_histograms[res_hist_key]:
     #     #     print(resolution_histograms[res_hist_key][region])

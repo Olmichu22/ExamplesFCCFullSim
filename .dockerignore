@@ -1,0 +1,8 @@
+# Excluir todo por defecto; COPY en Dockerfile selecciona explícitamente
+*
+
+# Permitir lo que necesita el build
+!EventDisplay/
+!EventDisplay/**
+!modules/
+!modules/**

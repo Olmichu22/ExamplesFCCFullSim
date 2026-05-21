@@ -246,7 +246,7 @@ plot_together:
     position: [0.35, 0.4, 0.6, 0.6]
     gridy: true
     markersize: 0.5
-    legend_txt_size: 0.1
+    # legend_txt_size: 0.1
   IsolatedPionEfficiencyTheta:
     variabs:
       - effGenIsolatedPionThetaEfficiency
@@ -324,7 +324,7 @@ plot_together:
     position: [0.35, 0.4, 0.6, 0.6]
     gridy: true
     markersize: 0.5
-    legend_txt_size: 0.04
+    # legend_txt_size: 0.04
   
   GeneralPionEfficiencyTheta:
     variabs:
@@ -364,7 +364,7 @@ plot_together:
     position: [0.35, 0.4, 0.6, 0.6]
     gridy: true
     markersize: 0.5
-    legend_txt_size: 0.04
+    # legend_txt_size: 0.04
 
     # logy: true
   

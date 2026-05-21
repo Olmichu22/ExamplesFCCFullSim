@@ -248,6 +248,69 @@ def set_up_root_histograms(histograms_config):
                     )
     return root_histograms
 
+def _make_hist(root_name, var_cfg):
+    """Create a single ROOT TH1F or TH2F from v2-config parameters."""
+    hist_type = var_cfg.get("type", "1D")
+    if hist_type == "1D":
+        bins = var_cfg.get("bins", 10)
+        r0, r1 = var_cfg.get("range", [0, 1])
+        return ROOT.TH1F(root_name, "", bins, r0, r1)
+    elif hist_type == "2D":
+        bx = var_cfg.get("x_bins", 10)
+        by = var_cfg.get("y_bins", 10)
+        rx0, rx1 = var_cfg.get("x_range", [0, 1])
+        ry0, ry1 = var_cfg.get("y_range", [0, 1])
+        return ROOT.TH2F(root_name, "", bx, rx0, rx1, by, ry0, ry1)
+    raise ValueError(f"Unknown histogram type '{hist_type}' for '{root_name}'")
+
+
+def build_histogram_registry(config: dict) -> dict:
+    """Build a 4-level histogram registry from a v2 YAML config.
+
+    Reads the ``histograms`` section of *config* and expands each variable
+    entry into one ROOT histogram per (variable, category, weight) triple.
+
+    Root histogram naming convention::
+
+        {variable}_{category}              # weight == nominal
+        {variable}_{category}_{weight}     # weight in [P1, M1, …]
+
+    Args:
+        config: dict loaded from rho_analysis_config_v2.yml.
+
+    Returns:
+        hists[level][variable][category][weight] → ROOT.TH1F / ROOT.TH2F
+    """
+    defaults = config["defaults"]["categories"]
+    hists = {}
+
+    for level, variables in config["histograms"].items():
+        hists[level] = {}
+        for var_name, var_cfg in variables.items():
+            hists[level][var_name] = {}
+            cats_raw = var_cfg["categories"]
+
+            # ``categories`` may be a list (use global defaults) or a dict
+            # (per-category weight overrides).
+            if isinstance(cats_raw, list):
+                cat_configs = {cat: defaults[cat] for cat in cats_raw}
+            else:
+                cat_configs = {
+                    cat: (override if override is not None else defaults[cat])
+                    for cat, override in cats_raw.items()
+                }
+
+            for cat, cat_cfg in cat_configs.items():
+                hists[level][var_name][cat] = {}
+                weight_variants = ["nominal"] + list(cat_cfg.get("weights", []))
+                for w in weight_variants:
+                    suffix = "" if w == "nominal" else f"_{w}"
+                    root_name = f"{var_name}_{cat}{suffix}"
+                    hists[level][var_name][cat][w] = _make_hist(root_name, var_cfg)
+
+    return hists
+
+
 def calc_efficiency(root_histograms, histograms_config, suffix = ""):
 
     for hist_level, category in histograms_config.items():
@@ -334,7 +397,6 @@ def open_root_file(file_path):
 
         # Attempt to open the ROOT file in "READ" mode without auto-recovery
         root_file = ROOT.TFile.Open(file_path, "READ")
-
         # Check if the file is a zombie
         if not root_file or root_file.IsZombie():
             logger_io.error(f"Error: '{file_path}' is a zombie or could not be opened.")
@@ -504,10 +566,20 @@ def setup_analysis_config(
         help="Path to the histogram configuration file.",
     )
     parser.add_argument(
-        "--prefix", required = False
+        "--prefix", required=False
     )
     parser.add_argument(
-        "--file-suffix", required = False, default = None
+        "--samples-config",
+        type=str,
+        default="config/samples/samples.yaml",
+        help="YAML con el mapeo sample → ruta en disco.",
+    )
+    parser.add_argument(
+        "--input-list",
+        nargs="+",
+        metavar="FILE",
+        default=None,
+        help="Uno o varios ficheros ROOT (rutas absolutas). Omite el escaneo de directorio.",
     )
 
     if parser_hook is not None:
@@ -573,6 +645,8 @@ def setup_analysis_config(
         path = output_base + args.prefix + outfile + suffix[1:] + "/"
     elif args.test_pfo:
         raise ValueError("Cannot use --test-pfo without --gatr-result.")
+    if args.input_list and args.gatr_result:
+        raise ValueError("Cannot use --input-list together with --gatr-result.")
     elif args.prefix:
         path = output_base + args.prefix + outfile + suffix[1:] + "/"
     else:
@@ -628,9 +702,23 @@ def setup_analysis_config(
 
     # Convert flags
     matched_cm = True if config["general"]["matchedCM"] == "True" else False
-    test_mode = args.test 
+    test_mode = args.test
 
-    
+    # Leer has_gen_taus desde samples.yaml para el sample activo
+    has_gen_taus = False
+    _samples_cfg = getattr(args, "samples_config", "config/samples/samples.yaml")
+    if os.path.exists(_samples_cfg):
+        with open(_samples_cfg) as _f:
+            _sdb = yaml.safe_load(_f)
+        _current_sample = config["general"]["sample"]
+        _entry = _sdb.get("samples", {}).get(_current_sample, {})
+        has_gen_taus = bool(_entry.get("has_gen_taus", False))
+        if not has_gen_taus:
+            for _e in _sdb.get("samples", {}).values():
+                if _current_sample and _current_sample.lower() in [a.lower() for a in _e.get("aliases", [])]:
+                    has_gen_taus = bool(_e.get("has_gen_taus", False))
+                    break
+
     return {
         "args": args,
         "config": config,
@@ -643,11 +731,12 @@ def setup_analysis_config(
             "matched_cm": matched_cm,
             "test": test_mode
         },
-        "decay_str": decay_str
+        "decay_str": decay_str,
+        "has_gen_taus": has_gen_taus,
     }
 
 
-def get_root_trees_path(sample, gatr_results_path, loggers, test, args=None):
+def get_root_trees_path(sample, gatr_results_path, loggers, test, args=None, skip_root_validation: bool = False):
     """
     Loads ROOT file paths and associated GATr (Graph Analysis Training results) predictions 
     for a given sample. Handles both local GATr result files and simulation-only workflows.
@@ -663,8 +752,8 @@ def get_root_trees_path(sample, gatr_results_path, loggers, test, args=None):
         loggers (dict): Dictionary of loggers with at least the `"io"` key used for logging 
             information, warnings, and errors.
         test (bool): If True, limits the processing to only one file for quick testing.
-        args (argparse.Namespace or None): Optional argument parser namespace containing additional
-            command-line arguments, such as file suffixes.
+        args (argparse.Namespace or None): Optional argument parser namespace. Used to read
+            ``args.input_list`` (explicit file list) and ``args.samples_config`` (YAML path).
 
     Raises:
         SystemExit: If `gatr_results_path` is provided but the path does not exist.
@@ -697,10 +786,11 @@ def get_root_trees_path(sample, gatr_results_path, loggers, test, args=None):
             my_file = Path(simulation_path)
             loggers["io"].debug("Reading file %s", simulation_path)
             if my_file.is_file():
-                root_file = open_root_file(simulation_path)
-                if not root_file or root_file.IsZombie():
-                    loggers["io"].warning("File %s is a zombie or could not be opened.", simulation_path)
-                    continue
+                if not skip_root_validation:
+                    root_file = open_root_file(simulation_path)
+                    if not root_file or root_file.IsZombie():
+                        loggers["io"].warning("File %s is a zombie or could not be opened.", simulation_path)
+                        continue
                 filenames.append(simulation_path)
             
             with open(mlpf_predictions_path, "rb") as f:
@@ -716,50 +806,73 @@ def get_root_trees_path(sample, gatr_results_path, loggers, test, args=None):
 
         loggers["io"].info("Total predictions loaded: %d", n_preds)
             
-    else:
-        # Simulation files
-        path = "/pnfs/ciemat.es/data/cms/store/user/cepeda/FCC/FullSim/"
-        file = "out_reco_edm4hep_edm4hep"
+    elif args is not None and args.input_list:
+        # Explicit file list — skip directory scan entirely
+        if test:
+            loggers["io"].warning("--test has no effect when --input-list is used.")
         filenames = []
-        sample_path = None
-        if args.file_suffix is not None:
-            sample_path = args.file_suffix
+        for f in args.input_list:
+            my_file = Path(f)
+            if not my_file.is_file():
+                loggers["io"].warning("File %s not found, skipping.", f)
+                continue
+            if not skip_root_validation:
+                root_file = open_root_file(f)
+                if not root_file or root_file.IsZombie():
+                    loggers["io"].warning("File %s is a zombie or could not be opened.", f)
+                    continue
+            filenames.append(f)
+        loggers["io"].info("Input-list mode: %d file(s) to process.", len(filenames))
+    else:
+        # Resolve sample → directory via samples YAML
+        samples_config_path = args.samples_config if args is not None else "config/samples/samples.yaml"
+        if not os.path.exists(samples_config_path):
+            loggers["io"].error("Samples config file %s not found.", samples_config_path)
+            sys.exit(1)
+        with open(samples_config_path, "r") as f:
+            samples_db = yaml.safe_load(f)
+
+        default_base = samples_db.get("default_base", "")
+        default_prefix = samples_db.get("default_file_prefix", "out_reco_edm4hep_edm4hep")
+
+        # Build flat lookup: alias_lower → entry
+        lookup = {}
+        for name, entry in samples_db.get("samples", {}).items():
+            lookup[name.lower()] = entry
+            for alias in entry.get("aliases", []):
+                lookup[alias.lower()] = entry
+
+        entry = lookup.get(sample.lower())
+        if entry is None:
+            loggers["io"].error("Sample '%s' not found in %s.", sample, samples_config_path)
+            sys.exit(1)
+
+        file_prefix = entry.get("file_prefix", default_prefix)
+        if "path" in entry:
+            dir_path = entry["path"]
         else:
-            if sample.lower() in ("ZTauTau_SMPol_25Sept_MuonFix".lower(), "ztt"):
-                sample_path = "ZTauTau_SMPol_25Sept_MuonFix"
-            elif sample.lower() == "zqq":
-                sample_path = "Zqq_1M"
-            elif sample.lower() == "zee":
-                sample_path = "Zee_50k"
-            elif sample.lower() == "bhabha":
-                sample_path = "bhabha_1M" # bhabha_1M gives 1M events
-            elif sample.lower() == "bhabha_1M3":
-                sample_path = "bhabha_1M_3"
-            else:
-                loggers["io"].error("Sample %s not recognized.", sample)
-                sys.exit(1)
-        dir_path = path + "/" + sample_path
+            dir_path = os.path.join(default_base, entry["folder"])
 
         nfiles = sum(
             1
-            for f in os.listdir(dir_path)
-            if f.endswith(".root") and os.path.isfile(os.path.join(dir_path, f))
+            for fname in os.listdir(dir_path)
+            if fname.endswith(".root") and os.path.isfile(os.path.join(dir_path, fname))
         )
-
-        # nfiles = 1000
-        if test == True:
-            nfiles = 100
+        if test:
+            nfiles = 10
 
         loggers["io"].info("Reading files from %s (%d files)", dir_path, nfiles)
+        filenames = []
         for i in range(1, nfiles + 1):
-            filename = dir_path + "/" + file + "_{}.root".format(i)
+            filename = os.path.join(dir_path, f"{file_prefix}_{i}.root")
             loggers["io"].debug("Reading file %s", filename)
             my_file = Path(filename)
             if my_file.is_file():
-                root_file = open_root_file(filename)
-                if not root_file or root_file.IsZombie():
-                    logger_io.warning("File %s is a zombie or could not be opened.", filename)
-                    continue
+                if not skip_root_validation:
+                    root_file = open_root_file(filename)
+                    if not root_file or root_file.IsZombie():
+                        loggers["io"].warning("File %s is a zombie or could not be opened.", filename)
+                        continue
                 filenames.append(filename)
     return filenames, mlpf_results
 

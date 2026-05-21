@@ -85,7 +85,8 @@ logger_io = loggers["io"]
 logger_process = loggers["processing"]
 logger_pi0mass = loggers["pi0mass"]
 logger_io.info("Output path: %s", fileOutName)
-
+args = general_configs["args"]
+print("ARGUMENTOS args:", args)
 # Continue with the rest of configs
 
 # ------------------------------------------------------------------------
@@ -101,7 +102,7 @@ logger_config.info("Configuration:\n%s", pprint.pformat(general_configs, indent=
 # ------------------------------------------------------------------------
 gatr_results_path = general_configs["args"].gatr_result
 
-filenames, mlpf_results = myutils.get_root_trees_path(sample, gatr_results_path, loggers, test_arg)
+filenames, mlpf_results = myutils.get_root_trees_path(sample, gatr_results_path, loggers,args.test, args)
 reader = root_io.Reader(filenames)
 
 genparts = "MCParticles"
@@ -119,6 +120,7 @@ confusion_events = {"Event":[], "Cluster":[], "Cf_w_e" : [], "Cf_w_mu": [], "Cf_
 # print(root_histograms)
 # exit(0)
 countEvents = 0
+tracks = True
 for eventid, event in enumerate(reader.get("events")):
     logger_process.debug("Processing event %d", eventid)
     if countEvents % 1000 == 0:
@@ -177,6 +179,7 @@ for eventid, event in enumerate(reader.get("events")):
 
             
     except Exception as e:
+
         logger_process.warning(f"Error reading {eventid}: {e}")
         matching_pions = ParticleMatchResults()
 
@@ -192,7 +195,11 @@ for eventid, event in enumerate(reader.get("events")):
         isclic = False  # o detectarlo desde config si lo tienes definido en YAML
 
     except Exception as e:
-        logger_process.warning(f"Error reading tracks in event {eventid}: {e}")
+        if tracks:
+            logger_process.warning(f"Error reading tracks in event {eventid}: {e}")
+        tracks = False
+        
+        track_links = []
         # unmatched_gen_photons = {}
         # unmatched_reco_photons = {}
         # gen_photons_matched_with_reco_photons = {}

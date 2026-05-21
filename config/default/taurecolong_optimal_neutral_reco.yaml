@@ -18,7 +18,7 @@ neutral_recover:
   cut_in_DR: 0.1
   cut_in_E: 0.2
   apply_filter_in_energy: false
-
+  return_hit_type_map: true
 
 output:
   outputfile:

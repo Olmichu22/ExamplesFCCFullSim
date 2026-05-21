@@ -1,3 +1,9 @@
 photon_config:
-  factor: 0.
-  const: 0.01
+  energy:
+    factor: 0.
+    const: 0.01
+  # direction:
+  #   factor_theta: 0.
+  #   const_theta: 0.01 # in radians
+  #   factor_phi: 0.
+  #   const_phi: 0.01 # in radians

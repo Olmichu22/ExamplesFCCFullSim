@@ -17,6 +17,8 @@ general:
 output:
   outputfile:
   - tau_traineddecay0_0.4_tph0.35_tpi0_n3_g0.0.root
+  - tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  - Histos_tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
   outputlabels: null
   outputpath: Results/RhoAnalysis/PolSM_March24_2M_4tau_trained0.4_tph0.35_tpi0_n3_g0.0/
 systematics_errors:

@@ -5,21 +5,16 @@ cuts:
   TauPionPCut: 0
   dRMax: 0.4
   generalPCut: 0.0
-  tauCut: 2
+  tauCut: 0
 general:
   decay:
   - -777
   matchedCM: 'True'
   outfile: tau_trained
-  sample: zqq
-  test: 'True'
+  sample: ZTauTau_SMPol_25Sept_MuonFix
+  test: true
 output:
   outputfile:
   - tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
-  outputlabels:
-  - Results/TauReco/tau_trained0.4_tph0.35_tpi0_n3_g0.0/true_predicted_label_decayAll.csv
+  outputlabels: []
   outputpath: Results/TauReco/tau_trained0.4_tph0.35_tpi0_n3_g0.0/
-systematics_errors:
-  photon_config:
-    const: 0.01
-    factor: 0.0
