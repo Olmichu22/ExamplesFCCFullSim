@@ -1,0 +1,45 @@
+args:
+  MatchedGenMinDR: null
+  NeutronCut: null
+  TauPhotonPCut: null
+  TauPionPCut: null
+  config: /nfs/cms/arqolmo/ExamplesFCCFullSim/config/default/taurecolong_optimal.yaml
+  dRMax: null
+  decay: 2
+  gatr_result: null
+  generalPCut: null
+  hist_config: /nfs/cms/arqolmo/ExamplesFCCFullSim/config/histograms/rho_analysis_config.yml
+  input_list: null
+  matchedCM: 'True'
+  n_workers: 60
+  outfile: null
+  prefix: PolAnalysis_GEN_P1_corr_
+  sample: p1
+  samples_config: config/samples/samples.yaml
+  sin_eff: null
+  tauCut: 0
+  test: false
+  test_pfo: false
+  verbose: 1
+cuts:
+  MatchedGenMinDR: 1
+  NeutronCut: 3
+  TauPhotonPCut: 0.35
+  TauPionPCut: 0
+  dRMax: 0.4
+  generalPCut: 0.0
+  tauCut: 0
+general:
+  decay:
+  - -777
+  - 2
+  matchedCM: 'True'
+  outfile: tau_trained
+  sample: p1
+  test: false
+output:
+  outputfile:
+  - tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  outputlabels: null
+  outputpath: Results/RhoAnalysis/PolAnalysis_GEN_P1_corr_tau_trained0.4_tph0.35_tpi0_n3_g0.0/
+run_Type: genOnlyRHOTree

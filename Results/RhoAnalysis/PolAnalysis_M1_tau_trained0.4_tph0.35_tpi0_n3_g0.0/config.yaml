@@ -1,0 +1,26 @@
+cuts:
+  MatchedGenMinDR: 1
+  NeutronCut: 3
+  TauPhotonPCut: 0.35
+  TauPionPCut: 0
+  dRMax: 0.4
+  generalPCut: 0.0
+  tauCut: 0
+general:
+  decay:
+  - -777
+  - 2
+  matchedCM: 'True'
+  outfile: tau_trained
+  sample: m1
+  test: false
+output:
+  outputfile:
+  - tau_traineddecay2_0.4_tph0.35_tpi0_n3_g0.0.root
+  outputlabels: null
+  outputpath: Results/RhoAnalysis/PolAnalysis_M1_tau_trained0.4_tph0.35_tpi0_n3_g0.0/
+systematics_errors:
+  photon_config:
+    energy:
+      const: 0.01
+      factor: 0.0

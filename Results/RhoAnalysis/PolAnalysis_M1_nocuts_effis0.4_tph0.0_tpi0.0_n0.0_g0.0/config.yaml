@@ -1,0 +1,33 @@
+cuts:
+  MatchedGenMinDR: 1
+  NeutronCut: 0.0
+  TauPhotonPCut: 0.0
+  TauPionPCut: 0.0
+  dRMax: 0.4
+  generalPCut: 0.0
+  tauCut: 0
+general:
+  decay:
+  - -777
+  - 2
+  matchedCM: 'True'
+  outfile: effis
+  sample: m1
+  test: false
+neutral_recover:
+  apply_filter_in_energy: false
+  cut_in_DR: 0.1
+  cut_in_E: 0.2
+  enable: true
+  return_hit_type_map: true
+  save_extra_data: false
+output:
+  outputfile:
+  - effisdecay2_0.4_tph0.0_tpi0.0_n0.0_g0.0.root
+  outputlabels: null
+  outputpath: Results/RhoAnalysis/PolAnalysis_M1_nocuts_effis0.4_tph0.0_tpi0.0_n0.0_g0.0/
+systematics_errors:
+  photon_config:
+    energy:
+      const: 0.01
+      factor: 0.0

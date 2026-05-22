@@ -16,3 +16,6 @@ tabpfn/
 *.sh
 *.pt
 *.npz
+.claude/
+*.json
+*.pyc
