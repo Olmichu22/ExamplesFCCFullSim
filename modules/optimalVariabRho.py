@@ -53,9 +53,9 @@ def wVariab(genTauP4,genRhoP4,genPionP4,beamE, testAtau=0, sin_eff=None):
        cosPsi=-1
     anglePsi=math.acos(cosPsi)
 
-    w_a= (-2+mtau*mtau/mRho/mRho + 2*(1+mtau*mtau/mRho/mRho)*(3*cosPsi*cosPsi-1)/2*(3*gen_cosBeta*gen_cosBeta-1)/2)* math.cos(gen_theta_Rho)
+    w_a= (-2+mtau*mtau/mRho/mRho + 2*(1+mtau*mtau/mRho/mRho)*(3*cosPsi-1)/2*(3*gen_cosBeta*gen_cosBeta-1)/2)* math.cos(gen_theta_Rho)
     w_b = 3 * math.sqrt(mtau*mtau/mRho/mRho) * (3*gen_cosBeta*gen_cosBeta-1)/2 * math.sin(2 * anglePsi) * math.sin(gen_theta_Rho)
-    w_c = 2 + (mtau*mtau/mRho/mRho) - 2 *(1- (mtau*mtau/mRho/mRho)) * (3*cosPsi*cosPsi-1)/2 * (3*gen_cosBeta*gen_cosBeta-1)/2
+    w_c = 2 + (mtau*mtau/mRho/mRho) - 2 *(1- (mtau*mtau/mRho/mRho)) * (3*cosPsi-1)/2 * (3*gen_cosBeta*gen_cosBeta-1)/2
 
 
     w= (w_a+w_b)/w_c
@@ -152,9 +152,9 @@ def wVariabRECO(RhoP4,PionP4,beamE):
        cosPsi=-1
     anglePsi=math.acos(cosPsi)
 
-    w_a= (-2+mtau*mtau/mRho/mRho + 2*(1+mtau*mtau/mRho/mRho)*(3*cosPsi*cosPsi-1)/2*(3*cosBeta*cosBeta-1)/2)* cos_theta
+    w_a= (-2+mtau*mtau/mRho/mRho + 2*(1+mtau*mtau/mRho/mRho)*(3*cosPsi-1)/2*(3*cosBeta*cosBeta-1)/2)* cos_theta
     w_b = 3 * math.sqrt(mtau*mtau/mRho/mRho) * (3*cosBeta*cosBeta-1)/2 * math.sin(2 * anglePsi) * math.sin(angleTheta)
-    w_c = 2 + (mtau*mtau/mRho/mRho) - 2 *(1- (mtau*mtau/mRho/mRho)) * (3*cosPsi*cosPsi-1)/2 * (3*cosBeta*cosBeta-1)/2
+    w_c = 2 + (mtau*mtau/mRho/mRho) - 2 *(1- (mtau*mtau/mRho/mRho)) * (3*cosPsi-1)/2 * (3*cosBeta*cosBeta-1)/2
 
     w= (w_a+w_b)/w_c
 
