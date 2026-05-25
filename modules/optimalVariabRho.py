@@ -65,7 +65,7 @@ def wVariab(genTauP4,genRhoP4,genPionP4,beamE, testAtau=0, sin_eff=None):
       sin2theta_effective = sin_eff
     else:  
       sin2theta_effective= 0.2312
-    gv_ga=  -1 + 4 *sin2theta_effective
+    gv_ga=  1 - 4 *sin2theta_effective
     Ae_sm=  2* gv_ga / (1+gv_ga*gv_ga)
     Atau_sm= Ae_sm
 

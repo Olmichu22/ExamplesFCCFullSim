@@ -13,7 +13,7 @@ def newAtau(TauP4, MesonP4,Type,New_Atau, sin_eff=None):
         sin2theta_effective= sin_eff
     else:
         sin2theta_effective= 0.2312
-    gv_ga=  -1 + 4 *sin2theta_effective
+    gv_ga=  1 - 4 *sin2theta_effective
     Ae_sm=  2* gv_ga / (1+gv_ga*gv_ga)
     Atau_sm= Ae_sm    
 
@@ -62,7 +62,7 @@ def newAtauRHO(TauP4, RhoP4,beamE, TauConst, Type,New_Atau,sin2theta_effective= 
          return weight
  
     #sin2theta_effective= 0.2312
-    gv_ga=  -1 + 4 *sin2theta_effective
+    gv_ga=  1 - 4 *sin2theta_effective
     Ae_sm=  2* gv_ga / (1+gv_ga*gv_ga)
     Atau_sm= Ae_sm    
 
@@ -165,7 +165,7 @@ def newAtauRHO2(TauP4, RhoP4,pionP4,beamE, Type,New_Atau,sin2theta_effective= 0.
          return weight
 
     #sin2theta_effective= 0.2312
-    gv_ga=  -1 + 4 *sin2theta_effective
+    gv_ga=  1 - 4 *sin2theta_effective
     Ae_sm=  2* gv_ga / (1+gv_ga*gv_ga)
     Atau_sm= Ae_sm
 
@@ -265,7 +265,7 @@ def newAtauLep(lepP4, lepTauP4, beamE, New_Atau, sin_eff=None):
     if abs(a) < 1e-10:
         return 1.0
 
-    gv_ga   = -1 + 4*sin2theta_effective
+    gv_ga   = 1 - 4*sin2theta_effective
     Ae_sm   = 2*gv_ga / (1 + gv_ga*gv_ga)
     Atau_sm = Ae_sm
     Ae      = Ae_sm
