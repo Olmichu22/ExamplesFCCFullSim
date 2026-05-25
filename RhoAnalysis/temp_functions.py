@@ -26,6 +26,14 @@ FILL_RULES = [
     ("Gen", "GenZMass", lambda v: v["ZGenMass"], None),
     ("Gen", "GenMuOmegaVar", lambda v: v["genOptimalvarLep"], None, lambda v: abs(v["genLepPDG"]) == 13),
     ("Gen", "GenElOmegaVar",  lambda v: v["genOptimalvarLep"], None, lambda v: abs(v["genLepPDG"]) == 11),
+    ("Gen", "GenLepP_omega_max_0", lambda v: v["genLepP"], None, lambda v: v["gen_w"] < 0),
+    ("Gen", "GenLepTheta_omega_max_0", lambda v: v["genLepTheta"], None, lambda v: v["gen_w"] < 0),
+    ("Gen", "GenLepPhi_omega_max_0", lambda v: v["genLepPhi"], None, lambda v: v["gen_w"] < 0),
+    ("Gen", "GenTauP_omega_max_0", lambda v: v["genTauP"], None, lambda v: v["gen_w"] < 0),
+    ("Gen", "GenTauTheta_omega_max_0", lambda v: v["genTauTheta"], None, lambda v: v["gen_w"] < 0),
+    ("Gen", "GenTauPhi_omega_max_0", lambda v: v["genTauPhi"], None, lambda v: v["gen_w"] < 0),
+    ("Gen", "GenWeightP1LepvsGenWeightRhoP1", lambda v: v["weight_P1"], lambda v: v["weight_lep_P1"], lambda v: v["gen_w"] * v["weight_P1"]),
+    ("Gen", "GenWeightM1LepvsGenWeightRhoM1", lambda v: v["weight_M1"], lambda v: v["weight_lep_M1"], lambda v: v["gen_w"] * v["weight_M1"]),
     # ── Reco ──────────────────────────────────────────────────────────────────
     ("Reco",    "Omega",                lambda v: v["w"],                              None),
     ("Reco",    "OmegaCosTheta",        lambda v: v["w"],                              lambda v: v["cos_theta_rho"]),
@@ -85,6 +93,13 @@ def fill_category(hists, vars_dict, category: str, base_weight: float):
                 w_hist.Fill(x_val, y_fn(vars_dict), effective_weight)
 
 SCALAR_BRANCHES = [
+    ("weight_P1",     "weight_P1",     float),
+    ("weight_M1",     "weight_M1",     float),
+    ("weight_lep_P1", "weight_lep_P1", float),
+    ("weight_lep_M1", "weight_lep_M1", float),
+    ("genTauP",         "genTauP",       float),
+    ("genTauTheta",     "genTauTheta",   float),
+    ("genTauPhi",       "genTauPhi",     float),
     ("beamE",            "beamE",         float),
     ("recoMesonE",       "recoMesonE",    float),
     ("recoMesonTheta",   "recoMesonTheta",float),

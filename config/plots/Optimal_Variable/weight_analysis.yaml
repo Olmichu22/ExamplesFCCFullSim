@@ -1,0 +1,22 @@
+variabs_2d:
+- GenWeightP1LepvsGenWeightRhoP1_SIGNAL
+- GenWeightM1LepvsGenWeightRhoM1_SIGNAL
+
+plot_titles_config_2d:
+  GenWeightP1LepvsGenWeightRhoP1_SIGNAL:
+    x: "Gen Weight P1 (Rho)"
+    y: "Gen Weight P1 (Lep)"
+    title: \text{Gen weight P1 for Lep vs Rho for SIGNAL (SM Sample)}
+    # rebiny: 10
+  
+  GenWeightM1LepvsGenWeightRhoM1_SIGNAL:
+    x: "Gen Weight M1 (Rho)"
+    y: "Gen Weight M1 (Lep)"
+    title: \text{Gen weight M1 for Lep vs Rho for SIGNAL (SM Sample)}
+    # rebiny: 10
+# plot_titles_config_2d:
+#   hRecoGenTypeMatched:
+#     x: "Gen Tau Type"
+#     y: "Reco Tau Type"
+#     title: "2D Histogram of Reco and Gen Tau Type"
+  

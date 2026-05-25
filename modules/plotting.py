@@ -1306,7 +1306,11 @@ def plot_2D_hist(file, variabs, labels, outputpath):
                 histo.RebinY(cfg["rebiny"])
         c.Clear()
         histo.Draw("COLZ")
-        out_file = os.path.join(out_dir, f"{var}.png")
+        if cfg.get("name", None):
+          out_name = cfg["name"]
+        else:
+          out_name = var
+        out_file = os.path.join(out_dir, f"{out_name}.png")
         c.SaveAs(out_file)
         print(f"Saved 2D histogram '{var}' as '{out_file}'")
     c.Close()
@@ -1782,6 +1786,8 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
             
             # Normalización
             if isinstance(sum_histo, ROOT.TH1):
+                if rebin and isinstance(rebin, int) and rebin > 1:
+                    sum_histo.Rebin(rebin)
                 if norm_main == "max":
                     m = sum_histo.GetMaximum()
                     if m > 0:
@@ -1790,8 +1796,6 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                     integ = sum_histo.Integral()
                     if integ > 0:
                         sum_histo.Scale(1.0 / integ)
-                if rebin and isinstance(rebin, int) and rebin > 1:
-                    sum_histo.Rebin(rebin)
                 global_max = max(global_max, sum_histo.GetMaximum())
                 ymin = sum_histo.GetMinimum()
                 global_min = ymin if global_min is None else min(global_min, ymin)
@@ -1874,6 +1878,8 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
 
             # Normalización (series principales)
             if isinstance(o, ROOT.TH1):
+                if rebin and isinstance(rebin, int) and rebin > 1:
+                    o.Rebin(rebin)
                 if norm_main == "max":
                     m = o.GetMaximum()
                     if m > 0:
@@ -1882,8 +1888,6 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                     integ = o.Integral()
                     if integ > 0:
                         o.Scale(1.0 / integ)
-                if rebin and isinstance(rebin, int) and rebin > 1:
-                    o.Rebin(rebin)
                 global_max = max(global_max, o.GetMaximum())
                 ymin = o.GetMinimum()
                 global_min = ymin if global_min is None else min(global_min, ymin)
@@ -1951,6 +1955,9 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                               norm_c = "none"
 
                           if isinstance(oc, ROOT.TH1):
+                              # aplicar mismo rebin que a las series principales
+                              if rebin and isinstance(rebin, int) and rebin > 1:
+                                  oc.Rebin(rebin)
                               if norm_c == "max":
                                   m = oc.GetMaximum()
                                   if m > 0:
@@ -1959,10 +1966,6 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                                   integ = oc.Integral()
                                   if integ > 0:
                                       oc.Scale(1.0 / integ)
-
-                              # aplicar mismo rebin que a las series principales
-                              if rebin and isinstance(rebin, int) and rebin > 1:
-                                  oc.Rebin(rebin)
 
                               global_max = max(global_max, oc.GetMaximum())
                               ymin = oc.GetMinimum()

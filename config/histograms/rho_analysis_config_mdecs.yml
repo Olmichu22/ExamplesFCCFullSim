@@ -1,0 +1,565 @@
+# rho_analysis_config_mdecs.yml
+#
+# Configuración para RhoHistFromTree_MDecs_parallel.py.
+# Lee árboles tau1_*/tau2_* (genOnlyRHOTree_parallel.py).
+#
+# Cada hemisferio tiene sus propios histogramas (_dec0, _dec1).
+# Las categorías usan doble sufijo: {cat_este}_{cat_otro}.
+#
+# Combinaciones de categorías definidas (16):
+#   ALL_ALL         — todo evento que pasa cortes
+#   SIGNAL_SIGNAL   — ambos hemisferios correctos
+#   SIGNAL_BG       — este=signal, otro=cualquier fondo
+#   BG_SIGNAL       — este=fondo, otro=signal
+#   SIGNAL_BGMuon/Ele/Pion/Rho/A1/Other  — este=signal, otro=fondo específico
+#   BGMuon/Ele/Pion/Rho/A1/Other_SIGNAL  — este=fondo específico, otro=signal
+
+defaults:
+  categories:
+    ALL_ALL:        {weights: []}
+    SIGNAL_SIGNAL:  {weights: [P1, M1, corr_P1, corr_M1]}
+    SIGNAL_BG:      {weights: []}
+    BG_SIGNAL:      {weights: []}
+    SIGNAL_BGMuon:  {weights: []}
+    SIGNAL_BGEle:   {weights: []}
+    SIGNAL_BGPion:  {weights: []}
+    SIGNAL_BGRho:   {weights: []}
+    SIGNAL_BGA1:    {weights: []}
+    SIGNAL_BGOther: {weights: []}
+    BGMuon_SIGNAL:  {weights: []}
+    BGEle_SIGNAL:   {weights: []}
+    BGPion_SIGNAL:  {weights: []}
+    BGRho_SIGNAL:   {weights: []}
+    BGA1_SIGNAL:    {weights: []}
+    BGOther_SIGNAL: {weights: []}
+
+# Alias YAML para la lista completa de categorías (shorthand)
+_all_cats: &all_cats
+  - ALL_ALL
+  - SIGNAL_SIGNAL
+  - SIGNAL_BG
+  - BG_SIGNAL
+  - SIGNAL_BGMuon
+  - SIGNAL_BGEle
+  - SIGNAL_BGPion
+  - SIGNAL_BGRho
+  - SIGNAL_BGA1
+  - SIGNAL_BGOther
+  - BGMuon_SIGNAL
+  - BGEle_SIGNAL
+  - BGPion_SIGNAL
+  - BGRho_SIGNAL
+  - BGA1_SIGNAL
+  - BGOther_SIGNAL
+
+histograms:
+  # ──────────────────────────────────────────────────────────────────────────
+  # Gen — por hemisferio
+  # ──────────────────────────────────────────────────────────────────────────
+  Gen:
+
+    Omega_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    Omega_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosTheta_GEN_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosTheta_GEN_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosPsi_GEN_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosPsi_GEN_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosThetaTau_GEN_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosThetaTau_GEN_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosThetaMeson_GEN_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosThetaMeson_GEN_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosThetaMeson_Reco_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosThetaMeson_Reco_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    DecayType_dec0:
+      type: 1D
+      bins: 31
+      range: [-15, 15]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        BG_SIGNAL:     {weights: []}
+        SIGNAL_BG:     {weights: []}
+        ALL_ALL:       {weights: []}
+
+    DecayType_dec1:
+      type: 1D
+      bins: 31
+      range: [-15, 15]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        BG_SIGNAL:     {weights: []}
+        SIGNAL_BG:     {weights: []}
+        ALL_ALL:       {weights: []}
+
+    OptimalVar_dec0:
+      type: 1D
+      bins: 100
+      range: [0, 1.1]
+      categories: *all_cats
+
+    OptimalVar_dec1:
+      type: 1D
+      bins: 100
+      range: [0, 1.1]
+      categories: *all_cats
+
+    VisP_dec0:
+      type: 1D
+      bins: 100
+      range: [0, 50]
+      categories: *all_cats
+
+    VisP_dec1:
+      type: 1D
+      bins: 100
+      range: [0, 50]
+      categories: *all_cats
+
+    TauP_dec0:
+      type: 1D
+      bins: 100
+      range: [0, 50]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    TauP_dec1:
+      type: 1D
+      bins: 100
+      range: [0, 50]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    TauP_omega_neg_dec0:
+      type: 1D
+      bins: 100
+      range: [0, 50]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    TauP_omega_neg_dec1:
+      type: 1D
+      bins: 100
+      range: [0, 50]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    TauTheta_omega_neg_dec0:
+      type: 1D
+      bins: 100
+      range: [0, 3.15]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    TauTheta_omega_neg_dec1:
+      type: 1D
+      bins: 100
+      range: [0, 3.15]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    TauPhi_omega_neg_dec0:
+      type: 1D
+      bins: 100
+      range: [-3.15, 3.15]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    TauPhi_omega_neg_dec1:
+      type: 1D
+      bins: 100
+      range: [-3.15, 3.15]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    VisP_omega_neg_dec0:
+      type: 1D
+      bins: 100
+      range: [0, 50]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    VisP_omega_neg_dec1:
+      type: 1D
+      bins: 100
+      range: [0, 50]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    Omega_ZGenMass_dec0:
+      type: 2D
+      x_bins: 200
+      x_range: [-1, 1]
+      y_bins: 300
+      y_range: [91, 91.19]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+        ALL_ALL:       {weights: []}
+
+    Omega_ZGenMass_dec1:
+      type: 2D
+      x_bins: 200
+      x_range: [-1, 1]
+      y_bins: 300
+      y_range: [91, 91.19]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+        ALL_ALL:       {weights: []}
+
+    Omega_ZVisMass_dec0:
+      type: 2D
+      x_bins: 200
+      x_range: [-1, 1]
+      y_bins: 200
+      y_range: [0, 100]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    Omega_ZVisMass_dec1:
+      type: 2D
+      x_bins: 200
+      x_range: [-1, 1]
+      y_bins: 200
+      y_range: [0, 100]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    # Gen — compartidos (Z-boson variables y cross-hemisphere)
+    GenZMass:
+      type: 1D
+      bins: 300
+      range: [91, 91.19]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    GenVisZMass:
+      type: 1D
+      bins: 200
+      range: [0, 100]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    VisP_dec0_vs_dec1:
+      type: 2D
+      x_bins: 50
+      x_range: [0, 50]
+      y_bins: 50
+      y_range: [0, 50]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    Omega_dec0_vs_VisP_dec1:
+      type: 2D
+      x_bins: 200
+      x_range: [-1, 1]
+      y_bins: 100
+      y_range: [0, 50]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+
+    Omega_dec0_vs_Omega_dec1:
+      type: 2D
+      x_bins: 100
+      x_range: [-1, 1]
+      y_bins: 100
+      y_range: [-1, 1]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+        ALL_ALL:       {weights: []}
+
+    WeightP1_dec0_vs_dec1:
+      type: 2D
+      x_bins: 100
+      x_range: [0, 3]
+      y_bins: 100
+      y_range: [0, 3]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    WeightM1_dec0_vs_dec1:
+      type: 2D
+      x_bins: 100
+      x_range: [0, 2.1]
+      y_bins: 100
+      y_range: [0, 2.1]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    # ZVisMass bins (llenado inline en process_tree_range_mdecs)
+    Omega_ZVisMass_Bin1_dec0:
+      type: 1D
+      bins: 50
+      range: [-1, 1]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    Omega_ZVisMass_Bin1_dec1:
+      type: 1D
+      bins: 50
+      range: [-1, 1]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    Omega_ZVisMass_Bin2_dec0:
+      type: 1D
+      bins: 50
+      range: [-1, 1]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    Omega_ZVisMass_Bin2_dec1:
+      type: 1D
+      bins: 50
+      range: [-1, 1]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    Omega_ZVisMass_Bin3_dec0:
+      type: 1D
+      bins: 50
+      range: [-1, 1]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    Omega_ZVisMass_Bin3_dec1:
+      type: 1D
+      bins: 50
+      range: [-1, 1]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Reco — por hemisferio
+  # ──────────────────────────────────────────────────────────────────────────
+  Reco:
+
+    Omega_Reco_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    Omega_Reco_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosTheta_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosTheta_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosPsi_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    CosPsi_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories: *all_cats
+
+    RecoVisEOverBeamE_dec0:
+      type: 1D
+      bins: 50
+      range: [0, 1.1]
+      categories: *all_cats
+
+    RecoVisEOverBeamE_dec1:
+      type: 1D
+      bins: 50
+      range: [0, 1.1]
+      categories: *all_cats
+
+    RecoVisCosTheta_dec0:
+      type: 1D
+      bins: 201
+      range: [-1, 1]
+      categories: *all_cats
+
+    RecoVisCosTheta_dec1:
+      type: 1D
+      bins: 201
+      range: [-1, 1]
+      categories: *all_cats
+
+    RecoVisP_dec0:
+      type: 1D
+      bins: 100
+      range: [0, 50]
+      categories: *all_cats
+
+    RecoVisP_dec1:
+      type: 1D
+      bins: 100
+      range: [0, 50]
+      categories: *all_cats
+
+    RecoDecayType_dec0:
+      type: 1D
+      bins: 31
+      range: [-15, 15]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        BG_SIGNAL:     {weights: []}
+        SIGNAL_BG:     {weights: []}
+        ALL_ALL:       {weights: []}
+
+    RecoDecayType_dec1:
+      type: 1D
+      bins: 31
+      range: [-15, 15]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        BG_SIGNAL:     {weights: []}
+        SIGNAL_BG:     {weights: []}
+        ALL_ALL:       {weights: []}
+
+    Optimal_X_dec0:
+      type: 1D
+      bins: 50
+      range: [-1.5, 1.5]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+        ALL_ALL:       {weights: []}
+        BG_SIGNAL:     {weights: []}
+        SIGNAL_BG:     {weights: []}
+
+    Optimal_X_dec1:
+      type: 1D
+      bins: 50
+      range: [-1.5, 1.5]
+      categories:
+        SIGNAL_SIGNAL: {weights: [P1, M1, corr_P1, corr_M1]}
+        ALL_ALL:       {weights: []}
+        BG_SIGNAL:     {weights: []}
+        SIGNAL_BG:     {weights: []}
+
+    DeltaR_dec0_dec1:
+      type: 1D
+      bins: 100
+      range: [0, 5]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+    # Reco — compartidos
+    RecoZMass:
+      type: 1D
+      bins: 200
+      range: [0, 100]
+      categories:
+        SIGNAL_SIGNAL: {weights: []}
+        ALL_ALL:       {weights: []}
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Matched — por hemisferio
+  # ──────────────────────────────────────────────────────────────────────────
+  Matched:
+
+    VisEOverBeamE_dec0:
+      type: 1D
+      bins: 50
+      range: [0, 1.1]
+      categories: *all_cats
+
+    VisEOverBeamE_dec1:
+      type: 1D
+      bins: 50
+      range: [0, 1.1]
+      categories: *all_cats
+
+    VisCosTheta_dec0:
+      type: 1D
+      bins: 201
+      range: [-1, 1]
+      categories: *all_cats
+
+    VisCosTheta_dec1:
+      type: 1D
+      bins: 201
+      range: [-1, 1]
+      categories: *all_cats

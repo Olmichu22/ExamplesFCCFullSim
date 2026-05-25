@@ -247,6 +247,7 @@ def process_chunk(filenames_chunk, mlpf_chunk, global_event_offset,
     GenConstEta      = ROOT.std.vector("float")()
     GenConstPDG      = ROOT.std.vector("int")()
     GenConstPi0Key   = ROOT.std.vector("int")()
+    GenConstPhi      = ROOT.std.vector("float")()
 
     # Reco tau
     RecoTauPt        = ROOT.std.vector("float")()
@@ -267,7 +268,7 @@ def process_chunk(filenames_chunk, mlpf_chunk, global_event_offset,
     RecoConstTheta   = ROOT.std.vector("float")()
     RecoConstEta     = ROOT.std.vector("float")()
     RecoConstPDG     = ROOT.std.vector("int")()
-
+    RecoConstPhi     = ROOT.std.vector("float")()
     # Gen photons (event-level)
     GenPhotonP       = ROOT.std.vector("float")()
     GenPhotonPt      = ROOT.std.vector("float")()
@@ -318,6 +319,7 @@ def process_chunk(filenames_chunk, mlpf_chunk, global_event_offset,
     tree.Branch("GenConstEta",     GenConstEta)
     tree.Branch("GenConstPDG",     GenConstPDG)
     tree.Branch("GenConstPi0Key",  GenConstPi0Key)
+    tree.Branch("GenConstPhi",     GenConstPhi)
     # Reco tau
     tree.Branch("RecoTauPt",        RecoTauPt)
     tree.Branch("RecoTauP",         RecoTauP)
@@ -337,6 +339,7 @@ def process_chunk(filenames_chunk, mlpf_chunk, global_event_offset,
     tree.Branch("RecoConstTheta",   RecoConstTheta)
     tree.Branch("RecoConstEta",     RecoConstEta)
     tree.Branch("RecoConstPDG",     RecoConstPDG)
+    tree.Branch("RecoConstPhi",     RecoConstPhi)
     # Gen photons
     tree.Branch("GenPhotonP",      GenPhotonP)
     tree.Branch("GenPhotonPt",     GenPhotonPt)
@@ -360,11 +363,11 @@ def process_chunk(filenames_chunk, mlpf_chunk, global_event_offset,
         GenTauQ, GenTauEta, GenTauTheta, GenTauPhi, GenTauMass,
         GenVisTauEta, GenVisTauTheta, GenVisTauPhi,
         GenTauDR, GenTauNConsts, GenTauNConstKey,
-        GenTauConstKey, GenMatchedKey, GenConstP, GenConstTheta, GenConstEta, GenConstPDG,
+        GenTauConstKey, GenMatchedKey, GenConstP, GenConstTheta, GenConstEta, GenConstPDG, GenConstPhi,
         GenConstPi0Key,
         RecoTauPt, RecoTauP, RecoTauMass, RecoTauType, RecoTauDM, RecoTauQ, RecoTauEta,
         RecoTauTheta, RecoTauPhi, RecoTauDR, RecoTauNConsts, RecoTauNConstKey, RecoTauConstKey,
-        RecoMatchedKey, RecoConstP, RecoConstTheta, RecoConstEta, RecoConstPDG,
+        RecoMatchedKey, RecoConstP, RecoConstTheta, RecoConstEta, RecoConstPDG, RecoConstPhi,
         GenPhotonP, GenPhotonPt, GenPhotonEta, GenPhotonTheta, GenPhotonPhi,
         GenPhotonMCIdx, GenPhotonTauKey,
         RecoPhotonP, RecoPhotonPt, RecoPhotonEta, RecoPhotonTheta, RecoPhotonPhi,
@@ -497,6 +500,7 @@ def process_chunk(filenames_chunk, mlpf_chunk, global_event_offset,
                     GenConstP.push_back(constP4.P())
                     GenConstTheta.push_back(constP4.Theta())
                     GenConstEta.push_back(constP4.Eta())
+                    GenConstPhi.push_back(constP4.Phi())
                     GenConstPi0Key.push_back(pi0_idx)
 
             # ── Fill reco tau branches ─────────────────────────────────────
@@ -543,7 +547,7 @@ def process_chunk(filenames_chunk, mlpf_chunk, global_event_offset,
                     RecoConstP.push_back(constP4.P())
                     RecoConstTheta.push_back(constP4.Theta())
                     RecoConstEta.push_back(constP4.Eta())
-
+                    RecoConstPhi.push_back(constP4.Phi())
             # ── Gen–reco tau matching ──────────────────────────────────────
             nTausType = 0
             for i in range(nGenTaus):
