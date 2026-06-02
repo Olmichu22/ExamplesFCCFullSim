@@ -41,7 +41,7 @@ import yaml
 import ROOT
 from ROOT import TFile
 
-from modules import myutils
+from modules import myutils, weightsPol, optimalVariabRho
 from RhoAnalysis.temp_functions import extract_scalars_optional, make_p4
 
 # ── Constantes ────────────────────────────────────────────────────────────────
@@ -78,13 +78,21 @@ _BG_MAP = {-13: "BGMuon", -11: "BGEle", 0: "BGPion", 1: "BGRho", 10: "BGA1"}
 # other_vars: vars del otro hemisferio
 
 WEIGHT_VALUES_MDECS = {
-    "nominal":  lambda dv, ov, w: w,
-    "P1":       lambda dv, ov, w: w * dv.get("weight_P1", 1.0),
-    "M1":       lambda dv, ov, w: w * dv.get("weight_M1", 1.0),
-    "corr_P1":  lambda dv, ov, w: w * dv.get("weight_P1", 1.0) * ov.get("weight_P1", 1.0),
-    "corr_M1":  lambda dv, ov, w: w * dv.get("weight_M1", 1.0) * ov.get("weight_M1", 1.0),
-    "other_P1": lambda dv, ov, w: w * ov.get("weight_P1", 1.0),
-    "other_M1": lambda dv, ov, w: w * ov.get("weight_M1", 1.0),
+    "nominal":      lambda dv, ov, w: w,
+    # Gen-level per-tau weights (exact tau kinematics)
+    "P1":           lambda dv, ov, w: w * dv.get("weight_P1",           1.0),
+    "M1":           lambda dv, ov, w: w * dv.get("weight_M1",           1.0),
+    # Gen-level joint two-tau weights — Alcaraz (2026) eqs. (9)/(13), includes cross-term
+    "corr_P1":      lambda dv, ov, w: w * dv.get("weight_corr_P1",      1.0),
+    "corr_M1":      lambda dv, ov, w: w * dv.get("weight_corr_M1",      1.0),
+    "other_P1":     lambda dv, ov, w: w * ov.get("weight_P1",           1.0),
+    "other_M1":     lambda dv, ov, w: w * ov.get("weight_M1",           1.0),
+    # Reco-level per-tau weights (visible-system proxy for tau direction)
+    "reco_P1":      lambda dv, ov, w: w * dv.get("reco_weight_P1",      1.0),
+    "reco_M1":      lambda dv, ov, w: w * dv.get("reco_weight_M1",      1.0),
+    # Reco-level joint two-tau weights
+    "reco_corr_P1": lambda dv, ov, w: w * dv.get("reco_weight_corr_P1", 1.0),
+    "reco_corr_M1": lambda dv, ov, w: w * dv.get("reco_weight_corr_M1", 1.0),
 }
 
 # ── Reglas de llenado por hemisferio ──────────────────────────────────────────
@@ -196,6 +204,206 @@ def _flatten_histograms(nested, result=None):
     return result
 
 
+def _assign_single_decay(tau1_vars, tau2_vars, id_gen):
+    """Asigna un único tau a 'este' y el otro a 'otro' según id_gen.
+
+    Si tau1 coincide: devuelve (tau1, tau2).
+    Si solo tau2 coincide: devuelve (tau2, tau1).
+    Si ambos coinciden: devuelve (tau1, tau2) — una sola vez, por convención.
+    Si ninguno coincide: devuelve (None, None).
+    """
+    t1 = int(tau1_vars.get("decayID", -999))
+    t2 = int(tau2_vars.get("decayID", -999))
+    if t1 == id_gen:
+        return tau1_vars, tau2_vars
+    if t2 == id_gen:
+        return tau2_vars, tau1_vars
+    return None, None
+
+
+def _recompute_weights(tau_vars, beamE, sin_eff, use_omega=False):
+    """
+    Recalcula weight_P1/weight_M1 con un sin²θ_eff dado.
+    Usa cinemática gen exacta (P, Theta, Phi, E del tau gen).
+    Para rho con use_omega=True usa newAtauRhoOmega con la variable óptima gen almacenada;
+    en caso contrario usa newAtau con H_V (Alcaraz 2026 eq. 5).
+    """
+    decay_id = int(tau_vars.get("decayID", -999))
+    if decay_id in (0, 1, 10):  # hadrónico (pion, rho, a1)
+        tauP4 = make_p4(tau_vars["P"],    tau_vars["Theta"],    tau_vars["Phi"],    tau_vars["E"])
+        visP4 = make_p4(tau_vars["visP"], tau_vars["visTheta"], tau_vars["visPhi"], tau_vars["visE"])
+        if use_omega and decay_id == 1:
+            omega = tau_vars.get("omega", -999.0)
+            w_P1  = weightsPol.newAtauRhoOmega(tauP4, omega, +1, sin_eff=sin_eff)
+            w_M1  = weightsPol.newAtauRhoOmega(tauP4, omega, -1, sin_eff=sin_eff)
+        else:
+            w_P1  = weightsPol.newAtau(tauP4, visP4, decay_id, +1, sin_eff=sin_eff)
+            w_M1  = weightsPol.newAtau(tauP4, visP4, decay_id, -1, sin_eff=sin_eff)
+    elif decay_id in (-11, -13):  # leptónico
+        tauP4 = make_p4(tau_vars["P"],    tau_vars["Theta"],    tau_vars["Phi"],    tau_vars["E"])
+        visP4 = make_p4(tau_vars["visP"], tau_vars["visTheta"], tau_vars["visPhi"], tau_vars["visE"])
+        w_P1  = weightsPol.newAtauLep(visP4, tauP4, beamE, +1, sin_eff=sin_eff)
+        w_M1  = weightsPol.newAtauLep(visP4, tauP4, beamE, -1, sin_eff=sin_eff)
+    else:
+        w_P1 = w_M1 = 1.0
+    tau_vars["weight_P1"] = w_P1
+    tau_vars["weight_M1"] = w_M1
+
+
+def _recompute_reco_weights(tau_vars, beamE, sin_eff, use_omega=False):
+    """
+    Calcula reco_weight_P1/reco_weight_M1 con cinemática reco.
+
+    El tau no es observable directamente (falta el neutrino). Se usa la
+    aproximación collinear: tau proxy con E=beamE y dirección del visible reco.
+    Así x = E_vis_reco / E_beam (fracción de energía correcta para las fórmulas).
+
+    Para leptónico se usa el leptón reco como visible y el proxy como tau.
+    Con use_omega=True y rho reco: usa wVariabRECO para obtener ω y lo pasa a
+    newAtauRhoOmega en lugar de H_V = alpha_V * z_R.
+    """
+    reco_id = int(tau_vars.get("recoTauID", -999))
+    if beamE <= 0:
+        tau_vars["reco_weight_P1"] = 1.0
+        tau_vars["reco_weight_M1"] = 1.0
+        return
+
+    # Tau proxy: misma dirección que el visible reco, E = beamE (collinear approx)
+    tau_E = beamE
+    tau_P = math.sqrt(max(0.0, tau_E**2 - weightsPol._M_TAU**2))
+    tau_proxy_P4 = make_p4(tau_P, tau_vars["recoVisTheta"],
+                            tau_vars["recoVisPhi"], tau_E)
+
+    if reco_id in (0, 1, 10):  # hadrónico reco
+        vis_P4 = make_p4(tau_vars["recoVisP"], tau_vars["recoVisTheta"],
+                          tau_vars["recoVisPhi"], tau_vars["recoVisE"])
+        if use_omega and reco_id == 1:
+            pion_P4 = make_p4(tau_vars["recoPionP"], tau_vars["recoPionTheta"],
+                               tau_vars["recoPionPhi"], tau_vars["recoPionE"])
+            _, _, _, omega_reco = optimalVariabRho.wVariabRECO(vis_P4, pion_P4, beamE)
+            w_P1 = weightsPol.newAtauRhoOmega(tau_proxy_P4, omega_reco, +1, sin_eff=sin_eff)
+            w_M1 = weightsPol.newAtauRhoOmega(tau_proxy_P4, omega_reco, -1, sin_eff=sin_eff)
+        else:
+            w_P1 = weightsPol.newAtau(tau_proxy_P4, vis_P4, reco_id, +1, sin_eff=sin_eff)
+            w_M1 = weightsPol.newAtau(tau_proxy_P4, vis_P4, reco_id, -1, sin_eff=sin_eff)
+    elif reco_id in (-11, -13):  # leptónico reco
+        lep_P4 = make_p4(tau_vars["recoLepP"], tau_vars["recoLepTheta"],
+                          tau_vars["recoLepPhi"], tau_vars["recoLepE"])
+        w_P1 = weightsPol.newAtauLep(lep_P4, tau_proxy_P4, beamE, +1, sin_eff=sin_eff)
+        w_M1 = weightsPol.newAtauLep(lep_P4, tau_proxy_P4, beamE, -1, sin_eff=sin_eff)
+    else:
+        w_P1 = w_M1 = 1.0
+    tau_vars["reco_weight_P1"] = w_P1
+    tau_vars["reco_weight_M1"] = w_M1
+
+
+def _get_H_for_joint(tau_vars, beamE, use_omega):
+    """
+    Devuelve el observable de spin H a usar en la fórmula joint.
+    - Rho con use_omega=True: usa omega almacenado en el árbol (variable óptima completa).
+    - Rho con use_omega=False, pion, a1: usa H_V = alpha_V*z_R de _compute_H.
+    - Leptónico: usa H_ell (no depende de use_omega).
+    """
+    decay_id = int(tau_vars.get("decayID", -999))
+    if use_omega and decay_id == 1:
+        return tau_vars.get("omega", 0.0)
+    if decay_id in (0, 1, 10):
+        tauP4 = make_p4(tau_vars["P"],    tau_vars["Theta"], tau_vars["Phi"],    tau_vars["E"])
+        visP4 = make_p4(tau_vars["visP"], tau_vars["visTheta"], tau_vars["visPhi"], tau_vars["visE"])
+        H = weightsPol._compute_H(visP4, tauP4, decay_id)
+        return H if H is not None else 0.0
+    if decay_id in (-11, -13):
+        visP4 = make_p4(tau_vars["visP"], tau_vars["visTheta"], tau_vars["visPhi"], tau_vars["visE"])
+        return weightsPol._compute_H_lep(visP4, beamE)
+    return 0.0
+
+
+def _compute_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff, use_omega=False):
+    """
+    Peso conjunto dos-tau (Alcaraz 2026 eqs. 9 y 13) con cinemática gen.
+    Incluye el término cruzado H·H' ausente en el producto independiente.
+    Almacena weight_corr_P1/M1 (idéntico en ambos hemisferios).
+
+    Con use_omega=True: usa omega almacenado en el árbol para taus rho,
+    H_V/H_ell para los demás. La fórmula siempre es:
+      W = [1 + P_new*(H + H') + H*H'] / [1 + P_sm*(H + H') + H*H']
+    """
+    id0 = int(vars_dec0.get("decayID", -999))
+    id1 = int(vars_dec1.get("decayID", -999))
+    is_had = lambda d: d in (0, 1, 10)
+    is_lep = lambda d: d in (-11, -13)
+
+    def p4(v):
+        return make_p4(v["P"], v["Theta"], v["Phi"], v["E"])
+
+    for New_Atau, suffix in [(+1.0, "P1"), (-1.0, "M1")]:
+        if is_had(id0) and (is_had(id1) or is_lep(id1)):
+            H  = _get_H_for_joint(vars_dec0, beamE, use_omega)
+            Hp = _get_H_for_joint(vars_dec1, beamE, use_omega)
+            w  = weightsPol.newAtauJoint(p4(vars_dec0), H, Hp, New_Atau, sin_eff=sin_eff)
+        elif is_lep(id0) and is_had(id1):
+            H  = _get_H_for_joint(vars_dec0, beamE, use_omega)
+            Hp = _get_H_for_joint(vars_dec1, beamE, use_omega)
+            w  = weightsPol.newAtauJoint(p4(vars_dec1), Hp, H, New_Atau, sin_eff=sin_eff)
+        else:
+            w = (vars_dec0.get(f"weight_{suffix}", 1.0) *
+                 vars_dec1.get(f"weight_{suffix}", 1.0))
+        vars_dec0[f"weight_corr_{suffix}"] = w
+        vars_dec1[f"weight_corr_{suffix}"] = w
+
+
+def _compute_reco_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff):
+    """
+    Peso conjunto dos-tau con cinemática reco (proxy collinear).
+    Misma lógica que _compute_joint_weights pero usando el tau proxy
+    (E=beamE, dirección=recoVisTheta/Phi) para cada hemisferio.
+    Almacena reco_weight_corr_P1/M1.
+    """
+    reco_id0 = int(vars_dec0.get("recoTauID", -999))
+    reco_id1 = int(vars_dec1.get("recoTauID", -999))
+    is_had = lambda d: d in (0, 1, 10)
+    is_lep = lambda d: d in (-11, -13)
+
+    if beamE <= 0:
+        for suffix in ("P1", "M1"):
+            vars_dec0[f"reco_weight_corr_{suffix}"] = 1.0
+            vars_dec1[f"reco_weight_corr_{suffix}"] = 1.0
+        return
+
+    def reco_tau_proxy(v):
+        tau_E = beamE
+        tau_P = math.sqrt(max(0.0, tau_E**2 - weightsPol._M_TAU**2))
+        return make_p4(tau_P, v["recoVisTheta"], v["recoVisPhi"], tau_E)
+
+    def reco_vis(v):
+        return make_p4(v["recoVisP"], v["recoVisTheta"], v["recoVisPhi"], v["recoVisE"])
+
+    def reco_lep(v):
+        return make_p4(v["recoLepP"], v["recoLepTheta"], v["recoLepPhi"], v["recoLepE"])
+
+    for New_Atau, suffix in [(+1.0, "P1"), (-1.0, "M1")]:
+        if is_had(reco_id0) and is_had(reco_id1):
+            w = weightsPol.newAtauJoint_had_had(
+                reco_tau_proxy(vars_dec0), reco_vis(vars_dec0),
+                reco_tau_proxy(vars_dec1), reco_vis(vars_dec1),
+                reco_id0, reco_id1, New_Atau, sin_eff=sin_eff)
+        elif is_had(reco_id0) and is_lep(reco_id1):
+            w = weightsPol.newAtauJoint_had_lep(
+                reco_tau_proxy(vars_dec0), reco_vis(vars_dec0),
+                reco_tau_proxy(vars_dec1), reco_lep(vars_dec1),
+                reco_id0, New_Atau, beamE, sin_eff=sin_eff)
+        elif is_lep(reco_id0) and is_had(reco_id1):
+            w = weightsPol.newAtauJoint_had_lep(
+                reco_tau_proxy(vars_dec1), reco_vis(vars_dec1),
+                reco_tau_proxy(vars_dec0), reco_lep(vars_dec0),
+                reco_id1, New_Atau, beamE, sin_eff=sin_eff)
+        else:
+            w = (vars_dec0.get(f"reco_weight_{suffix}", 1.0) *
+                 vars_dec1.get(f"reco_weight_{suffix}", 1.0))
+        vars_dec0[f"reco_weight_corr_{suffix}"] = w
+        vars_dec1[f"reco_weight_corr_{suffix}"] = w
+
+
 def _assign_hemispheres(tau1_vars, tau2_vars, id0_gen, id1_gen):
     """Asigna tau1/tau2 a dec0/dec1 por decayID (order-independent).
 
@@ -213,17 +421,36 @@ def _assign_hemispheres(tau1_vars, tau2_vars, id0_gen, id1_gen):
     return None, None
 
 
-def _classify_hemisphere(dec_vars, expected_gen_id, use_reco=False):
+def _classify_hemisphere(dec_vars, expected_gen_id, use_reco=False,
+                          expected_reco_id=None, only_gen=False):
     """Devuelve la categoría de un hemisferio.
 
     Returns: una de 'SIGNAL', 'BGMuon', 'BGEle', 'BGPion', 'BGRho', 'BGA1', 'BGOther'
+    Si expected_gen_id es None, siempre devuelve la categoría BG real (modo single-decay).
+
+    only_gen=True  → el árbol es gen-only (recoTauID contiene IDs gen); se remap 2→1
+                     tanto en la rama gen como reco.
+    only_gen=False → árbol reco real; para gen se remap 2→1 (no-op, decayID ya es gen);
+                     para reco NO se remap y se compara contra expected_reco_id.
     """
-    actual = int(dec_vars.get("recoTauID", -999) if use_reco else dec_vars.get("decayID", -999))
-    if actual == 2:
-        actual = 1  # remap reco ρ → gen ρ
-    if actual == expected_gen_id:
-        return "SIGNAL"
-    return _BG_MAP.get(actual, "BGOther")
+    if use_reco and not only_gen:
+        # Reco real: usar el ID reco tal cual, sin remap.
+        actual = int(dec_vars.get("recoTauID", -999))
+        expected = expected_reco_id if expected_reco_id is not None else expected_gen_id
+        if expected is not None and actual == expected:
+            return "SIGNAL"
+        # Para el nombre BG sí se remap al espacio gen (solo para la etiqueta).
+        if actual == 2:
+            actual = 1
+        return _BG_MAP.get(actual, "BGOther")
+    else:
+        # Gen path, o reco de árbol gen-only (only_gen=True): remap 2→1.
+        actual = int(dec_vars.get("recoTauID" if use_reco else "decayID", -999))
+        if actual == 2:
+            actual = 1
+        if expected_gen_id is not None and actual == expected_gen_id:
+            return "SIGNAL"
+        return _BG_MAP.get(actual, "BGOther")
 
 
 def _get_fill_categories(this_cat, other_cat):
@@ -377,13 +604,17 @@ def _fill_zvismassbins(hists, vars_dec0, vars_dec1, shared_vars,
 def process_tree_range_mdecs(trees, root_histograms_super,
                               weight, decay_pair,
                               cuts_cfg, logger_process, other_BG_id,
-                              start_entry, end_entry):
+                              start_entry, end_entry,
+                              single_decay_id=None, only_gen=False,
+                              sin_eff=None, compute_weights=False,
+                              use_omega=False):
     """Procesa entradas [start_entry, end_entry) de los árboles MDecs.
 
     Devuelve dict de contadores: totalEvents, selectedEvents, sumWeights, ...
     """
     id0_gen = 1 if decay_pair[0] == 2 else decay_pair[0]
     id1_gen = 1 if decay_pair[1] == 2 else decay_pair[1]
+    single_decay_id_gen = (1 if single_decay_id == 2 else single_decay_id) if single_decay_id is not None else None
 
     tauPCut    = cuts_cfg.get("tauPCut",   0.0)
     meson_cut  = cuts_cfg.get("meson_cut",  [0.0, np.inf])
@@ -416,79 +647,182 @@ def process_tree_range_mdecs(trees, root_histograms_super,
             tau1_vars = {k: float(getattr(entry, f"tau1_{k}", 0.0)) for k in _TAU_KEYS_MDECS}
             tau2_vars = {k: float(getattr(entry, f"tau2_{k}", 0.0)) for k in _TAU_KEYS_MDECS}
 
-            # Asignar hemisferios según decayID
-            vars_dec0, vars_dec1 = _assign_hemispheres(tau1_vars, tau2_vars, id0_gen, id1_gen)
-            if vars_dec0 is None:
-                continue
+            if compute_weights and sin_eff is not None:
+                _recompute_weights(tau1_vars, beamE, sin_eff, use_omega=use_omega)
+                _recompute_weights(tau2_vars, beamE, sin_eff, use_omega=use_omega)
 
-            # Cálculos derivados
-            for vd in (vars_dec0, vars_dec1):
-                vd["_optimal_x"] = (2.0 * vd["recoVisE"] / beamE - 1.0) if beamE else 0.0
+            # Reco-level weights: always computed (visible-system proxy for tau direction)
+            _sin = sin_eff if sin_eff is not None else 0.2312
+            _recompute_reco_weights(tau1_vars, beamE, _sin, use_omega=use_omega)
+            _recompute_reco_weights(tau2_vars, beamE, _sin, use_omega=use_omega)
 
-            # Cortes (dec0 = "mesón", dec1 = "leptón" por convención; siempre aplicables)
-            if vars_dec0["recoVisP"] < tauPCut:
-                continue
-            zmass = shared_vars["ZRecoMass"]
-            if not (zmass_cut[0] <= zmass <= zmass_cut[1]):
-                continue
-            if not (meson_cut[0] <= vars_dec0["recoVisP"] <= meson_cut[1]):
-                continue
-            if not (lepton_cut[0] <= vars_dec1["recoVisP"] <= lepton_cut[1]):
-                continue
-
-            p4_dec0 = make_p4(vars_dec0["recoVisP"], vars_dec0["recoVisTheta"],
-                               vars_dec0["recoVisPhi"], vars_dec0["recoVisE"])
-            p4_dec1 = make_p4(vars_dec1["recoVisP"], vars_dec1["recoVisTheta"],
-                               vars_dec1["recoVisPhi"], vars_dec1["recoVisE"])
-            dR = myutils.dRAngle(p4_dec0, p4_dec1)
-            if not (angle_sep[0] <= dR <= angle_sep[1]):
-                continue
-
-            if extra_cuts:
-                skip = False
-                flat = {**vars_dec0, **{f"d1_{k}": v for k, v in vars_dec1.items()},
-                        **shared_vars}
-                for expr in extra_cuts:
-                    try:
-                        if not eval(expr, {"__builtins__": {}}, flat):
-                            skip = True
-                            break
-                    except Exception:
-                        skip = True
-                        break
-                if skip:
+            if single_decay_id_gen is not None:
+                # ── Modo single-decay ──────────────────────────────────────────
+                vars_this, vars_other = _assign_single_decay(
+                    tau1_vars, tau2_vars, single_decay_id_gen)
+                if vars_this is None:
                     continue
 
-            # Clasificación gen y reco por hemisferio
-            cat_dec0_gen  = _classify_hemisphere(vars_dec0, id0_gen, use_reco=False)
-            cat_dec1_gen  = _classify_hemisphere(vars_dec1, id1_gen, use_reco=False)
-            cat_dec0_reco = _classify_hemisphere(vars_dec0, id0_gen, use_reco=True)
-            cat_dec1_reco = _classify_hemisphere(vars_dec1, id1_gen, use_reco=True)
+                # Corr weights: fallback to product of per-tau weights (other tau unknown)
+                for v0, v1 in [(vars_this, vars_other), (vars_other, vars_this)]:
+                    for sfx in ("P1", "M1"):
+                        v0[f"weight_corr_{sfx}"]      = v0.get(f"weight_{sfx}", 1.0) * v1.get(f"weight_{sfx}", 1.0)
+                        v0[f"reco_weight_corr_{sfx}"] = v0.get(f"reco_weight_{sfx}", 1.0) * v1.get(f"reco_weight_{sfx}", 1.0)
 
-            if tree_key == "original":
-                selectedEvents += 1
-                if cat_dec0_gen == "SIGNAL" and cat_dec1_gen == "SIGNAL":
-                    sumWeights   += weight
-                    sumWeightsP1 += weight * vars_dec0.get("weight_P1", 1.0)
-                    sumWeightsM1 += weight * vars_dec0.get("weight_M1", 1.0)
+                for vd in (vars_this, vars_other):
+                    vd["_optimal_x"] = (2.0 * vd["recoVisE"] / beamE - 1.0) if beamE else 0.0
+
+                if vars_this["recoVisP"] < tauPCut:
+                    continue
+                zmass = shared_vars["ZRecoMass"]
+                if not (zmass_cut[0] <= zmass <= zmass_cut[1]):
+                    continue
+                if not (meson_cut[0] <= vars_this["recoVisP"] <= meson_cut[1]):
+                    continue
+                if not (lepton_cut[0] <= vars_other["recoVisP"] <= lepton_cut[1]):
+                    continue
+
+                p4_this = make_p4(vars_this["recoVisP"], vars_this["recoVisTheta"],
+                                  vars_this["recoVisPhi"], vars_this["recoVisE"])
+                p4_other = make_p4(vars_other["recoVisP"], vars_other["recoVisTheta"],
+                                   vars_other["recoVisPhi"], vars_other["recoVisE"])
+                dR = myutils.dRAngle(p4_this, p4_other)
+                if not (angle_sep[0] <= dR <= angle_sep[1]):
+                    continue
+
+                if extra_cuts:
+                    skip = False
+                    flat = {**vars_this, **{f"d1_{k}": v for k, v in vars_other.items()},
+                            **shared_vars}
+                    for expr in extra_cuts:
+                        try:
+                            if not eval(expr, {"__builtins__": {}}, flat):
+                                skip = True
+                                break
+                        except Exception:
+                            skip = True
+                            break
+                    if skip:
+                        continue
+
+                cat_this_gen   = _classify_hemisphere(vars_this,  single_decay_id_gen, use_reco=False,
+                                                     only_gen=only_gen)
+                cat_other_gen  = _classify_hemisphere(vars_other, None,                use_reco=False,
+                                                     only_gen=only_gen)
+                cat_this_reco  = _classify_hemisphere(vars_this,  single_decay_id_gen, use_reco=True,
+                                                     expected_reco_id=single_decay_id,
+                                                     only_gen=only_gen)
+                cat_other_reco = _classify_hemisphere(vars_other, None,                use_reco=True,
+                                                     only_gen=only_gen)
+
+                if tree_key == "original":
+                    selectedEvents += 1
+                    if cat_this_gen == "SIGNAL":
+                        sumWeights   += weight
+                        sumWeightsP1 += weight * vars_this.get("weight_P1", 1.0)
+                        sumWeightsM1 += weight * vars_this.get("weight_M1", 1.0)
+                    else:
+                        other_BG_id[f"{cat_this_gen}_{cat_other_gen}"] = (
+                            other_BG_id.get(f"{cat_this_gen}_{cat_other_gen}", 0) + 1)
+
+                # Solo dec_idx=0; _dec1 queda vacío en este modo
+                _fill_hemisphere(root_hists, vars_this, vars_other, shared_vars, 0,
+                                 cat_this_gen, cat_other_gen,
+                                 cat_this_reco, cat_other_reco, weight)
+
+                _fill_shared(root_hists, vars_this, vars_other, shared_vars,
+                             cat_this_gen, cat_other_gen,
+                             cat_this_reco, cat_other_reco,
+                             weight, dR=dR)
+
+                _fill_zvismassbins(root_hists, vars_this, vars_other, shared_vars,
+                                   cat_this_gen, cat_other_gen, weight)
+
+            else:
+                # ── Modo pair (comportamiento original) ───────────────────────
+                vars_dec0, vars_dec1 = _assign_hemispheres(tau1_vars, tau2_vars, id0_gen, id1_gen)
+                if vars_dec0 is None:
+                    continue
+
+                # Joint two-tau weights (Alcaraz 2026 eqs. 9/13)
+                if compute_weights and sin_eff is not None:
+                    _compute_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff,
+                                           use_omega=use_omega)
                 else:
-                    other_BG_id[f"{cat_dec0_gen}_{cat_dec1_gen}"] = (
-                        other_BG_id.get(f"{cat_dec0_gen}_{cat_dec1_gen}", 0) + 1)
+                    # Fallback: product of stored per-tau weights
+                    for v0, v1 in [(vars_dec0, vars_dec1), (vars_dec1, vars_dec0)]:
+                        for sfx in ("P1", "M1"):
+                            v0[f"weight_corr_{sfx}"] = v0.get(f"weight_{sfx}", 1.0) * v1.get(f"weight_{sfx}", 1.0)
+                _compute_reco_joint_weights(vars_dec0, vars_dec1, beamE, _sin)
 
-            # Rellenar histogramas por hemisferio
-            _fill_hemisphere(root_hists, vars_dec0, vars_dec1, shared_vars, 0,
-                             cat_dec0_gen, cat_dec1_gen, cat_dec0_reco, cat_dec1_reco, weight)
-            _fill_hemisphere(root_hists, vars_dec1, vars_dec0, shared_vars, 1,
-                             cat_dec1_gen, cat_dec0_gen, cat_dec1_reco, cat_dec0_reco, weight)
+                for vd in (vars_dec0, vars_dec1):
+                    vd["_optimal_x"] = (2.0 * vd["recoVisE"] / beamE - 1.0) if beamE else 0.0
 
-            # Rellenar histogramas compartidos
-            _fill_shared(root_hists, vars_dec0, vars_dec1, shared_vars,
-                         cat_dec0_gen, cat_dec1_gen, cat_dec0_reco, cat_dec1_reco,
-                         weight, dR=dR)
+                if vars_dec0["recoVisP"] < tauPCut:
+                    continue
+                zmass = shared_vars["ZRecoMass"]
+                if not (zmass_cut[0] <= zmass <= zmass_cut[1]):
+                    continue
+                if not (meson_cut[0] <= vars_dec0["recoVisP"] <= meson_cut[1]):
+                    continue
+                if not (lepton_cut[0] <= vars_dec1["recoVisP"] <= lepton_cut[1]):
+                    continue
 
-            # ZVisMass bins (lógica condicional inline)
-            _fill_zvismassbins(root_hists, vars_dec0, vars_dec1, shared_vars,
-                               cat_dec0_gen, cat_dec1_gen, weight)
+                p4_dec0 = make_p4(vars_dec0["recoVisP"], vars_dec0["recoVisTheta"],
+                                   vars_dec0["recoVisPhi"], vars_dec0["recoVisE"])
+                p4_dec1 = make_p4(vars_dec1["recoVisP"], vars_dec1["recoVisTheta"],
+                                   vars_dec1["recoVisPhi"], vars_dec1["recoVisE"])
+                dR = myutils.dRAngle(p4_dec0, p4_dec1)
+                if not (angle_sep[0] <= dR <= angle_sep[1]):
+                    continue
+
+                if extra_cuts:
+                    skip = False
+                    flat = {**vars_dec0, **{f"d1_{k}": v for k, v in vars_dec1.items()},
+                            **shared_vars}
+                    for expr in extra_cuts:
+                        try:
+                            if not eval(expr, {"__builtins__": {}}, flat):
+                                skip = True
+                                break
+                        except Exception:
+                            skip = True
+                            break
+                    if skip:
+                        continue
+
+                cat_dec0_gen  = _classify_hemisphere(vars_dec0, id0_gen, use_reco=False,
+                                                     only_gen=only_gen)
+                cat_dec1_gen  = _classify_hemisphere(vars_dec1, id1_gen, use_reco=False,
+                                                     only_gen=only_gen)
+                cat_dec0_reco = _classify_hemisphere(vars_dec0, id0_gen, use_reco=True,
+                                                     expected_reco_id=decay_pair[0],
+                                                     only_gen=only_gen)
+                cat_dec1_reco = _classify_hemisphere(vars_dec1, id1_gen, use_reco=True,
+                                                     expected_reco_id=decay_pair[1],
+                                                     only_gen=only_gen)
+
+                if tree_key == "original":
+                    selectedEvents += 1
+                    if cat_dec0_gen == "SIGNAL" and cat_dec1_gen == "SIGNAL":
+                        sumWeights   += weight
+                        sumWeightsP1 += weight * vars_dec0.get("weight_P1", 1.0)
+                        sumWeightsM1 += weight * vars_dec0.get("weight_M1", 1.0)
+                    else:
+                        other_BG_id[f"{cat_dec0_gen}_{cat_dec1_gen}"] = (
+                            other_BG_id.get(f"{cat_dec0_gen}_{cat_dec1_gen}", 0) + 1)
+
+                _fill_hemisphere(root_hists, vars_dec0, vars_dec1, shared_vars, 0,
+                                 cat_dec0_gen, cat_dec1_gen, cat_dec0_reco, cat_dec1_reco, weight)
+                _fill_hemisphere(root_hists, vars_dec1, vars_dec0, shared_vars, 1,
+                                 cat_dec1_gen, cat_dec0_gen, cat_dec1_reco, cat_dec0_reco, weight)
+
+                _fill_shared(root_hists, vars_dec0, vars_dec1, shared_vars,
+                             cat_dec0_gen, cat_dec1_gen, cat_dec0_reco, cat_dec1_reco,
+                             weight, dR=dR)
+
+                _fill_zvismassbins(root_hists, vars_dec0, vars_dec1, shared_vars,
+                                   cat_dec0_gen, cat_dec1_gen, weight)
 
     return {
         "totalEvents":    totalEvents,
@@ -525,6 +859,11 @@ def process_chunk_stage2_mdecs(input_root, tree_keys, entry_range, config_bundle
     weight           = config_bundle["weight"]
     cuts_cfg         = config_bundle["cuts_cfg"]
     fileOutName_base = config_bundle["fileOutName_base"]
+    single_decay_id  = config_bundle.get("single_decay_id", None)
+    only_gen         = config_bundle.get("only_gen", False)
+    sin_eff          = config_bundle.get("sin_eff", None)
+    compute_weights  = config_bundle.get("compute_weights", False)
+    use_omega        = config_bundle.get("use_omega", False)
 
     infile = TFile.Open(input_root, "READ")
     if not infile or infile.IsZombie():
@@ -565,6 +904,11 @@ def process_chunk_stage2_mdecs(input_root, tree_keys, entry_range, config_bundle
         other_BG_id=other_BG_id,
         start_entry=start_entry,
         end_entry=end_entry,
+        single_decay_id=single_decay_id,
+        only_gen=only_gen,
+        sin_eff=sin_eff,
+        compute_weights=compute_weights,
+        use_omega=use_omega,
     )
 
     infile.Close()
@@ -622,6 +966,27 @@ def my_hook(parser):
         metavar=("DECID_0", "DECID_1"),
         help="Par de decayIDs a analizar (sobrescribe general.decay_pair del YAML). "
              "Ejemplo: --decay-pair 2 -13")
+    parser.add_argument("--single-decay", type=int, default=None,
+        metavar="DECID",
+        help="Modo single-decay: selecciona todos los eventos donde al menos un tau "
+             "tenga este decayID (ej. 2=rho, -13=muón). El otro lado se detecta "
+             "automáticamente y sus pesos se usan en corr_P1/corr_M1. "
+             "Incompatible con --decay-pair.")
+    parser.add_argument("--only-gen", action="store_true", default=False,
+        help="Indica que el árbol es gen-only (generado con genOnlyRHOTree): "
+             "las ramas reco contienen IDs gen, por lo que se aplica el remap "
+             "2→1 también en la clasificación reco. "
+             "Por defecto (árbol reco real) el remap solo se aplica en gen.")
+    parser.add_argument("--sin-eff", type=float, default=None, metavar="SIN2THETA",
+        help="Valor de sin²θ_eff para recalcular weight_P1/weight_M1 on-the-fly "
+             "(requiere --compute-weights). Por defecto usa los pesos del árbol.")
+    parser.add_argument("--compute-weights", action="store_true", default=False,
+        help="Recalcula weight_P1/weight_M1 desde las cinemáticas almacenadas "
+             "en lugar de leer los pesos del árbol. Necesario para usar --sin-eff.")
+    parser.add_argument("--omega-weights", action="store_true", default=False,
+        help="Para el canal rho usa la variable óptima ω directamente como H en el peso, "
+             "en lugar de H_V = alpha_V * z_R. Añade 'omegaW_' al nombre del archivo de salida. "
+             "Requiere --compute-weights.")
 
 
 def main():
@@ -634,19 +999,35 @@ def main():
     logger_io      = loggers["io"]
     logger_process = loggers["processing"]
 
-    # Leer decay_pair: CLI tiene prioridad sobre el YAML
-    if args.decay_pair is not None:
-        decay_pair = args.decay_pair
-    else:
-        decay_pair = run_config.get("general", {}).get("decay_pair")
-    if decay_pair is None or len(decay_pair) != 2:
-        logger_io.error(
-            "Especifica el par de desintegraciones con --decay-pair DECID_0 DECID_1 "
-            "o con 'general.decay_pair: [decID_0, decID_1]' en el YAML de config."
-        )
+    single_decay_id = args.single_decay
+    only_gen        = args.only_gen
+    sin_eff         = args.sin_eff
+    compute_weights = args.compute_weights
+    use_omega       = args.omega_weights
+
+    if single_decay_id is not None and args.decay_pair is not None:
+        logger_io.error("--single-decay y --decay-pair son incompatibles; usa solo uno.")
         sys.exit(1)
-    decay_pair = [int(d) for d in decay_pair]
-    logger_config.info("decay_pair: %s", decay_pair)
+
+    if single_decay_id is not None:
+        # Modo single-decay: decay_pair solo se usa internamente como dummy en process_tree
+        decay_pair = [single_decay_id, single_decay_id]
+        logger_config.info("single_decay_id: %d", single_decay_id)
+    else:
+        # Leer decay_pair: CLI tiene prioridad sobre el YAML
+        if args.decay_pair is not None:
+            decay_pair = args.decay_pair
+        else:
+            decay_pair = run_config.get("general", {}).get("decay_pair")
+        if decay_pair is None or len(decay_pair) != 2:
+            logger_io.error(
+                "Especifica el par de desintegraciones con --decay-pair DECID_0 DECID_1, "
+                "con 'general.decay_pair: [decID_0, decID_1]' en el YAML de config, "
+                "o usa --single-decay DECID para modo single-decay."
+            )
+            sys.exit(1)
+        decay_pair = [int(d) for d in decay_pair]
+        logger_config.info("decay_pair: %s", decay_pair)
 
     tauPCut = run_config["cuts"]["tauCut"]
 
@@ -694,7 +1075,10 @@ def main():
     }
 
     outputpath = os.path.dirname(input_root)
-    out_prefix = f"HistosMDecs_{decay_pair[0]}_{decay_pair[1]}_"
+    if single_decay_id is not None:
+        out_prefix = f"HistosMDecs_single{single_decay_id}_"
+    else:
+        out_prefix = f"HistosMDecs_{decay_pair[0]}_{decay_pair[1]}_"
     if angle_sep[0] > 0:
         out_prefix += f"dRgt{angle_sep[0]}_{angle_sep[1]}_"
     if meson_cut[0] > 0 or meson_cut[1] < 100:
@@ -707,6 +1091,10 @@ def main():
         safe = "_".join(e.replace(" ", "").replace("==", "eq").replace(">", "gt").replace("<", "lt")
                         for e in args.cut)
         out_prefix += f"cut_{safe}_"
+    if sin_eff is not None:
+        out_prefix += f"sineff{sin_eff}_"
+    if use_omega:
+        out_prefix += "omegaW_"
     fileOutName = os.path.join(outputpath, out_prefix + general_configs["fileOutName"])
     fileOutName_base = Path(fileOutName).stem
     os.makedirs(outputpath, exist_ok=True)
@@ -742,6 +1130,11 @@ def main():
             other_BG_id=other_BG_id,
             start_entry=0,
             end_entry=n_entries,
+            single_decay_id=single_decay_id,
+            only_gen=only_gen,
+            sin_eff=sin_eff,
+            compute_weights=compute_weights,
+            use_omega=use_omega,
         )
         infile.Close()
         _write_output_mdecs(fileOutName, root_histograms_super, counters, other_BG_id, logger_io)
@@ -758,6 +1151,11 @@ def main():
         "cuts_cfg":         cuts_cfg,
         "outputpath":       outputpath,
         "fileOutName_base": fileOutName_base,
+        "single_decay_id":  single_decay_id,
+        "only_gen":         only_gen,
+        "sin_eff":          sin_eff,
+        "compute_weights":  compute_weights,
+        "use_omega":        use_omega,
     }
 
     ctx = multiprocessing.get_context("fork")

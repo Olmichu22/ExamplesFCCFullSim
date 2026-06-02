@@ -152,6 +152,29 @@ def newAtauRhoOmega(TauP4, omega, New_Atau, sin_eff=None):
 
 # ── Public two-tau joint weight functions ────────────────────────────────────
 
+def newAtauJoint(TauP4, H, Hp, New_Atau, sin_eff=None):
+    """
+    Generic joint two-tau weight given pre-computed spin-analyzing values H and H'.
+
+    W = [1 + P_new*(H + H') + H*H'] / [1 + P_sm*(H + H') + H*H']
+
+    H  : spin-analyzing value for tau- decay (any observable: H_V, omega, H_ell...)
+    Hp : spin-analyzing value for tau+ decay (same convention as newAtauJoint_had_had:
+         the tau+ sign flip is already absorbed into the sumHH = H + Hp form)
+    TauP4: tau- 4-vector (defines costheta for polarization).
+    """
+    sin2eff = sin_eff if sin_eff is not None else 0.2312
+    Ae = _compute_ae_sm(sin2eff)
+    costheta = math.cos(TauP4.Theta())
+    P_sm  = _compute_Ptau(costheta, Ae, Ae)
+    P_new = _compute_Ptau(costheta, New_Atau, Ae)
+    sumHH = H + Hp
+    cross = H * Hp
+    denom = 1 + P_sm  * sumHH + cross
+    numer = 1 + P_new * sumHH + cross
+    return numer / denom if abs(denom) > 1e-12 else 1.0
+
+
 def newAtauJoint_had_had(TauP4, MesonP4, OtherTauP4, OtherMesonP4,
                          Type, OtherType, New_Atau, sin_eff=None):
     """
