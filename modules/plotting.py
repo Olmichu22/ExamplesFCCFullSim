@@ -1891,6 +1891,12 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                 global_max = max(global_max, o.GetMaximum())
                 ymin = o.GetMinimum()
                 global_min = ymin if global_min is None else min(global_min, ymin)
+                # Populate list_graph_values for diff panel (after normalization)
+                nb = o.GetNbinsX()
+                x_vals  = [o.GetBinCenter(b)  for b in range(1, nb + 1)]
+                y_vals  = [o.GetBinContent(b) for b in range(1, nb + 1)]
+                y_errs  = [o.GetBinError(b)   for b in range(1, nb + 1)]
+                list_graph_values[label] = (x_vals, y_vals, y_errs, y_errs)
             else:
                 # TGraph: estimamos extremos Y a partir de puntos
                 n = o.GetN()
@@ -2248,7 +2254,8 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
 
           # Si quieres que el eje X solo se rotule aquí, reduce el tamaño de labels en el pad superior:
           # (ya hicimos SetBottomMargin en pad_top; esto suele bastar)
-          title = difference_line["label"]
+          dcfg2 = difference_line if isinstance(difference_line, dict) else {}
+          title = dcfg2.get("label", "#Delta")
           # Dibuja el scatter con ejes propios
           diff_graph.Draw("AP")
           x_min = diff_graph.GetXaxis().GetXmin()
