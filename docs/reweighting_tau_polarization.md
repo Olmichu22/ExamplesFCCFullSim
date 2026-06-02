@@ -167,16 +167,18 @@ Consecuencia: la media del repesado per-tau **sobreestima ~9%** (P1: +0.256 vs v
 
 Todos los histogramas `Omega_dec0` son **gen** (4-vectores exactos), así que ni la reconstrucción del π⁰ ni la resolución de detector intervienen. Para localizar el origen del 8% se midió la pendiente `a` de A(ω)=a·ω en bins de la masa invariante del ρ (`visM`):
 
-| masa ρ (GeV) | poder analizador `a` |
+| masa ρ (GeV) | `a` ± err (ajuste ponderado A=a·ω por origen) |
 |---|---|
-| 0.40–0.60 | 1.000 |
-| 0.60–0.70 | 0.991 |
-| 0.70–0.80 (polo) | 0.996 |
-| 0.80–0.90 | 0.985 |
-| 0.90–1.05 | 0.943 |
-| 1.05–1.50 | 0.658 |
+| 0.40–0.60 | 0.998 ± 0.008 |
+| 0.60–0.70 | 0.992 ± 0.005 |
+| 0.70–0.80 (polo) | 0.995 ± 0.003 |
+| 0.80–0.90 | 0.987 ± 0.004 |
+| 0.90–1.05 | 0.953 ± 0.007 |
+| 1.05–1.50 | 0.668 ± 0.010 |
 
-**Conclusión:** cerca del polo del ρ, `a`≈1.0 — **ω es prácticamente óptima**. El poder se desploma en la cola alta de masa (a=0.66 por encima de 1.05 GeV). Como `a` depende fuertemente de mρ y **no** es plano, se **descarta el límite mτ/Eτ→0** como causa (sería plano en masa): el efecto está en cómo `wVariab` trata el ρ lejos del polo, donde la estructura de espín de la resonancia deja de describir bien el decay (masa media observada 0.810 GeV, σ=0.176, sesgada hacia arriba).
+**Conclusión:** la región mρ ≤ 0.9 GeV es un **plateau de a≈0.99, compatible con 1** — todos los bins son estadísticamente indistinguibles entre sí (no hay máximo significativo por debajo del polo; el bin de baja masa tiene poca estadística). **ω es prácticamente óptima en esa región.** El poder analizador **cae a masas altas**: 0.95 en 0.90–1.05 (~6σ bajo el plateau) y se desploma a 0.67 por encima de 1.05 GeV. Como `a` depende fuertemente de mρ y **no** es plano, se **descarta el límite mτ/Eτ→0** como causa (sería plano en masa): el efecto está en cómo `wVariab` trata el ρ lejos del polo (masa media observada 0.810 GeV, σ=0.176, sesgada hacia arriba).
+
+**Correlación física de la caída:** $\alpha_V=(m_\tau^2-2m_\rho^2)/(m_\tau^2+2m_\rho^2)$ — el poder analizador de la parte longitudinal del ρ — decrece con mρ (0.73 a 0.5 GeV → 0.45 en el polo → 0.005 a 1.25 GeV → negativo). Se anula en mρ≈1.26 GeV, justo donde `a(ω)` se desploma: un ρ pesado pierde la capacidad de transferir la helicidad del τ a la dirección observable. El plateau llega hasta ~0.9 GeV (pese a que α_V ya bajó a ~0.25) porque ω combina la parte longitudinal con la estructura transversa (cosβ, cosψ); solo cuando ambas se agotan (alta masa) cae. **Pendiente test 2** para separar si la caída a alta masa es física (información ausente) o defecto de la fórmula `wVariab`.
 
 **Implicaciones:**
 1. Una calibración con un solo factor global `a=0.92` **no es correcta** — habría que usar `a(mρ)`.
