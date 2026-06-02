@@ -1,0 +1,104 @@
+# compare_omega_HV_vs_omega_weights.yaml
+# Compara verdad P1/M1 vs SM repesado con 4 estrategias:
+#   - H_V per-tau      (sufijo _M1 / _P1)
+#   - omega per-tau    (sufijo _M1 / _P1,  archivo omegaW)
+#   - H_V + crossterm  (sufijo corr_M1 / corr_P1)
+#   - omega + crossterm(sufijo corr_M1 / corr_P1, archivo omegaW)
+#
+# Convención: SM con peso _M1 imita P1; SM con peso _P1 imita M1.
+# diff_line compara los dos primeros datasets (verdad vs SM_HV per-tau).
+
+datasets:
+  # Verdad P1
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_P1_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: P1
+    color: ROOT.kBlack
+    linestyle: 1
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+
+  # Verdad M1
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_M1_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: M1
+    color: ROOT.kBlack
+    linestyle: 2
+    markerstyle: 25
+    markersize: 1.
+    linewidth: 3
+
+  # SM con H_V (per-tau)
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_SM_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: SM_HV
+    color: ROOT.kRed
+    linestyle: 1
+    markerstyle: 21
+    markersize: 1.
+    linewidth: 2
+
+  # SM con H_V + crossterm
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_SM_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: SM_HV_corr
+    color: ROOT.kMagenta+1
+    linestyle: 2
+    markerstyle: 22
+    markersize: 1.
+    linewidth: 2
+
+  # SM con omega (per-tau)
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_SM_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_omegaW_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: SM_omega
+    color: ROOT.kBlue
+    linestyle: 1
+    markerstyle: 23
+    markersize: 1.
+    linewidth: 2
+
+  # SM con omega + crossterm
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_SM_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_omegaW_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: SM_omega_corr
+    color: ROOT.kGreen+2
+    linestyle: 2
+    markerstyle: 24
+    markersize: 1.
+    linewidth: 2
+
+plots:
+
+  # ── Escenario P1: verdad P1 vs 4 estrategias de repesado de SM ──
+  # diff_line: P1 - SM_HV (primer par)
+
+  Omega_P1_all_strategies:
+    per_dataset:
+      P1:           Omega_dec0_ALL_ALL
+      SM_HV:        Omega_dec0_ALL_ALL_M1
+      SM_HV_corr:   Omega_dec0_ALL_ALL_corr_M1
+      SM_omega:     Omega_dec0_ALL_ALL_M1
+      SM_omega_corr: Omega_dec0_ALL_ALL_corr_M1
+    title: \omega \text{ rho decay - P1 scenario (all reweighting strategies)}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  # ── Escenario M1: verdad M1 vs 4 estrategias de repesado de SM ──
+  # diff_line: M1 - SM_HV (primer par)
+
+  Omega_M1_all_strategies:
+    per_dataset:
+      M1:           Omega_dec0_ALL_ALL
+      SM_HV:        Omega_dec0_ALL_ALL_P1
+      SM_HV_corr:   Omega_dec0_ALL_ALL_corr_P1
+      SM_omega:     Omega_dec0_ALL_ALL_P1
+      SM_omega_corr: Omega_dec0_ALL_ALL_corr_P1
+    title: \omega \text{ rho decay - M1 scenario (all reweighting strategies)}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]

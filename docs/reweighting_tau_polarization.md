@@ -138,3 +138,55 @@ Histograma ROOT: `Omega_dec0_ALL_ALL_corr_M1` (solo disponible en modo pair).
 | `newAtauJoint(TauP4, H, Hp, New_Atau)` | Joint genérico con $H$, $H'$ pre-calculados |
 | `newAtauJoint_had_had(...)` | Joint had+had via `_compute_H` internamente |
 | `newAtauJoint_had_lep(...)` | Joint had+lep via `_compute_H`/`_compute_H_lep` internamente |
+
+---
+
+## 6. Verificación de cierre y limitaciones conocidas (junio 2026)
+
+Closure tests (chi²/ndf bin a bin sobre la distribución de ω, muestra SM repesada vs verdad P1/M1, canal ρ). Convención: peso `_M1` (New_Atau=−1) imita P1.
+
+### 6.1 ω no es un observable óptimo perfecto — potencia analizadora ≈ 0.92
+
+Si ω fuera el observable óptimo ideal y la muestra está totalmente polarizada (A_τ=±1 ⟹ P=∓1), la asimetría debería cumplir **A(ω) ≡ ω** (pendiente 1). Medido sobre las muestras P1/M1:
+
+$$A(\omega) = \frac{f_{P1}(\omega) - f_{M1}(\omega)}{f_{P1}(\omega) + f_{M1}(\omega)} = 0.924\,\omega - 0.001$$
+
+→ **ω tiene potencia analizadora del 92%** (dilución del 8%). Prueba directa: `f_P1(ω)` no se anula en ω→−1 (ni `f_M1` en ω→+1), cuando debería si ω fuera óptimo perfecto.
+
+**Origen del 8%:** `wVariab` es el observable óptimo de un ρ ideal (anchura nula). En datos reales la masa del ρ varía evento a evento (se usa `mRho` del evento en cosψ), y eventos off-shell o mal asignados degradan ω. Parte es físico (anchura finita), parte del método.
+
+**Síntoma observable en los plots:** el peso `(1+P·ω)/(1+P_sm·ω)` asume implícitamente potencia analizadora 1, por lo que es ~8% demasiado empinado en ω y sobre-corrige las colas:
+- Plot **P1** (peso ∝ 1+ω): vacía de más la cola ω<0 → región desplazada hacia la derecha.
+- Plot **M1** (peso ∝ 1−ω): vacía de más la cola ω>0 → región desplazada hacia la izquierda.
+
+Consecuencia: la media del repesado per-tau **sobreestima ~9%** (P1: +0.256 vs verdad +0.232). Cuadra con la dilución del 8%.
+
+**Estado:** no se corrige por ahora. Posible calibración futura: usar la potencia analizadora medida `a≈0.92` en el peso, `W = (1+P_new·a·ω)/(1+P_sm·a·ω)`, verificando antes que `a` es un factor de escala global (medir en bins de masa del ρ).
+
+### 6.2 La correlación: el producto sobre-corrige, la fórmula joint cierra mejor
+
+Cierre sobre ω de un hemisferio en eventos ρ+ρ (target = verdad P1, media +0.234):
+
+| Estrategia | Media | chi²/ndf |
+|---|---|---|
+| SM nominal | −0.021 | 0.00694 |
+| per-tau (ω solo) | +0.256 | 0.00018 |
+| producto W⁽¹⁾·W⁽²⁾ | +0.306 | 0.00068 ← peor |
+| **joint Alcaraz** (1+P(ω+ω')+ωω') | **+0.244** | **0.00013** ← mejor |
+
+- **El producto de pesos per-tau es incorrecto:** sobreestima la media a +0.306 (+31% sobre el shift real). Ambos τ comparten el **mismo ángulo de producción** → la misma P(z); el producto aplica la corrección de polarización dos veces de forma correlacionada.
+- **La fórmula joint de Alcaraz cierra mejor incluso que el per-tau** (+0.244, chi² 0.00013). El término cruzado ω·ω' es la correlación de espín entre hemisferios y, al estar correctamente incluido, **cancela parte del overshoot** de la dilución del 8%.
+
+**Correcciones aplicadas (junio 2026):**
+1. En modo single-decay el `corr` usaba el producto (fallback). Como el otro hemisferio sí está disponible (`vars_other`), ahora usa `_compute_joint_weights` (fórmula joint de Alcaraz), igual que el modo pair.
+2. `_compute_reco_joint_weights` (corr a nivel reco) no aceptaba `use_omega` y siempre usaba $H_V$. Ahora es omega-aware vía `_get_H_for_joint_reco` (ω reco vía `wVariabRECO` para ρ), consistente con `_recompute_reco_weights` per-tau.
+
+### 6.3 Variable óptima en el canal leptónico
+
+La formulación general del PDF (sección 3, eq. 15-16) es:
+
+$$\frac{1}{N}\frac{dN}{d\omega} = f(\omega)(1+P\omega), \qquad W = \frac{1 + P'(\omega + \omega') + \omega\omega'}{1 + P(\omega + \omega') + \omega\omega'}$$
+
+con ω, ω' las variables óptimas de cada pata. **Para el τ leptónico la variable óptima es $\omega_\ell = H_\ell(x_\ell)$**: la única información observable es $x_\ell = E_\ell/E_\text{beam}$ (los dos neutrinos no se reconstruyen), y la distribución (eq. 10) es $f(x_\ell)(1+P\cdot H_\ell)$, que comparada con eq. 15 identifica $H_\ell$ como la variable óptima. No existe una variable óptima "mejor" para el leptón análoga a la ω del ρ (que sí gana con cosβ, cosψ).
+
+**Consecuencia:** el flag `--omega-weights` solo afecta al ρ. El leptón usa $H_\ell$ siempre (con y sin el flag), y eso es lo correcto: $H_\ell$ ya es su variable óptima. No hay cambio que aplicar para leptones.

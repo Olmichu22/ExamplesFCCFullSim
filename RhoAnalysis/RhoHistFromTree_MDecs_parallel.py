@@ -352,12 +352,48 @@ def _compute_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff, use_omega=False
         vars_dec1[f"weight_corr_{suffix}"] = w
 
 
-def _compute_reco_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff):
+def _reco_tau_proxy(tau_vars, beamE):
+    """Tau proxy reco: dirección del visible reco, E=beamE (collinear approx)."""
+    tau_E = beamE
+    tau_P = math.sqrt(max(0.0, tau_E**2 - weightsPol._M_TAU**2))
+    return make_p4(tau_P, tau_vars["recoVisTheta"], tau_vars["recoVisPhi"], tau_E)
+
+
+def _get_H_for_joint_reco(tau_vars, beamE, use_omega):
+    """
+    Observable de spin H a usar en la fórmula joint con cinemática reco.
+    Análogo a _get_H_for_joint pero con ramas reco y el tau proxy collinear.
+    - Rho con use_omega=True: ω reco vía wVariabRECO (variable óptima completa).
+    - Rho con use_omega=False, pion, a1: H_V = alpha_V*z_R de _compute_H.
+    - Leptónico: H_ell = variable óptima leptónica (no hay otra; x_ell es toda la info).
+    """
+    reco_id = int(tau_vars.get("recoTauID", -999))
+    if use_omega and reco_id == 1:
+        vis_P4  = make_p4(tau_vars["recoVisP"],  tau_vars["recoVisTheta"],
+                          tau_vars["recoVisPhi"], tau_vars["recoVisE"])
+        pion_P4 = make_p4(tau_vars["recoPionP"], tau_vars["recoPionTheta"],
+                          tau_vars["recoPionPhi"], tau_vars["recoPionE"])
+        _, _, _, omega_reco = optimalVariabRho.wVariabRECO(vis_P4, pion_P4, beamE)
+        return omega_reco
+    if reco_id in (0, 1, 10):
+        vis_P4 = make_p4(tau_vars["recoVisP"], tau_vars["recoVisTheta"],
+                         tau_vars["recoVisPhi"], tau_vars["recoVisE"])
+        H = weightsPol._compute_H(vis_P4, _reco_tau_proxy(tau_vars, beamE), reco_id)
+        return H if H is not None else 0.0
+    if reco_id in (-11, -13):
+        lep_P4 = make_p4(tau_vars["recoLepP"], tau_vars["recoLepTheta"],
+                         tau_vars["recoLepPhi"], tau_vars["recoLepE"])
+        return weightsPol._compute_H_lep(lep_P4, beamE)
+    return 0.0
+
+
+def _compute_reco_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff, use_omega=False):
     """
     Peso conjunto dos-tau con cinemática reco (proxy collinear).
     Misma lógica que _compute_joint_weights pero usando el tau proxy
-    (E=beamE, dirección=recoVisTheta/Phi) para cada hemisferio.
-    Almacena reco_weight_corr_P1/M1.
+    (E=beamE, dirección=recoVisTheta/Phi) y observables reco.
+    Con use_omega=True usa ω reco (wVariabRECO) para taus rho, consistente
+    con _recompute_reco_weights. Almacena reco_weight_corr_P1/M1.
     """
     reco_id0 = int(vars_dec0.get("recoTauID", -999))
     reco_id1 = int(vars_dec1.get("recoTauID", -999))
@@ -370,33 +406,17 @@ def _compute_reco_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff):
             vars_dec1[f"reco_weight_corr_{suffix}"] = 1.0
         return
 
-    def reco_tau_proxy(v):
-        tau_E = beamE
-        tau_P = math.sqrt(max(0.0, tau_E**2 - weightsPol._M_TAU**2))
-        return make_p4(tau_P, v["recoVisTheta"], v["recoVisPhi"], tau_E)
-
-    def reco_vis(v):
-        return make_p4(v["recoVisP"], v["recoVisTheta"], v["recoVisPhi"], v["recoVisE"])
-
-    def reco_lep(v):
-        return make_p4(v["recoLepP"], v["recoLepTheta"], v["recoLepPhi"], v["recoLepE"])
-
     for New_Atau, suffix in [(+1.0, "P1"), (-1.0, "M1")]:
-        if is_had(reco_id0) and is_had(reco_id1):
-            w = weightsPol.newAtauJoint_had_had(
-                reco_tau_proxy(vars_dec0), reco_vis(vars_dec0),
-                reco_tau_proxy(vars_dec1), reco_vis(vars_dec1),
-                reco_id0, reco_id1, New_Atau, sin_eff=sin_eff)
-        elif is_had(reco_id0) and is_lep(reco_id1):
-            w = weightsPol.newAtauJoint_had_lep(
-                reco_tau_proxy(vars_dec0), reco_vis(vars_dec0),
-                reco_tau_proxy(vars_dec1), reco_lep(vars_dec1),
-                reco_id0, New_Atau, beamE, sin_eff=sin_eff)
+        if is_had(reco_id0) and (is_had(reco_id1) or is_lep(reco_id1)):
+            H  = _get_H_for_joint_reco(vars_dec0, beamE, use_omega)
+            Hp = _get_H_for_joint_reco(vars_dec1, beamE, use_omega)
+            w  = weightsPol.newAtauJoint(_reco_tau_proxy(vars_dec0, beamE), H, Hp,
+                                         New_Atau, sin_eff=sin_eff)
         elif is_lep(reco_id0) and is_had(reco_id1):
-            w = weightsPol.newAtauJoint_had_lep(
-                reco_tau_proxy(vars_dec1), reco_vis(vars_dec1),
-                reco_tau_proxy(vars_dec0), reco_lep(vars_dec0),
-                reco_id1, New_Atau, beamE, sin_eff=sin_eff)
+            H  = _get_H_for_joint_reco(vars_dec0, beamE, use_omega)
+            Hp = _get_H_for_joint_reco(vars_dec1, beamE, use_omega)
+            w  = weightsPol.newAtauJoint(_reco_tau_proxy(vars_dec1, beamE), Hp, H,
+                                         New_Atau, sin_eff=sin_eff)
         else:
             w = (vars_dec0.get(f"reco_weight_{suffix}", 1.0) *
                  vars_dec1.get(f"reco_weight_{suffix}", 1.0))
@@ -663,11 +683,17 @@ def process_tree_range_mdecs(trees, root_histograms_super,
                 if vars_this is None:
                     continue
 
-                # Corr weights: fallback to product of per-tau weights (other tau unknown)
-                for v0, v1 in [(vars_this, vars_other), (vars_other, vars_this)]:
-                    for sfx in ("P1", "M1"):
-                        v0[f"weight_corr_{sfx}"]      = v0.get(f"weight_{sfx}", 1.0) * v1.get(f"weight_{sfx}", 1.0)
-                        v0[f"reco_weight_corr_{sfx}"] = v0.get(f"reco_weight_{sfx}", 1.0) * v1.get(f"reco_weight_{sfx}", 1.0)
+                # Joint two-tau weights (Alcaraz 2026 eqs. 9/13). El otro hemisferio SÍ
+                # está disponible (vars_other), así que se usa la fórmula joint completa
+                # con término cruzado, igual que en modo pair. El producto de pesos
+                # per-tau es incorrecto (doble-cuenta la polarización de producción).
+                if compute_weights and sin_eff is not None:
+                    _compute_joint_weights(vars_this, vars_other, beamE, sin_eff, use_omega=use_omega)
+                else:
+                    for v0, v1 in [(vars_this, vars_other), (vars_other, vars_this)]:
+                        for sfx in ("P1", "M1"):
+                            v0[f"weight_corr_{sfx}"] = v0.get(f"weight_{sfx}", 1.0) * v1.get(f"weight_{sfx}", 1.0)
+                _compute_reco_joint_weights(vars_this, vars_other, beamE, _sin, use_omega=use_omega)
 
                 for vd in (vars_this, vars_other):
                     vd["_optimal_x"] = (2.0 * vd["recoVisE"] / beamE - 1.0) if beamE else 0.0
@@ -753,7 +779,7 @@ def process_tree_range_mdecs(trees, root_histograms_super,
                     for v0, v1 in [(vars_dec0, vars_dec1), (vars_dec1, vars_dec0)]:
                         for sfx in ("P1", "M1"):
                             v0[f"weight_corr_{sfx}"] = v0.get(f"weight_{sfx}", 1.0) * v1.get(f"weight_{sfx}", 1.0)
-                _compute_reco_joint_weights(vars_dec0, vars_dec1, beamE, _sin)
+                _compute_reco_joint_weights(vars_dec0, vars_dec1, beamE, _sin, use_omega=use_omega)
 
                 for vd in (vars_dec0, vars_dec1):
                     vd["_optimal_x"] = (2.0 * vd["recoVisE"] / beamE - 1.0) if beamE else 0.0
