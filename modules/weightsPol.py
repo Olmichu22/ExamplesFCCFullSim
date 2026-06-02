@@ -177,10 +177,10 @@ def newAtauJoint_had_had(TauP4, MesonP4, OtherTauP4, OtherMesonP4,
     if H is None or Hp is None:
         return 1.0
     # Hp enters with flipped sign for tau+ (antineutrino handedness correction)
-    diff  = H + Hp
-    cross = -(H * Hp)
-    denom = 1 + P_sm  * diff - cross
-    numer = 1 + P_new * diff - cross
+    sumHH = H + Hp
+    cross = H * Hp
+    denom = 1 + P_sm  * sumHH + cross
+    numer = 1 + P_new * sumHH + cross
     return numer / denom if abs(denom) > 1e-12 else 1.0
 
 
@@ -208,10 +208,10 @@ def newAtauJoint_had_lep(TauHadP4, MesonP4, TauLepP4, LepP4,
     if H_R is None:
         return 1.0
     # H_ell enters with flipped sign for tau+ (antineutrino handedness correction)
-    diff  = H_R + H_ell
-    cross = -(H_R * H_ell)
-    denom = 1 + P_sm  * diff - cross
-    numer = 1 + P_new * diff - cross
+    sumHH = H_R + H_ell
+    cross = H_R * H_ell
+    denom = 1 + P_sm  * sumHH + cross
+    numer = 1 + P_new * sumHH + cross
     return numer / denom if abs(denom) > 1e-12 else 1.0
 
 
