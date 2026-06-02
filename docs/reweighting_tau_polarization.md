@@ -153,7 +153,7 @@ $$A(\omega) = \frac{f_{P1}(\omega) - f_{M1}(\omega)}{f_{P1}(\omega) + f_{M1}(\om
 
 → **ω tiene potencia analizadora del 92%** (dilución del 8%). Prueba directa: `f_P1(ω)` no se anula en ω→−1 (ni `f_M1` en ω→+1), cuando debería si ω fuera óptimo perfecto.
 
-**Origen del 8%:** `wVariab` es el observable óptimo de un ρ ideal (anchura nula). En datos reales la masa del ρ varía evento a evento (se usa `mRho` del evento en cosψ), y eventos off-shell o mal asignados degradan ω. Parte es físico (anchura finita), parte del método.
+**Origen del 8%:** localizado en el test 6.1.1 — `wVariab` es óptima cerca del polo del ρ (a≈1.0) pero pierde poder analizador en la cola alta de masa. No es un efecto del límite mτ/Eτ→0 (que sería plano en masa) ni de reconstrucción (todo es gen).
 
 **Síntoma observable en los plots:** el peso `(1+P·ω)/(1+P_sm·ω)` asume implícitamente potencia analizadora 1, por lo que es ~8% demasiado empinado en ω y sobre-corrige las colas:
 - Plot **P1** (peso ∝ 1+ω): vacía de más la cola ω<0 → región desplazada hacia la derecha.
@@ -161,7 +161,28 @@ $$A(\omega) = \frac{f_{P1}(\omega) - f_{M1}(\omega)}{f_{P1}(\omega) + f_{M1}(\om
 
 Consecuencia: la media del repesado per-tau **sobreestima ~9%** (P1: +0.256 vs verdad +0.232). Cuadra con la dilución del 8%.
 
-**Estado:** no se corrige por ahora. Posible calibración futura: usar la potencia analizadora medida `a≈0.92` en el peso, `W = (1+P_new·a·ω)/(1+P_sm·a·ω)`, verificando antes que `a` es un factor de escala global (medir en bins de masa del ρ).
+**Estado:** no se corrige por ahora. Posible calibración futura: usar la potencia analizadora medida `a` en el peso, `W = (1+P_new·a·ω)/(1+P_sm·a·ω)`. **Pero ver test 6.1.1: `a` NO es global.**
+
+#### 6.1.1 Test: el poder analizador depende de la masa del ρ (no es global)
+
+Todos los histogramas `Omega_dec0` son **gen** (4-vectores exactos), así que ni la reconstrucción del π⁰ ni la resolución de detector intervienen. Para localizar el origen del 8% se midió la pendiente `a` de A(ω)=a·ω en bins de la masa invariante del ρ (`visM`):
+
+| masa ρ (GeV) | poder analizador `a` |
+|---|---|
+| 0.40–0.60 | 1.000 |
+| 0.60–0.70 | 0.991 |
+| 0.70–0.80 (polo) | 0.996 |
+| 0.80–0.90 | 0.985 |
+| 0.90–1.05 | 0.943 |
+| 1.05–1.50 | 0.658 |
+
+**Conclusión:** cerca del polo del ρ, `a`≈1.0 — **ω es prácticamente óptima**. El poder se desploma en la cola alta de masa (a=0.66 por encima de 1.05 GeV). Como `a` depende fuertemente de mρ y **no** es plano, se **descarta el límite mτ/Eτ→0** como causa (sería plano en masa): el efecto está en cómo `wVariab` trata el ρ lejos del polo, donde la estructura de espín de la resonancia deja de describir bien el decay (masa media observada 0.810 GeV, σ=0.176, sesgada hacia arriba).
+
+**Implicaciones:**
+1. Una calibración con un solo factor global `a=0.92` **no es correcta** — habría que usar `a(mρ)`.
+2. **Alternativa más simple: un corte de masa del ρ** alrededor del polo (p.ej. 0.65–0.85 GeV) recupera `a`≈0.99 sin calibrar nada. Precio: ~la mitad de estadística (la cola). La decisión es estadística (resolución vs sesgo).
+
+Pendiente para confirmar (test 2, futuro): comparar el poder analizador de `wVariab` (algebraica) vs `wVariabDanvier` (covariante, $H^\mu=2(q\cdot N)q^\mu-q^2N^\mu$) para separar "defecto de fórmula" de "efecto físico irreducible".
 
 ### 6.2 La correlación: el producto sobre-corrige, la fórmula joint cierra mejor
 
