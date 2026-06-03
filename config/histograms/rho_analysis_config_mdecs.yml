@@ -16,7 +16,7 @@
 
 defaults:
   categories:
-    ALL_ALL:        {weights: []}
+    ALL_ALL:        {weights: [P1, M1, corr_P1, corr_M1]}
     SIGNAL_SIGNAL:  {weights: [P1, M1, corr_P1, corr_M1]}
     SIGNAL_BG:      {weights: []}
     BG_SIGNAL:      {weights: []}
@@ -69,6 +69,88 @@ histograms:
       bins: 100
       range: [-1, 1]
       categories: *all_cats
+
+    # ── Omega en 6 bins de masa resonante del rho (visM gen) ──
+    # Rangos del estudio de closure por masa (test 6.1.1):
+    #   Bin1 0.40-0.60 | Bin2 0.60-0.70 | Bin3 0.70-0.80 (polo)
+    #   Bin4 0.80-0.90 | Bin5 0.90-1.05 | Bin6 1.05-1.50
+    Omega_RhoMass_Bin1_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+    Omega_RhoMass_Bin1_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    Omega_RhoMass_Bin2_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+    Omega_RhoMass_Bin2_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    Omega_RhoMass_Bin3_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+    Omega_RhoMass_Bin3_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    Omega_RhoMass_Bin4_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+    Omega_RhoMass_Bin4_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    Omega_RhoMass_Bin5_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+    Omega_RhoMass_Bin5_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+
+    Omega_RhoMass_Bin6_dec0:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
+    Omega_RhoMass_Bin6_dec1:
+      type: 1D
+      bins: 100
+      range: [-1, 1]
+      categories:
+        ALL_ALL: {weights: [P1, M1, corr_P1, corr_M1]}
 
     CosTheta_GEN_dec0:
       type: 1D

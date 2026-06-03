@@ -1,0 +1,252 @@
+# compare_omega_closure_by_rhomass.yaml
+# Closure del repesado omega/H_V en 6 bins de masa resonante del rho (visM gen).
+# Rangos del test 6.1.1:
+#   Bin1 0.40-0.60 | Bin2 0.60-0.70 | Bin3 0.70-0.80 (polo)
+#   Bin4 0.80-0.90 | Bin5 0.90-1.05 | Bin6 1.05-1.50
+#
+# Compara verdad P1/M1 vs SM repesado con 4 estrategias por bin:
+#   H_V per-tau, H_V + crossterm, omega per-tau, omega + crossterm
+# Convención: SM con peso _M1 imita P1; SM con peso _P1 imita M1.
+
+datasets:
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_P1_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: P1
+    color: ROOT.kBlack
+    linestyle: 1
+    markerstyle: 20
+    markersize: 1.
+    linewidth: 3
+
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_M1_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: M1
+    color: ROOT.kBlack
+    linestyle: 2
+    markerstyle: 25
+    markersize: 1.
+    linewidth: 3
+
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_SM_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: SM_HV
+    color: ROOT.kRed
+    linestyle: 1
+    markerstyle: 21
+    markersize: 1.
+    linewidth: 2
+
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_SM_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: SM_HV_corr
+    color: ROOT.kMagenta+1
+    linestyle: 2
+    markerstyle: 22
+    markersize: 1.
+    linewidth: 2
+
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_SM_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_omegaW_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: SM_omega
+    color: ROOT.kBlue
+    linestyle: 1
+    markerstyle: 23
+    markersize: 1.
+    linewidth: 2
+
+  - path: Results/RhoAnalysis/PolAnalysis_GEN_SM_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_omegaW_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
+    label: SM_omega_corr
+    color: ROOT.kGreen+2
+    linestyle: 2
+    markerstyle: 24
+    markersize: 1.
+    linewidth: 2
+
+plots:
+
+  Omega_RhoMass_Bin1_P1:
+    per_dataset:
+      P1:            Omega_RhoMass_Bin1_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin1_dec0_ALL_ALL_M1
+      SM_HV_corr:    Omega_RhoMass_Bin1_dec0_ALL_ALL_corr_M1
+      SM_omega:      Omega_RhoMass_Bin1_dec0_ALL_ALL_M1
+      SM_omega_corr: Omega_RhoMass_Bin1_dec0_ALL_ALL_corr_M1
+    title: \omega \text{ rho - P1 scenario - m_{\rho} 0.40-0.60 GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin1_M1:
+    per_dataset:
+      M1:            Omega_RhoMass_Bin1_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin1_dec0_ALL_ALL_P1
+      SM_HV_corr:    Omega_RhoMass_Bin1_dec0_ALL_ALL_corr_P1
+      SM_omega:      Omega_RhoMass_Bin1_dec0_ALL_ALL_P1
+      SM_omega_corr: Omega_RhoMass_Bin1_dec0_ALL_ALL_corr_P1
+    title: \omega \text{ rho - M1 scenario - m_{\rho} 0.40-0.60 GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin2_P1:
+    per_dataset:
+      P1:            Omega_RhoMass_Bin2_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin2_dec0_ALL_ALL_M1
+      SM_HV_corr:    Omega_RhoMass_Bin2_dec0_ALL_ALL_corr_M1
+      SM_omega:      Omega_RhoMass_Bin2_dec0_ALL_ALL_M1
+      SM_omega_corr: Omega_RhoMass_Bin2_dec0_ALL_ALL_corr_M1
+    title: \omega \text{ rho - P1 scenario - m_{\rho} 0.60-0.70 GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin2_M1:
+    per_dataset:
+      M1:            Omega_RhoMass_Bin2_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin2_dec0_ALL_ALL_P1
+      SM_HV_corr:    Omega_RhoMass_Bin2_dec0_ALL_ALL_corr_P1
+      SM_omega:      Omega_RhoMass_Bin2_dec0_ALL_ALL_P1
+      SM_omega_corr: Omega_RhoMass_Bin2_dec0_ALL_ALL_corr_P1
+    title: \omega \text{ rho - M1 scenario - m_{\rho} 0.60-0.70 GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin3_P1:
+    per_dataset:
+      P1:            Omega_RhoMass_Bin3_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin3_dec0_ALL_ALL_M1
+      SM_HV_corr:    Omega_RhoMass_Bin3_dec0_ALL_ALL_corr_M1
+      SM_omega:      Omega_RhoMass_Bin3_dec0_ALL_ALL_M1
+      SM_omega_corr: Omega_RhoMass_Bin3_dec0_ALL_ALL_corr_M1
+    title: \omega \text{ rho - P1 scenario - m_{\rho} 0.70-0.80 (pole) GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin3_M1:
+    per_dataset:
+      M1:            Omega_RhoMass_Bin3_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin3_dec0_ALL_ALL_P1
+      SM_HV_corr:    Omega_RhoMass_Bin3_dec0_ALL_ALL_corr_P1
+      SM_omega:      Omega_RhoMass_Bin3_dec0_ALL_ALL_P1
+      SM_omega_corr: Omega_RhoMass_Bin3_dec0_ALL_ALL_corr_P1
+    title: \omega \text{ rho - M1 scenario - m_{\rho} 0.70-0.80 (pole) GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin4_P1:
+    per_dataset:
+      P1:            Omega_RhoMass_Bin4_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin4_dec0_ALL_ALL_M1
+      SM_HV_corr:    Omega_RhoMass_Bin4_dec0_ALL_ALL_corr_M1
+      SM_omega:      Omega_RhoMass_Bin4_dec0_ALL_ALL_M1
+      SM_omega_corr: Omega_RhoMass_Bin4_dec0_ALL_ALL_corr_M1
+    title: \omega \text{ rho - P1 scenario - m_{\rho} 0.80-0.90 GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin4_M1:
+    per_dataset:
+      M1:            Omega_RhoMass_Bin4_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin4_dec0_ALL_ALL_P1
+      SM_HV_corr:    Omega_RhoMass_Bin4_dec0_ALL_ALL_corr_P1
+      SM_omega:      Omega_RhoMass_Bin4_dec0_ALL_ALL_P1
+      SM_omega_corr: Omega_RhoMass_Bin4_dec0_ALL_ALL_corr_P1
+    title: \omega \text{ rho - M1 scenario - m_{\rho} 0.80-0.90 GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin5_P1:
+    per_dataset:
+      P1:            Omega_RhoMass_Bin5_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin5_dec0_ALL_ALL_M1
+      SM_HV_corr:    Omega_RhoMass_Bin5_dec0_ALL_ALL_corr_M1
+      SM_omega:      Omega_RhoMass_Bin5_dec0_ALL_ALL_M1
+      SM_omega_corr: Omega_RhoMass_Bin5_dec0_ALL_ALL_corr_M1
+    title: \omega \text{ rho - P1 scenario - m_{\rho} 0.90-1.05 GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin5_M1:
+    per_dataset:
+      M1:            Omega_RhoMass_Bin5_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin5_dec0_ALL_ALL_P1
+      SM_HV_corr:    Omega_RhoMass_Bin5_dec0_ALL_ALL_corr_P1
+      SM_omega:      Omega_RhoMass_Bin5_dec0_ALL_ALL_P1
+      SM_omega_corr: Omega_RhoMass_Bin5_dec0_ALL_ALL_corr_P1
+    title: \omega \text{ rho - M1 scenario - m_{\rho} 0.90-1.05 GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin6_P1:
+    per_dataset:
+      P1:            Omega_RhoMass_Bin6_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin6_dec0_ALL_ALL_M1
+      SM_HV_corr:    Omega_RhoMass_Bin6_dec0_ALL_ALL_corr_M1
+      SM_omega:      Omega_RhoMass_Bin6_dec0_ALL_ALL_M1
+      SM_omega_corr: Omega_RhoMass_Bin6_dec0_ALL_ALL_corr_M1
+    title: \omega \text{ rho - P1 scenario - m_{\rho} 1.05-1.50 GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]
+
+  Omega_RhoMass_Bin6_M1:
+    per_dataset:
+      M1:            Omega_RhoMass_Bin6_dec0_ALL_ALL
+      SM_HV:         Omega_RhoMass_Bin6_dec0_ALL_ALL_P1
+      SM_HV_corr:    Omega_RhoMass_Bin6_dec0_ALL_ALL_corr_P1
+      SM_omega:      Omega_RhoMass_Bin6_dec0_ALL_ALL_P1
+      SM_omega_corr: Omega_RhoMass_Bin6_dec0_ALL_ALL_corr_P1
+    title: \omega \text{ rho - M1 scenario - m_{\rho} 1.05-1.50 GeV}
+    x: \omega
+    y: "Norm Events"
+    normalize: "max"
+    legend: [0.55, 0.55, 0.92, 0.88]
+    rebin: 4
+    diff_line:
+      y_range: [-0.15, 0.15]

@@ -2086,6 +2086,7 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
         # --- 3) Dibujar en dos pads si hay diferencia ---
         # Layout: top (70%) para principales, bottom (30%) para diferencia
         have_diff_panel = diff_graph is not None
+        diff_panel_xrange = None  # rango X compartido entre pad superior e inferior
 
         if have_diff_panel:
             pad_top = ROOT.TPad("pad_top", "pad_top", 0.0, 0.30, 1.0, 1.0)
@@ -2162,13 +2163,19 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                 o.SetTitle(cfg.get("title", ""))
                 # Ocultar etiquetas y título del eje X en el pad superior si hay panel de diferencia
                 if have_diff_panel:
-                                  # Usa el rango del gráfico de diferencia para forzar el mismo X en ambos pads
-                  x_min = diff_graph.GetXaxis().GetXmin()
-                  x_max = diff_graph.GetXaxis().GetXmax()
-
-                  # Forzar mismo rango y mismas divisiones/ticklength en el pad superior
-                  # (SetLimits para TGraph; para TH1 también funciona al haber frame creado)
-                  o.GetXaxis().SetLimits(x_min, x_max)
+                  # Alinear el eje X de ambos pads usando el rango REAL de los datos.
+                  # Para un TH1 hay que usar SetRangeUser (zoom): SetLimits remapea los
+                  # bordes de bin y deforma/desplaza el histograma (lo sacaba fuera de +-1
+                  # al copiar el rango auto-margen del TGraph de diferencia).
+                  if isinstance(o, ROOT.TH1):
+                      x_min = o.GetXaxis().GetXmin()
+                      x_max = o.GetXaxis().GetXmax()
+                      o.GetXaxis().SetRangeUser(x_min, x_max)
+                  else:
+                      x_min = diff_graph.GetXaxis().GetXmin()
+                      x_max = diff_graph.GetXaxis().GetXmax()
+                      o.GetXaxis().SetLimits(x_min, x_max)
+                  diff_panel_xrange = (x_min, x_max)
                   xax = o.GetXaxis()
                   xax.SetNdivisions(510)   # mismas divisiones que abajo
                   xax.SetTickLength(0.03)  # misma longitud de tick
@@ -2258,8 +2265,12 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
           title = dcfg2.get("label", "#Delta")
           # Dibuja el scatter con ejes propios
           diff_graph.Draw("AP")
-          x_min = diff_graph.GetXaxis().GetXmin()
-          x_max = diff_graph.GetXaxis().GetXmax()
+          # Forzar el MISMO rango X que el pad superior para que los ejes queden alineados
+          if diff_panel_xrange is not None:
+              x_min, x_max = diff_panel_xrange
+          else:
+              x_min = diff_graph.GetXaxis().GetXmin()
+              x_max = diff_graph.GetXaxis().GetXmax()
           diff_graph.GetXaxis().SetLimits(x_min, x_max)
           diff_graph.GetXaxis().SetNdivisions(510)
           diff_graph.GetXaxis().SetTickLength(0.03)
