@@ -462,7 +462,41 @@ def main(
     for b in range(nBins):
         dofit(b, False)
     dofit(nBins, True)
-    
+
+    # =================================================
+    # TABLA DE CONTEOS DE EVENTOS (usando histos _full)
+    # =================================================
+    def _integral(hname):
+        h = file.Get(hname)
+        if not h:
+            return 0.0
+        return h.Integral() * lumi_scale
+
+    n_sig  = _integral(f"{var}_SIGNAL_full")
+    n_mig  = _integral(f"{var}_BG_migrations_full")
+    n_zqq  = _integral(f"{var}_BG_Zqq_full")
+    n_bhab = _integral(f"{var}_BG_Bhabha_full")
+    n_ext  = n_zqq + n_bhab
+    n_tot  = n_sig + n_mig + n_ext
+
+    counts_txt = os.path.join(outdir, f"event_counts{tag}.txt")
+    with open(counts_txt, "w") as fc:
+        fc.write(f"{'Source':<22} {'Events':>12} {'%':>8}\n")
+        fc.write("-" * 44 + "\n")
+        fc.write(f"{'Signal (SS)':<22} {n_sig:>12.1f} {100*n_sig/n_tot if n_tot else 0:>7.2f}%\n")
+        fc.write(f"{'BG migrations':<22} {n_mig:>12.1f} {100*n_mig/n_tot if n_tot else 0:>7.2f}%\n")
+        if n_zqq > 0:
+            fc.write(f"{'BG Zqq':<22} {n_zqq:>12.1f} {100*n_zqq/n_tot if n_tot else 0:>7.2f}%\n")
+        if n_bhab > 0:
+            fc.write(f"{'BG Bhabha':<22} {n_bhab:>12.1f} {100*n_bhab/n_tot if n_tot else 0:>7.2f}%\n")
+        if n_ext > 0:
+            fc.write(f"{'BG external (total)':<22} {n_ext:>12.1f} {100*n_ext/n_tot if n_tot else 0:>7.2f}%\n")
+        fc.write("-" * 44 + "\n")
+        fc.write(f"{'Total':<22} {n_tot:>12.1f} {'100.00%':>8}\n")
+    if verbose:
+        with open(counts_txt) as fc:
+            print("[INFO] Tabla de conteos:\n" + fc.read())
+
     def my_minimization2(npar, gin, f, par, iflag):
         val = 0.0
         for b in range(nBins):

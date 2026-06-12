@@ -3,6 +3,7 @@ import math
 import ROOT
 import yaml
 import os
+import shutil
 import argparse
 import copy
 import logging
@@ -483,7 +484,8 @@ def setup_analysis_config(
     output_base: str = "Results/TauReco/",
     parser_hook=None,
     exp = False,
-    particle_analysis = False
+    particle_analysis = False,
+    log_subdir = None
 ):
     """
     Encapsulates argument configuration, config loading, cut application,
@@ -665,18 +667,29 @@ def setup_analysis_config(
         config["output"]["outputfile"] = [file_out]
     config["output"]["outputpath"] = path
 
+    # Carpeta de logs: si se indica log_subdir → path/logs/<log_subdir>/.
+    # Se vacía en cada run para que solo contenga los logs de la última ejecución.
+    if log_subdir:
+        log_dir = os.path.join(path, "logs", log_subdir)
+        if os.path.isdir(log_dir):
+            shutil.rmtree(log_dir)
+        os.makedirs(log_dir, exist_ok=True)
+    else:
+        log_dir = path
+
     if not exp:
         # Logging
         lvl = logging.WARNING if args.verbose == 0 else logging.INFO if args.verbose == 1 else logging.DEBUG
+        app_log = os.path.join(log_dir, f"app_{decay_str}.log")
         handlers = []
         if args.verbose < 2:
-            handlers = [logging.StreamHandler(sys.stdout), logging.FileHandler(os.path.join(path, f"app_{decay_str}.log"), mode="w")]
+            handlers = [logging.StreamHandler(sys.stdout), logging.FileHandler(app_log, mode="w")]
         elif args.verbose == 2:
             sh = logging.StreamHandler(sys.stdout); sh.setLevel(logging.DEBUG)
-            fh = logging.FileHandler(os.path.join(path, f"app_{decay_str}.log"), mode="w"); fh.setLevel(logging.DEBUG)
+            fh = logging.FileHandler(app_log, mode="w"); fh.setLevel(logging.DEBUG)
             handlers = [sh, fh]
         else:
-            handlers = [logging.FileHandler(os.path.join(path, f"app_{decay_str}.log"), mode="w")]
+            handlers = [logging.FileHandler(app_log, mode="w")]
 
         logging.basicConfig(
             level=lvl,
@@ -724,6 +737,7 @@ def setup_analysis_config(
         "config": config,
         "histograms_config": histograms_config,
         "outputpath": path,
+        "logdir": log_dir,
         "fileOutName": file_out,
         "loggers": loggers,
         "decay": select_decay,
@@ -847,33 +861,89 @@ def get_root_trees_path(sample, gatr_results_path, loggers, test, args=None, ski
             loggers["io"].error("Sample '%s' not found in %s.", sample, samples_config_path)
             sys.exit(1)
 
-        file_prefix = entry.get("file_prefix", default_prefix)
+        entry_prefix = entry.get("file_prefix", default_prefix)
+
+        # Resolve one or more source directories for this sample.
+        # Supported keys (singular = 1 dir, plural = list of dirs; can be combined):
+        #   path  / paths   -> absolute directory path(s)
+        #   folder/ folders -> name(s) relative to default_base
+        # List elements may be plain strings or dicts {path|folder, file_prefix}
+        # to give a given directory its own file prefix.
+        dir_specs = []  # list of (dir_path, file_prefix)
+
+        def _add_dir(value, is_folder):
+            if isinstance(value, (list, tuple)):
+                for v in value:
+                    _add_dir(v, is_folder)
+            elif isinstance(value, dict):
+                sub_prefix = value.get("file_prefix", entry_prefix)
+                if "path" in value:
+                    dir_specs.append((value["path"], sub_prefix))
+                elif "folder" in value:
+                    dir_specs.append((os.path.join(default_base, value["folder"]), sub_prefix))
+                else:
+                    loggers["io"].warning("Ignoring dir spec without 'path'/'folder': %r", value)
+            else:
+                dp = os.path.join(default_base, value) if is_folder else value
+                dir_specs.append((dp, entry_prefix))
+
+        for v in entry.get("paths", []):
+            _add_dir(v, is_folder=False)
+        for v in entry.get("folders", []):
+            _add_dir(v, is_folder=True)
         if "path" in entry:
-            dir_path = entry["path"]
-        else:
-            dir_path = os.path.join(default_base, entry["folder"])
+            _add_dir(entry["path"], is_folder=False)
+        if "folder" in entry:
+            _add_dir(entry["folder"], is_folder=True)
 
-        nfiles = sum(
-            1
-            for fname in os.listdir(dir_path)
-            if fname.endswith(".root") and os.path.isfile(os.path.join(dir_path, fname))
-        )
-        if test:
-            nfiles = 10
+        if not dir_specs:
+            loggers["io"].error(
+                "Sample '%s' has no 'path(s)'/'folder(s)' in %s.", sample, samples_config_path
+            )
+            sys.exit(1)
 
-        loggers["io"].info("Reading files from %s (%d files)", dir_path, nfiles)
+        bad_indices = set(entry.get("bad_file_indices", []))
+        if bad_indices:
+            loggers["io"].info("Skipping %d bad file indices for sample '%s': %s",
+                               len(bad_indices), sample, sorted(bad_indices))
+
         filenames = []
-        for i in range(1, nfiles + 1):
-            filename = os.path.join(dir_path, f"{file_prefix}_{i}.root")
-            loggers["io"].debug("Reading file %s", filename)
-            my_file = Path(filename)
-            if my_file.is_file():
-                if not skip_root_validation:
-                    root_file = open_root_file(filename)
-                    if not root_file or root_file.IsZombie():
-                        loggers["io"].warning("File %s is a zombie or could not be opened.", filename)
-                        continue
-                filenames.append(filename)
+        remaining = 100 if test else None  # --test caps the total number of files
+        for dir_path, file_prefix in dir_specs:
+            if remaining is not None and remaining <= 0:
+                break
+            if not os.path.isdir(dir_path):
+                loggers["io"].warning("Directory %s not found, skipping.", dir_path)
+                continue
+
+            nfiles = sum(
+                1
+                for fname in os.listdir(dir_path)
+                if fname.endswith(".root") and os.path.isfile(os.path.join(dir_path, fname))
+            )
+            if remaining is not None:
+                nfiles = min(nfiles, remaining)
+
+            loggers["io"].info("Reading files from %s (%d files)", dir_path, nfiles)
+            for i in range(1, nfiles + 1):
+                if i in bad_indices:
+                    loggers["io"].debug("Skipping bad file index %d", i)
+                    continue
+                filename = os.path.join(dir_path, f"{file_prefix}_{i}.root")
+                loggers["io"].debug("Reading file %s", filename)
+                my_file = Path(filename)
+                if my_file.is_file():
+                    if not skip_root_validation:
+                        root_file = open_root_file(filename)
+                        if not root_file or root_file.IsZombie():
+                            loggers["io"].warning("File %s is a zombie or could not be opened.", filename)
+                            continue
+                    filenames.append(filename)
+
+            if remaining is not None:
+                remaining = 10 - len(filenames)
+
+        loggers["io"].info("Total files to process for sample '%s': %d", sample, len(filenames))
     return filenames, mlpf_results
 
 

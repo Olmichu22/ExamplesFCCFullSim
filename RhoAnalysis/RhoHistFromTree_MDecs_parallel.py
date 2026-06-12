@@ -48,6 +48,8 @@ from RhoAnalysis.temp_functions import extract_scalars_optional, make_p4
 
 _DEFAULT_CONFIG = "config/default/taurecolong.yaml"
 _OUTPUT_BASE    = "Results/RhoAnalysis/"
+# Subcarpeta dentro de <outputpath>/logs/ donde se guardan los logs de este script
+_LOG_SOURCE     = "RhoHistFromTree_MDecs"
 
 _SHARED_MDECS = [
     ("GenZMass",    "GenZMass",    float),
@@ -61,7 +63,7 @@ _TAU_KEYS_MDECS = [
     "visP", "visE", "visM", "visTheta", "visPhi",
     "pionP", "pionE", "pionM", "pionTheta", "pionPhi",
     "lepP", "lepE", "lepTheta", "lepPhi", "lepPDG",
-    "decayID", "cos_theta", "cos_psi", "cos_beta",
+    "decayID", "tauPDG", "genHelicity", "cos_theta", "cos_psi", "cos_beta",
     "omega", "weight_P1", "weight_M1",
     "cos_theta_tau", "optimalVar", "isElectron", "nPhotons",
     "recoVisP", "recoVisE", "recoVisM", "recoVisTheta", "recoVisPhi",
@@ -100,6 +102,12 @@ WEIGHT_VALUES_MDECS = {
 # v = vars del hemisferio, sh = shared_vars
 # El nombre real en el YAML es base_name + "_dec0" o "_dec1".
 
+# Predicados de carga del tau de ESTE hemisferio (PDG: 15 = τ⁻, −15 = τ⁺).
+def _is_taup(v):  # τ⁺  (carga +1)
+    return int(v.get("tauPDG", 0)) == -15
+def _is_taum(v):  # τ⁻  (carga −1)
+    return int(v.get("tauPDG", 0)) == 15
+
 FILL_RULES_PER_DEC = [
     # ── Gen ───────────────────────────────────────────────────────────────────
     ("Gen",     "Omega",              lambda v, sh: v["omega"],                    None),
@@ -137,7 +145,7 @@ FILL_RULES_PER_DEC = [
     ("Gen",     "Omega_RhoMass_Bin6", lambda v, sh: v["omega"],                   None,
                                       lambda v, sh: 1.05 <= v["visM"] < 1.50),
     # ── Reco ──────────────────────────────────────────────────────────────────
-    ("Reco",    "Omega_Reco",         lambda v, sh: v["omega"],                    None),
+    ("Reco",    "Omega_Reco",         lambda v, sh: v.get("_omega_reco", -999.0),  None),
     ("Reco",    "CosTheta",           lambda v, sh: v["cos_theta"],               None),
     ("Reco",    "CosPsi",             lambda v, sh: v["cos_psi"],                 None),
     ("Reco",    "RecoVisEOverBeamE",  lambda v, sh: v["recoVisE"] / sh["beamE"]
@@ -146,10 +154,57 @@ FILL_RULES_PER_DEC = [
     ("Reco",    "RecoVisP",           lambda v, sh: v["recoVisP"],                None),
     ("Reco",    "RecoDecayType",      lambda v, sh: float(v["recoTauID"]),        None),
     ("Reco",    "Optimal_X",          lambda v, sh: v.get("_optimal_x", 0.0),    None),
+    # 2D var-óptima-reco × cosθ-visible-reco para el fit de polarización (A_τ/A_e).
+    # X = variable óptima reco del canal (ω reco para ρ; x reco para π/lep); Y = cosθ visible reco.
+    ("Reco",    "OptimalReco_vs_CosThetaVis",
+                                       lambda v, sh: v.get("_optimal_unified_reco", -999.0),
+                                       lambda v, sh: math.cos(v["recoVisTheta"])),
     # ── Matched ───────────────────────────────────────────────────────────────
     ("Matched", "VisEOverBeamE",      lambda v, sh: v["visE"] / sh["beamE"]
                                                     if sh["beamE"] else 0.0,      None),
     ("Matched", "VisCosTheta",        lambda v, sh: math.cos(v["visTheta"]),      None),
+
+    # ── Separación por carga τ⁺/τ⁻ de los observables de polarización ──────────
+    # Mismo x que la variable inclusiva, con cond_fn extra sobre tauPDG.
+    # Para los Omega_RhoMass_Bin* se mantiene además el corte de masa visM.
+    ("Gen",  "Omega_plus",       lambda v, sh: v["omega"],      None, lambda v, sh: _is_taup(v)),
+    ("Gen",  "Omega_minus",      lambda v, sh: v["omega"],      None, lambda v, sh: _is_taum(v)),
+    ("Gen",  "OptimalVar_plus",  lambda v, sh: v["optimalVar"], None, lambda v, sh: _is_taup(v)),
+    ("Gen",  "OptimalVar_minus", lambda v, sh: v["optimalVar"], None, lambda v, sh: _is_taum(v)),
+    ("Gen",  "Omega_RhoMass_Bin1_plus",  lambda v, sh: v["omega"], None, lambda v, sh: 0.40 <= v["visM"] < 0.60 and _is_taup(v)),
+    ("Gen",  "Omega_RhoMass_Bin1_minus", lambda v, sh: v["omega"], None, lambda v, sh: 0.40 <= v["visM"] < 0.60 and _is_taum(v)),
+    ("Gen",  "Omega_RhoMass_Bin2_plus",  lambda v, sh: v["omega"], None, lambda v, sh: 0.60 <= v["visM"] < 0.70 and _is_taup(v)),
+    ("Gen",  "Omega_RhoMass_Bin2_minus", lambda v, sh: v["omega"], None, lambda v, sh: 0.60 <= v["visM"] < 0.70 and _is_taum(v)),
+    ("Gen",  "Omega_RhoMass_Bin3_plus",  lambda v, sh: v["omega"], None, lambda v, sh: 0.70 <= v["visM"] < 0.80 and _is_taup(v)),
+    ("Gen",  "Omega_RhoMass_Bin3_minus", lambda v, sh: v["omega"], None, lambda v, sh: 0.70 <= v["visM"] < 0.80 and _is_taum(v)),
+    ("Gen",  "Omega_RhoMass_Bin4_plus",  lambda v, sh: v["omega"], None, lambda v, sh: 0.80 <= v["visM"] < 0.90 and _is_taup(v)),
+    ("Gen",  "Omega_RhoMass_Bin4_minus", lambda v, sh: v["omega"], None, lambda v, sh: 0.80 <= v["visM"] < 0.90 and _is_taum(v)),
+    ("Gen",  "Omega_RhoMass_Bin5_plus",  lambda v, sh: v["omega"], None, lambda v, sh: 0.90 <= v["visM"] < 1.05 and _is_taup(v)),
+    ("Gen",  "Omega_RhoMass_Bin5_minus", lambda v, sh: v["omega"], None, lambda v, sh: 0.90 <= v["visM"] < 1.05 and _is_taum(v)),
+    ("Gen",  "Omega_RhoMass_Bin6_plus",  lambda v, sh: v["omega"], None, lambda v, sh: 1.05 <= v["visM"] < 1.50 and _is_taup(v)),
+    ("Gen",  "Omega_RhoMass_Bin6_minus", lambda v, sh: v["omega"], None, lambda v, sh: 1.05 <= v["visM"] < 1.50 and _is_taum(v)),
+    # Helicidad por carga: τ⁻ hel=-1 (tipo M1), τ⁻ hel=+1 (tipo P1); τ⁺ invertido.
+    ("Gen",  "Omega_minus_NegHel", lambda v, sh: v["omega"], None, lambda v, sh: _is_taum(v) and v.get("genHelicity", 0.0) < 0),
+    ("Gen",  "Omega_minus_PosHel", lambda v, sh: v["omega"], None, lambda v, sh: _is_taum(v) and v.get("genHelicity", 0.0) > 0),
+    ("Gen",  "Omega_plus_NegHel",  lambda v, sh: v["omega"], None, lambda v, sh: _is_taup(v) and v.get("genHelicity", 0.0) < 0),
+    ("Gen",  "Omega_plus_PosHel",  lambda v, sh: v["omega"], None, lambda v, sh: _is_taup(v) and v.get("genHelicity", 0.0) > 0),
+    ("Reco", "Omega_Reco_plus",  lambda v, sh: v.get("_omega_reco", -999.0), None, lambda v, sh: _is_taup(v)),
+    ("Reco", "Omega_Reco_minus", lambda v, sh: v.get("_omega_reco", -999.0), None, lambda v, sh: _is_taum(v)),
+    ("Reco", "Optimal_X_plus",   lambda v, sh: v.get("_optimal_x", 0.0), None, lambda v, sh: _is_taup(v)),
+    ("Reco", "Optimal_X_minus",  lambda v, sh: v.get("_optimal_x", 0.0), None, lambda v, sh: _is_taum(v)),
+    # Omega_Reco en 6 bins de masa reco del rho (recoVisM) — mismo binado que gen, pero reco
+    ("Reco", "Omega_Reco_RhoMass_Bin1", lambda v, sh: v.get("_omega_reco", -999.0), None,
+                                         lambda v, sh: 0.40 <= v["recoVisM"] < 0.60),
+    ("Reco", "Omega_Reco_RhoMass_Bin2", lambda v, sh: v.get("_omega_reco", -999.0), None,
+                                         lambda v, sh: 0.60 <= v["recoVisM"] < 0.70),
+    ("Reco", "Omega_Reco_RhoMass_Bin3", lambda v, sh: v.get("_omega_reco", -999.0), None,
+                                         lambda v, sh: 0.70 <= v["recoVisM"] < 0.80),
+    ("Reco", "Omega_Reco_RhoMass_Bin4", lambda v, sh: v.get("_omega_reco", -999.0), None,
+                                         lambda v, sh: 0.80 <= v["recoVisM"] < 0.90),
+    ("Reco", "Omega_Reco_RhoMass_Bin5", lambda v, sh: v.get("_omega_reco", -999.0), None,
+                                         lambda v, sh: 0.90 <= v["recoVisM"] < 1.05),
+    ("Reco", "Omega_Reco_RhoMass_Bin6", lambda v, sh: v.get("_omega_reco", -999.0), None,
+                                         lambda v, sh: 1.05 <= v["recoVisM"] < 1.50),
 ]
 
 # Reglas para histogramas compartidos (no por hemisferio).
@@ -217,19 +272,29 @@ def _flatten_histograms(nested, result=None):
     return result
 
 
-def _assign_single_decay(tau1_vars, tau2_vars, id_gen):
-    """Asigna un único tau a 'este' y el otro a 'otro' según id_gen.
+def _assign_single_decay(tau1_vars, tau2_vars, id_gen, id_reco=None, only_gen=False):
+    """Asigna un único tau a 'este' y el otro a 'otro' según el canal objetivo.
+
+    only_gen=False (reco real): selecciona por id RECO exacto (recoTauID == id_reco;
+        1 y 2 son canales distintos, sin remap), como analysisRHOTree.py
+        (`recoTauID==selectDecay`). La señal/fondo se decide luego por gen.
+    only_gen=True (árbol gen-only): selecciona por decayID (id gen, id_gen ya con
+        remap 2→1).
 
     Si tau1 coincide: devuelve (tau1, tau2).
     Si solo tau2 coincide: devuelve (tau2, tau1).
     Si ambos coinciden: devuelve (tau1, tau2) — una sola vez, por convención.
     Si ninguno coincide: devuelve (None, None).
     """
-    t1 = int(tau1_vars.get("decayID", -999))
-    t2 = int(tau2_vars.get("decayID", -999))
-    if t1 == id_gen:
+    if only_gen:
+        target, key = id_gen, "decayID"
+    else:
+        target, key = id_reco, "recoTauID"
+    t1 = int(tau1_vars.get(key, -999))
+    t2 = int(tau2_vars.get(key, -999))
+    if t1 == target:
         return tau1_vars, tau2_vars
-    if t2 == id_gen:
+    if t2 == target:
         return tau2_vars, tau1_vars
     return None, None
 
@@ -263,6 +328,15 @@ def _recompute_weights(tau_vars, beamE, sin_eff, use_omega=False):
     tau_vars["weight_M1"] = w_M1
 
 
+def _reco_htype(reco_id):
+    """Tipo hadrónico para weightsPol (espera 0/1/10): ρ reco (2) → 1.
+
+    A nivel RECO la ρ tiene recoTauID==2 (la gen usa decayID==1). weightsPol
+    (_compute_H, newAtau) solo entiende 0/1/10, así que hay que remapear 2→1.
+    """
+    return 1 if reco_id == 2 else reco_id
+
+
 def _recompute_reco_weights(tau_vars, beamE, sin_eff, use_omega=False):
     """
     Calcula reco_weight_P1/reco_weight_M1 con cinemática reco.
@@ -287,18 +361,19 @@ def _recompute_reco_weights(tau_vars, beamE, sin_eff, use_omega=False):
     tau_proxy_P4 = make_p4(tau_P, tau_vars["recoVisTheta"],
                             tau_vars["recoVisPhi"], tau_E)
 
-    if reco_id in (0, 1, 10):  # hadrónico reco
+    if reco_id in (0, 1, 2, 10):  # hadrónico reco (ρ reco = 2)
         vis_P4 = make_p4(tau_vars["recoVisP"], tau_vars["recoVisTheta"],
                           tau_vars["recoVisPhi"], tau_vars["recoVisE"])
-        if use_omega and reco_id == 1:
+        if use_omega and reco_id in (1, 2):
             pion_P4 = make_p4(tau_vars["recoPionP"], tau_vars["recoPionTheta"],
                                tau_vars["recoPionPhi"], tau_vars["recoPionE"])
             _, _, _, omega_reco = optimalVariabRho.wVariabRECO(vis_P4, pion_P4, beamE)
             w_P1 = weightsPol.newAtauRhoOmega(tau_proxy_P4, omega_reco, +1, sin_eff=sin_eff)
             w_M1 = weightsPol.newAtauRhoOmega(tau_proxy_P4, omega_reco, -1, sin_eff=sin_eff)
         else:
-            w_P1 = weightsPol.newAtau(tau_proxy_P4, vis_P4, reco_id, +1, sin_eff=sin_eff)
-            w_M1 = weightsPol.newAtau(tau_proxy_P4, vis_P4, reco_id, -1, sin_eff=sin_eff)
+            htype = _reco_htype(reco_id)
+            w_P1 = weightsPol.newAtau(tau_proxy_P4, vis_P4, htype, +1, sin_eff=sin_eff)
+            w_M1 = weightsPol.newAtau(tau_proxy_P4, vis_P4, htype, -1, sin_eff=sin_eff)
     elif reco_id in (-11, -13):  # leptónico reco
         lep_P4 = make_p4(tau_vars["recoLepP"], tau_vars["recoLepTheta"],
                           tau_vars["recoLepPhi"], tau_vars["recoLepE"])
@@ -333,9 +408,13 @@ def _get_H_for_joint(tau_vars, beamE, use_omega):
 
 def _compute_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff, use_omega=False):
     """
-    Peso conjunto dos-tau (Alcaraz 2026 eqs. 9 y 13) con cinemática gen.
+    Peso conjunto dos-tau (Alcaraz 2026 eqs. 9, 13 y 16) con cinemática gen.
     Incluye el término cruzado H·H' ausente en el producto independiente.
     Almacena weight_corr_P1/M1 (idéntico en ambos hemisferios).
+
+    Se aplica a TODAS las combinaciones con observable definido: had-had,
+    had-lep y lep-lep (eq. 16 general). El producto solo se usa como último
+    recurso para decays no soportados.
 
     Con use_omega=True: usa omega almacenado en el árbol para taus rho,
     H_V/H_ell para los demás. La fórmula siempre es:
@@ -358,7 +437,15 @@ def _compute_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff, use_omega=False
             H  = _get_H_for_joint(vars_dec0, beamE, use_omega)
             Hp = _get_H_for_joint(vars_dec1, beamE, use_omega)
             w  = weightsPol.newAtauJoint(p4(vars_dec1), Hp, H, New_Atau, sin_eff=sin_eff)
+        elif is_lep(id0) and is_lep(id1):
+            # lep-lep: fórmula joint general (Alcaraz eq. 16) con H = H_ell para ambos
+            # τ. El término cruzado H·H' (correlación de espín) es físico también aquí;
+            # el producto independiente sería incorrecto.
+            H  = _get_H_for_joint(vars_dec0, beamE, use_omega)
+            Hp = _get_H_for_joint(vars_dec1, beamE, use_omega)
+            w  = weightsPol.newAtauJoint(p4(vars_dec0), H, Hp, New_Atau, sin_eff=sin_eff)
         else:
+            # Solo decays no soportados (p.ej. id -2): producto como último recurso.
             w = (vars_dec0.get(f"weight_{suffix}", 1.0) *
                  vars_dec1.get(f"weight_{suffix}", 1.0))
         vars_dec0[f"weight_corr_{suffix}"] = w
@@ -372,6 +459,28 @@ def _reco_tau_proxy(tau_vars, beamE):
     return make_p4(tau_P, tau_vars["recoVisTheta"], tau_vars["recoVisPhi"], tau_E)
 
 
+def _compute_omega_reco(tau_vars, beamE):
+    """
+    ω reco = variable óptima reconstruida del canal ρ vía wVariabRECO
+    (misma fórmula angular que gen pero con θ_ρ analítico y 4-vectores reco).
+    Solo definida para ρ reco (recoTauID 1 ó 2: ρ con un fotón perdido vs ρ
+    completo — ambos vienen de un ρ, se calcula la var óptima igual); para los
+    demás canales devuelve -999.0, igual que la convención de la rama gen `omega`.
+    """
+    if beamE <= 0 or int(tau_vars.get("recoTauID", -999)) not in (1, 2):
+        return -999.0
+    vis_P4  = make_p4(tau_vars["recoVisP"],  tau_vars["recoVisTheta"],
+                      tau_vars["recoVisPhi"], tau_vars["recoVisE"])
+    pion_P4 = make_p4(tau_vars["recoPionP"], tau_vars["recoPionTheta"],
+                      tau_vars["recoPionPhi"], tau_vars["recoPionE"])
+    ct_reco, cp_reco, _, omega_reco = optimalVariabRho.wVariabRECO(vis_P4, pion_P4, beamE)
+    # Guardar cos_theta/cos_psi reco para el corte de bordes de ω (legacy: abs(==1) =
+    # caso clampeado, cinemática fuera del rango τ→ρ permitido → enriquecido en fakes).
+    tau_vars["_ct_reco"] = ct_reco
+    tau_vars["_cp_reco"] = cp_reco
+    return omega_reco
+
+
 def _get_H_for_joint_reco(tau_vars, beamE, use_omega):
     """
     Observable de spin H a usar en la fórmula joint con cinemática reco.
@@ -381,17 +490,17 @@ def _get_H_for_joint_reco(tau_vars, beamE, use_omega):
     - Leptónico: H_ell = variable óptima leptónica (no hay otra; x_ell es toda la info).
     """
     reco_id = int(tau_vars.get("recoTauID", -999))
-    if use_omega and reco_id == 1:
+    if use_omega and reco_id in (1, 2):
         vis_P4  = make_p4(tau_vars["recoVisP"],  tau_vars["recoVisTheta"],
                           tau_vars["recoVisPhi"], tau_vars["recoVisE"])
         pion_P4 = make_p4(tau_vars["recoPionP"], tau_vars["recoPionTheta"],
                           tau_vars["recoPionPhi"], tau_vars["recoPionE"])
         _, _, _, omega_reco = optimalVariabRho.wVariabRECO(vis_P4, pion_P4, beamE)
         return omega_reco
-    if reco_id in (0, 1, 10):
+    if reco_id in (0, 1, 2, 10):
         vis_P4 = make_p4(tau_vars["recoVisP"], tau_vars["recoVisTheta"],
                          tau_vars["recoVisPhi"], tau_vars["recoVisE"])
-        H = weightsPol._compute_H(vis_P4, _reco_tau_proxy(tau_vars, beamE), reco_id)
+        H = weightsPol._compute_H(vis_P4, _reco_tau_proxy(tau_vars, beamE), _reco_htype(reco_id))
         return H if H is not None else 0.0
     if reco_id in (-11, -13):
         lep_P4 = make_p4(tau_vars["recoLepP"], tau_vars["recoLepTheta"],
@@ -410,7 +519,7 @@ def _compute_reco_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff, use_omega=
     """
     reco_id0 = int(vars_dec0.get("recoTauID", -999))
     reco_id1 = int(vars_dec1.get("recoTauID", -999))
-    is_had = lambda d: d in (0, 1, 10)
+    is_had = lambda d: d in (0, 1, 2, 10)  # ρ reco = 2
     is_lep = lambda d: d in (-11, -13)
 
     if beamE <= 0:
@@ -430,26 +539,44 @@ def _compute_reco_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff, use_omega=
             Hp = _get_H_for_joint_reco(vars_dec1, beamE, use_omega)
             w  = weightsPol.newAtauJoint(_reco_tau_proxy(vars_dec1, beamE), Hp, H,
                                          New_Atau, sin_eff=sin_eff)
+        elif is_lep(reco_id0) and is_lep(reco_id1):
+            # lep-lep reco: fórmula joint general (eq. 16), H_ell para ambos.
+            H  = _get_H_for_joint_reco(vars_dec0, beamE, use_omega)
+            Hp = _get_H_for_joint_reco(vars_dec1, beamE, use_omega)
+            w  = weightsPol.newAtauJoint(_reco_tau_proxy(vars_dec0, beamE), H, Hp,
+                                         New_Atau, sin_eff=sin_eff)
         else:
+            # Solo decays no soportados: producto como último recurso.
             w = (vars_dec0.get(f"reco_weight_{suffix}", 1.0) *
                  vars_dec1.get(f"reco_weight_{suffix}", 1.0))
         vars_dec0[f"reco_weight_corr_{suffix}"] = w
         vars_dec1[f"reco_weight_corr_{suffix}"] = w
 
 
-def _assign_hemispheres(tau1_vars, tau2_vars, id0_gen, id1_gen):
-    """Asigna tau1/tau2 a dec0/dec1 por decayID (order-independent).
+def _assign_hemispheres(tau1_vars, tau2_vars, id0_gen, id1_gen,
+                        reco_id0=None, reco_id1=None, only_gen=False):
+    """Asigna tau1/tau2 a dec0/dec1 (order-independent).
+
+    only_gen=False (reco real): selecciona/empareja por id RECO exacto
+        (recoTauID == reco_id0/reco_id1; 1 y 2 son canales distintos, sin remap),
+        como analysisRHOTree.py (`recoTauID==selectDecay`). La señal/fondo se
+        decide después por verdad gen.
+    only_gen=True (árbol gen-only): empareja por decayID (ids gen, con remap 2→1
+        ya aplicado en id0_gen/id1_gen).
 
     Devuelve (vars_dec0, vars_dec1) o (None, None) si el evento no encaja con
-    el par de desintegraciones esperado.
-    Para par simétrico (id0_gen == id1_gen), asigna tau1→dec0, tau2→dec1.
+    el par esperado. Para par simétrico, asigna tau1→dec0, tau2→dec1.
     """
-    t1_id = int(tau1_vars.get("decayID", -999))
-    t2_id = int(tau2_vars.get("decayID", -999))
+    if only_gen:
+        a0, a1, key = id0_gen, id1_gen, "decayID"
+    else:
+        a0, a1, key = reco_id0, reco_id1, "recoTauID"
+    t1_id = int(tau1_vars.get(key, -999))
+    t2_id = int(tau2_vars.get(key, -999))
 
-    if t1_id == id0_gen and t2_id == id1_gen:
+    if t1_id == a0 and t2_id == a1:
         return tau1_vars, tau2_vars
-    if t2_id == id0_gen and t1_id == id1_gen:
+    if t2_id == a0 and t1_id == a1:
         return tau2_vars, tau1_vars
     return None, None
 
@@ -463,23 +590,27 @@ def _classify_hemisphere(dec_vars, expected_gen_id, use_reco=False,
 
     only_gen=True  → el árbol es gen-only (recoTauID contiene IDs gen); se remap 2→1
                      tanto en la rama gen como reco.
-    only_gen=False → árbol reco real; para gen se remap 2→1 (no-op, decayID ya es gen);
-                     para reco NO se remap y se compara contra expected_reco_id.
+    only_gen=False → árbol reco real. El evento YA está seleccionado por id reco
+                     aguas arriba (_assign_hemispheres / _assign_single_decay), donde
+                     1 y 2 son canales distintos. Aquí la SEÑAL/FONDO se decide por
+                     la VERDAD GEN (decayID), igual que analysisRHOTree.py
+                     (`genTauID==selectGEN`): SIGNAL si el gen coincide con el canal,
+                     y el desglose BG{Muon,Ele,Pion,Rho,A1,Other} es por decayID gen.
+                     Todos los fondos así definidos están reconstruidos como el canal
+                     (p.ej. ρ) → tienen variable óptima/ω definida.
     """
     if use_reco and not only_gen:
-        # Reco real: usar el ID reco tal cual, sin remap.
-        actual = int(dec_vars.get("recoTauID", -999))
-        expected = expected_reco_id if expected_reco_id is not None else expected_gen_id
-        if expected is not None and actual == expected:
+        # Reco real: señal/fondo por VERDAD GEN (decayID), no por id reco.
+        actual = int(dec_vars.get("decayID", -999))
+        if expected_gen_id is not None and actual == expected_gen_id:
             return "SIGNAL"
-        # Para el nombre BG sí se remap al espacio gen (solo para la etiqueta).
-        if actual == 2:
-            actual = 1
         return _BG_MAP.get(actual, "BGOther")
     else:
-        # Gen path, o reco de árbol gen-only (only_gen=True): remap 2→1.
+        # Gen path, o reco de árbol gen-only (only_gen=True).
+        # Aquí no se remapea el decayID gen real: si el árbol contiene 2,
+        # ese modo se clasifica como fondo y no como rho señal.
         actual = int(dec_vars.get("recoTauID" if use_reco else "decayID", -999))
-        if actual == 2:
+        if only_gen and use_reco and actual == 2:
             actual = 1
         if expected_gen_id is not None and actual == expected_gen_id:
             return "SIGNAL"
@@ -654,6 +785,8 @@ def process_tree_range_mdecs(trees, root_histograms_super,
     lepton_cut = cuts_cfg.get("lepton_cut", [0.0, np.inf])
     zmass_cut  = cuts_cfg.get("zmass_cut",  [0.0, np.inf])
     angle_sep  = cuts_cfg.get("angle_sep",  [0.0, np.inf])
+    cos_acc    = cuts_cfg.get("cos_acceptance", 1.0)  # corte aceptancia |cos(θ_mesón)|<=cos_acc (legacy: 0.95)
+    omega_border = cuts_cfg.get("omega_border_cut", False)  # legacy: descarta |cos_theta_reco|==1 o |cos_psi_reco|==1
     extra_cuts = cuts_cfg.get("extra_cuts", [])
 
     totalEvents    = 0
@@ -692,24 +825,26 @@ def process_tree_range_mdecs(trees, root_histograms_super,
             if single_decay_id_gen is not None:
                 # ── Modo single-decay ──────────────────────────────────────────
                 vars_this, vars_other = _assign_single_decay(
-                    tau1_vars, tau2_vars, single_decay_id_gen)
+                    tau1_vars, tau2_vars, single_decay_id_gen,
+                    id_reco=single_decay_id, only_gen=only_gen)
                 if vars_this is None:
                     continue
 
-                # Joint two-tau weights (Alcaraz 2026 eqs. 9/13). El otro hemisferio SÍ
-                # está disponible (vars_other), así que se usa la fórmula joint completa
-                # con término cruzado, igual que en modo pair. El producto de pesos
-                # per-tau es incorrecto (doble-cuenta la polarización de producción).
-                if compute_weights and sin_eff is not None:
-                    _compute_joint_weights(vars_this, vars_other, beamE, sin_eff, use_omega=use_omega)
-                else:
-                    for v0, v1 in [(vars_this, vars_other), (vars_other, vars_this)]:
-                        for sfx in ("P1", "M1"):
-                            v0[f"weight_corr_{sfx}"] = v0.get(f"weight_{sfx}", 1.0) * v1.get(f"weight_{sfx}", 1.0)
+                # Joint two-tau weights (Alcaraz 2026 eqs. 9/13/16): SIEMPRE la fórmula
+                # joint completa con término cruzado, en gen y reco. El otro hemisferio
+                # está disponible (vars_other). El producto de pesos per-tau es incorrecto
+                # (doble-cuenta la polarización de producción) y ya no se usa salvo, dentro
+                # de _compute_joint_weights, para decays no soportados.
+                _compute_joint_weights(vars_this, vars_other, beamE, _sin, use_omega=use_omega)
                 _compute_reco_joint_weights(vars_this, vars_other, beamE, _sin, use_omega=use_omega)
 
                 for vd in (vars_this, vars_other):
                     vd["_optimal_x"] = (2.0 * vd["recoVisE"] / beamE - 1.0) if beamE else 0.0
+                    vd["_omega_reco"] = _compute_omega_reco(vd, beamE)
+                    # Variable óptima reco unificada por canal: ω reco para ρ (id 1 ó 2),
+                    # x reco para el resto.
+                    vd["_optimal_unified_reco"] = (
+                        vd["_omega_reco"] if int(vd.get("recoTauID", -999)) in (1, 2) else vd["_optimal_x"])
 
                 if vars_this["recoVisP"] < tauPCut:
                     continue
@@ -717,6 +852,9 @@ def process_tree_range_mdecs(trees, root_histograms_super,
                 if not (zmass_cut[0] <= zmass <= zmass_cut[1]):
                     continue
                 if not (meson_cut[0] <= vars_this["recoVisP"] <= meson_cut[1]):
+                    continue
+                # Aceptancia legacy: |cos(θ_mesón)| <= cos_acc (analysisRHOTree.py, 0.95)
+                if abs(math.cos(vars_this["recoVisTheta"])) > cos_acc:
                     continue
                 if not (lepton_cut[0] <= vars_other["recoVisP"] <= lepton_cut[1]):
                     continue
@@ -728,6 +866,12 @@ def process_tree_range_mdecs(trees, root_histograms_super,
                 dR = myutils.dRAngle(p4_this, p4_other)
                 if not (angle_sep[0] <= dR <= angle_sep[1]):
                     continue
+                # Corte de bordes de ω (legacy analysisRHOTree.py): descarta el ρ si su
+                # cos_theta/cos_psi reco quedan clampeados a ±1 (cinemática no física).
+                if omega_border:
+                    _ct = vars_this.get("_ct_reco"); _cp = vars_this.get("_cp_reco")
+                    if _ct is not None and (abs(_ct) >= 1.0 or abs(_cp) >= 1.0):
+                        continue
 
                 if extra_cuts:
                     skip = False
@@ -779,23 +923,24 @@ def process_tree_range_mdecs(trees, root_histograms_super,
 
             else:
                 # ── Modo pair (comportamiento original) ───────────────────────
-                vars_dec0, vars_dec1 = _assign_hemispheres(tau1_vars, tau2_vars, id0_gen, id1_gen)
+                vars_dec0, vars_dec1 = _assign_hemispheres(
+                    tau1_vars, tau2_vars, id0_gen, id1_gen,
+                    reco_id0=decay_pair[0], reco_id1=decay_pair[1], only_gen=only_gen)
                 if vars_dec0 is None:
                     continue
 
-                # Joint two-tau weights (Alcaraz 2026 eqs. 9/13)
-                if compute_weights and sin_eff is not None:
-                    _compute_joint_weights(vars_dec0, vars_dec1, beamE, sin_eff,
-                                           use_omega=use_omega)
-                else:
-                    # Fallback: product of stored per-tau weights
-                    for v0, v1 in [(vars_dec0, vars_dec1), (vars_dec1, vars_dec0)]:
-                        for sfx in ("P1", "M1"):
-                            v0[f"weight_corr_{sfx}"] = v0.get(f"weight_{sfx}", 1.0) * v1.get(f"weight_{sfx}", 1.0)
+                # Joint two-tau weights (Alcaraz 2026 eqs. 9/13/16): SIEMPRE joint completo
+                # (gen y reco), independiente de --compute-weights.
+                _compute_joint_weights(vars_dec0, vars_dec1, beamE, _sin, use_omega=use_omega)
                 _compute_reco_joint_weights(vars_dec0, vars_dec1, beamE, _sin, use_omega=use_omega)
 
                 for vd in (vars_dec0, vars_dec1):
                     vd["_optimal_x"] = (2.0 * vd["recoVisE"] / beamE - 1.0) if beamE else 0.0
+                    vd["_omega_reco"] = _compute_omega_reco(vd, beamE)
+                    # Variable óptima reco unificada por canal: ω reco para ρ (id 1 ó 2),
+                    # x reco para el resto.
+                    vd["_optimal_unified_reco"] = (
+                        vd["_omega_reco"] if int(vd.get("recoTauID", -999)) in (1, 2) else vd["_optimal_x"])
 
                 if vars_dec0["recoVisP"] < tauPCut:
                     continue
@@ -803,6 +948,9 @@ def process_tree_range_mdecs(trees, root_histograms_super,
                 if not (zmass_cut[0] <= zmass <= zmass_cut[1]):
                     continue
                 if not (meson_cut[0] <= vars_dec0["recoVisP"] <= meson_cut[1]):
+                    continue
+                # Aceptancia legacy: |cos(θ_mesón)| <= cos_acc (analysisRHOTree.py, 0.95)
+                if abs(math.cos(vars_dec0["recoVisTheta"])) > cos_acc:
                     continue
                 if not (lepton_cut[0] <= vars_dec1["recoVisP"] <= lepton_cut[1]):
                     continue
@@ -814,6 +962,12 @@ def process_tree_range_mdecs(trees, root_histograms_super,
                 dR = myutils.dRAngle(p4_dec0, p4_dec1)
                 if not (angle_sep[0] <= dR <= angle_sep[1]):
                     continue
+                # Corte de bordes de ω (legacy analysisRHOTree.py): descarta el ρ si su
+                # cos_theta/cos_psi reco quedan clampeados a ±1 (cinemática no física).
+                if omega_border:
+                    _ct = vars_dec0.get("_ct_reco"); _cp = vars_dec0.get("_cp_reco")
+                    if _ct is not None and (abs(_ct) >= 1.0 or abs(_cp) >= 1.0):
+                        continue
 
                 if extra_cuts:
                     skip = False
@@ -882,7 +1036,9 @@ def process_chunk_stage2_mdecs(input_root, tree_keys, entry_range, config_bundle
     for h in root_logger.handlers[:]:
         root_logger.removeHandler(h)
         h.close()
-    log_file = os.path.join(outputpath, f"worker_{worker_id}.log")
+    log_dir = os.path.join(outputpath, "logs", _LOG_SOURCE)
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, f"worker_{worker_id}.log")
     logging.basicConfig(
         filename=log_file,
         level=logging.INFO,
@@ -994,6 +1150,13 @@ def my_hook(parser):
         help="Rango de corte en P del dec1 (por defecto: sin corte)")
     parser.add_argument("--zmass-cut", type=float, default=[0.0, np.inf], nargs="+",
         help="Rango de masa Z reco (por defecto: sin corte)")
+    parser.add_argument("--cos-acceptance", type=float, default=1.0,
+        help="Corte de aceptancia legacy: rechaza el evento si |cos(θ_mesón_vis)| > este "
+             "valor (analysisRHOTree.py usa 0.95). Default 1.0 = desactivado.")
+    parser.add_argument("--omega-border-cut", action="store_true", default=False,
+        help="Corte de bordes de ω legacy: descarta el ρ si su cos_theta o cos_psi reco "
+             "(wVariabRECO) quedan clampeados a ±1 (cinemática fuera del rango τ→ρ, "
+             "enriquecida en fakes). Añade 'omegaBorder_' al nombre. Default: desactivado.")
     parser.add_argument("--hist-config-mdecs", type=str,
         default="config/histograms/rho_analysis_config_mdecs.yml",
         help="Config YAML de histogramas MDecs")
@@ -1022,15 +1185,20 @@ def my_hook(parser):
     parser.add_argument("--compute-weights", action="store_true", default=False,
         help="Recalcula weight_P1/weight_M1 desde las cinemáticas almacenadas "
              "en lugar de leer los pesos del árbol. Necesario para usar --sin-eff.")
-    parser.add_argument("--omega-weights", action="store_true", default=False,
-        help="Para el canal rho usa la variable óptima ω directamente como H en el peso, "
-             "en lugar de H_V = alpha_V * z_R. Añade 'omegaW_' al nombre del archivo de salida. "
-             "Requiere --compute-weights.")
+    # Por defecto se usa la variable óptima ω (fórmula completa, con cosPsi/cosBeta) como
+    # H para el canal rho, tanto a nivel reco (newAtauRhoOmega) como gen (al recalcular con
+    # --compute-weights). Para desactivarlo y usar la H simplificada H_V = alpha_V*z_R: --no-omega-weights.
+    parser.add_argument("--no-omega-weights", dest="omega_weights", action="store_false",
+        help="Desactiva ω: para el canal rho usa la H simplificada H_V = alpha_V * z_R "
+             "(newAtau) en lugar de la variable óptima ω. Añade 'noOmega_' al nombre de salida. "
+             "Por defecto ω está ACTIVADO (reco y gen).")
+    parser.set_defaults(omega_weights=True)
 
 
 def main():
     general_configs = myutils.setup_analysis_config(
-        _DEFAULT_CONFIG, _OUTPUT_BASE, parser_hook=my_hook)
+        _DEFAULT_CONFIG, _OUTPUT_BASE, parser_hook=my_hook,
+        log_subdir=_LOG_SOURCE)
     loggers    = general_configs["loggers"]
     run_config = general_configs["config"]
     args       = general_configs["args"]
@@ -1110,6 +1278,8 @@ def main():
         "lepton_cut": lepton_cut,
         "zmass_cut": zmass_cut,
         "angle_sep": angle_sep,
+        "cos_acceptance": args.cos_acceptance,
+        "omega_border_cut": args.omega_border_cut,
         "extra_cuts": args.cut,
     }
 
@@ -1126,14 +1296,18 @@ def main():
         out_prefix += f"Dec1Pgt{lepton_cut[0]}_lt{lepton_cut[1]}_"
     if zmass_cut[0] > 0 or zmass_cut[1] < 200:
         out_prefix += f"Zmassgt{zmass_cut[0]}_lt{zmass_cut[1]}_"
+    if args.cos_acceptance < 1.0:
+        out_prefix += f"cosAcc{args.cos_acceptance}_"
+    if args.omega_border_cut:
+        out_prefix += "omegaBorder_"
     if args.cut:
         safe = "_".join(e.replace(" ", "").replace("==", "eq").replace(">", "gt").replace("<", "lt")
                         for e in args.cut)
         out_prefix += f"cut_{safe}_"
     if sin_eff is not None:
         out_prefix += f"sineff{sin_eff}_"
-    if use_omega:
-        out_prefix += "omegaW_"
+    if not use_omega:
+        out_prefix += "noOmega_"
     fileOutName = os.path.join(outputpath, out_prefix + general_configs["fileOutName"])
     fileOutName_base = Path(fileOutName).stem
     os.makedirs(outputpath, exist_ok=True)

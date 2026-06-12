@@ -1,6 +1,7 @@
 import ROOT
 ROOT.gROOT.SetBatch(True)
 import numpy as np
+import ctypes
 import os
 os.environ["XDG_CACHE_HOME"] = "/nfs/cms/arqolmo/ExamplesFCCFullSim/tmp/mplconfig"
 os.makedirs(os.environ["XDG_CACHE_HOME"], exist_ok=True)
@@ -1570,15 +1571,33 @@ def _draw_one_object_1d(obj, first, draw_as_scatter):
             opt = "HIST" if first else "HIST same"
     obj.Draw(opt)
     return opt
-def get_total_entries(obj):
+def get_total_entries(obj, raw=False):
     """
     Returns total entries for TH1 or TGraph.
+
+    raw=False (default): suma de pesos (TH1 -> Integral; TGraph -> GetN).
+    raw=True:            conteo crudo SIN ponderar (TH1 -> GetEntries; TGraph -> GetN).
+    Útil cuando el mismo conjunto de eventos se rellena con pesos distintos
+    (p.ej. variantes de polarización): Integral difiere, GetEntries no.
     """
     if isinstance(obj, ROOT.TH1):
-        return obj.Integral()
+        return obj.GetEntries() if raw else obj.Integral()
     elif isinstance(obj, ROOT.TGraph):
         return obj.GetN()
     return 0
+
+def save_chi2_csv(chi2_results, outdir, fig_name):
+    """
+    Saves Chi2Test results (chi2/ndf and p-value) to a CSV.
+    chi2_results: list of dicts with keys Reference, Dataset, Chi2_ndf, pvalue, ndf
+    """
+    if not chi2_results:
+        return
+    df = pd.DataFrame(chi2_results)
+    csv_path = os.path.join(outdir, f"{fig_name}_chi2.csv")
+    df.to_csv(csv_path, index=False)
+    print(f"[OK] Saved chi2 CSV: {csv_path}")
+
 
 def save_entries_csv(entries_per_dataset, percentages, total_entries, outdir, fig_name):
     """
@@ -1655,6 +1674,11 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
         os.makedirs(outdir)
     
     for fig_name, cfg in plots.items():
+        # Tamaño del título del plot (TPaveText). Se aplica vía gStyle antes de dibujar
+        # y se restaura al final para no afectar a otros plots.
+        _orig_title_fs = ROOT.gStyle.GetTitleFontSize()
+        if "title_size" in cfg:
+            ROOT.gStyle.SetTitleFontSize(float(cfg["title_size"]))
         c = ROOT.TCanvas(f"c_compare_{fig_name}", fig_name, 900, 700)
         if cfg.get("gridx", False):
             c.SetGridx()
@@ -1667,7 +1691,9 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
         leg_pos = cfg.get("legend", [0.65, 0.70, 0.88, 0.88])
         legend = ROOT.TLegend(*leg_pos)
         legend_text_size = cfg.get("legend_txt_size", 0.03)
-        
+        legend_margin = cfg.get("legend_margin", 0.2)
+        legend.SetMargin(legend_margin)
+        legend.SetNColumns(cfg.get("legend_ncolumns", 1))
         legend.SetTextSize(legend_text_size)
         legend.SetBorderSize(0)
         legend.SetFillStyle(0)
@@ -1687,6 +1713,9 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
         if norm_main not in ("none", "max", "integral"):
             norm_main = "none"
         rebin = cfg.get("rebin", None)
+        # Modo de dibujo global para las series principales (ej. "HIST E", "E1", "P").
+        # Vacío = comportamiento automático de _draw_one_object_1d.
+        main_draw_mode = str(cfg.get("draw_mode", "")).upper()
 
         # --- 1) Recuperar, estilizar y (si procede) normalizar las series principales
         list_graph_values = dict()
@@ -1782,7 +1811,8 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
             )
             
             if sum_label not in ignore_entries_for:
-                entries_per_dataset[sum_label] = get_total_entries(sum_histo)
+                entries_per_dataset[sum_label] = get_total_entries(
+                    sum_histo, raw=str(cfg.get("show_entries", False)).lower() == "raw")
             
             # Normalización
             if isinstance(sum_histo, ROOT.TH1):
@@ -1862,6 +1892,17 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
     # Guarda también errores (low/high)
               list_graph_values[label] = (x_vals, y_vals, y_err_lo, y_err_hi)
               # list_graph_values[label] = (x_vals, y_vals)
+            # Flag global de sombreado: con cfg['shade_edges'] activo, los histogramas que no
+            # piden su propio 'fill' se rellenan con un patrón rayado (borde sombreado).
+            # OJO: CompareAlgs inyecta fill=False por defecto en cada dataset, así que aquí se
+            # combina con OR (no se puede usar ds.get('fill', _shade)). shade_style/shade_alpha
+            # ajustan patrón y transparencia (alpha<1 puede no renderizar en PNG; hatch a 1.0 sí).
+            _shade = cfg.get("shade_edges", False)
+            _ds_fill = ds.get("fill", False)
+            if _shade and not _ds_fill:
+                _fill_on, _fill_style, _fill_alpha = True, cfg.get("shade_style", 3354), cfg.get("shade_alpha", 1.0)
+            else:
+                _fill_on, _fill_style, _fill_alpha = _ds_fill, ds.get("fillstyle", 3004), ds.get("fillalpha", 1.0)
             _apply_style_1d(
                 o,
                 ds["color"],
@@ -1869,12 +1910,13 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                 ds["markerstyle"],
                 ds["markersize"],
                 ds.get("linewidth", 2),
-                fill=ds.get("fill", False),
-                fillstyle=ds.get("fillstyle", 3004),
-                fillalpha=ds.get("fillalpha", 1.0)
+                fill=_fill_on,
+                fillstyle=_fill_style,
+                fillalpha=_fill_alpha,
             )
             if label not in ignore_entries_for:
-              entries_per_dataset[label] = get_total_entries(o)
+              entries_per_dataset[label] = get_total_entries(
+                  o, raw=str(cfg.get("show_entries", False)).lower() == "raw")
 
             # Normalización (series principales)
             if isinstance(o, ROOT.TH1):
@@ -1907,7 +1949,7 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                         mn = min(ys)
                         global_min = mn if global_min is None else min(global_min, mn)
 
-            objs.append((o, label, "main", ""))  # "" => sin modo de dibujo forzado
+            objs.append((o, label, "main", main_draw_mode))
         total_entries = sum(entries_per_dataset.values()) if entries_per_dataset else 0
 
         percentages = {}
@@ -1992,24 +2034,20 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
 
                           # Añade al final para que el común no tape las curvas principales
                           objs.append((oc, common_label, "common", force_draw))
+        # dict label -> TH1 (series principales, post-normalización) para chi2_test
+        main_histos = {label: o for (o, label, kind, _) in objs if kind == "main" and isinstance(o, ROOT.TH1)}
+
         diff_graph = None
+        diff_graphs = []          # lista de TGraphAsymmErrors (uno por par)
         diff_ymin = None
         diff_ymax = None
         difference_line = cfg.get("diff_line", None)
+        # ¿El panel inferior es cociente (valor a comparar / referencia) en vez de resta?
+        # Se activa con diff_line: {mode: ratio} (alias: div/divide/cociente).
+        _dcfg_mode = difference_line if isinstance(difference_line, dict) else {}
+        diff_is_ratio = str(_dcfg_mode.get("mode", "diff")).lower() in ("ratio", "div", "divide", "cociente")
         # --- Diferencia punto a punto (se dibujará en un PAD inferior) ---
         if difference_line is not None and len(list_graph_values) >= 2:
-            _labels = list(list_graph_values.keys())
-            x0 = np.asarray(list_graph_values[_labels[0]][0], dtype=float)
-            y0 = np.asarray(list_graph_values[_labels[0]][1], dtype=float)
-            x1 = np.asarray(list_graph_values[_labels[1]][0], dtype=float)
-            y1 = np.asarray(list_graph_values[_labels[1]][1], dtype=float)
-            
-            min_len = min(len(x0), len(x1), len(y0), len(y1))
-            x0, y0 = x0[:min_len], y0[:min_len]
-            x1, y1 = x1[:min_len], y1[:min_len]
-            
-            # Si x difiere entre métodos, aquí podrías interpolar (np.interp); por ahora, resta por índice
-            diff_vals = y0 - y1
             def _get_yerrs(values_tuple, n):
               # values_tuple puede ser (x, y) o (x, y, yerr_lo, yerr_hi)
               if len(values_tuple) >= 4:
@@ -2020,43 +2058,121 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                   hi = np.zeros(n, dtype=float)
               return lo, hi
 
-            e0_lo, e0_hi = _get_yerrs(list_graph_values[_labels[0]], min_len)
-            e1_lo, e1_hi = _get_yerrs(list_graph_values[_labels[1]], min_len)
+            # --- Determinar la lista de pares a representar ---
+            dcfg = difference_line if isinstance(difference_line, dict) else {}
+            _all_labels = list(list_graph_values.keys())
+            pairs = dcfg.get("pairs", None)
+            if pairs:
+                # Lista explícita de pares [ref, other]
+                diff_pairs = [tuple(p) for p in pairs]
+            else:
+                # Compatibilidad hacia atrás: un único par con los dos primeros labels
+                diff_pairs = [(_all_labels[0], _all_labels[1])]
 
-            diff_err_lo = np.sqrt(e0_lo**2 + e1_lo**2)
-            diff_err_hi = np.sqrt(e0_hi**2 + e1_hi**2)
-            diff_graph = ROOT.TGraphAsymmErrors(min_len)
-            for i in range(min_len):
-                xi  = float(x0[i])
-                yi  = float(diff_vals[i])
-                elo = float(diff_err_lo[i])
-                ehi = float(diff_err_hi[i])
-                diff_graph.SetPoint(i, xi, yi)
-                # errores en X = 0; en Y asimétricos (low/high)
-                diff_graph.SetPointError(i, 0.0, 0.0, elo, ehi)
+            # Para el rango Y automático (sobre todos los pares)
+            global_dmin = None
+            global_dmax = None
 
-            # Estilo
-            diff_graph.SetName(f"gdiff_{fig_name}")
-            diff_graph.SetTitle("")
-            diff_graph.SetMarkerStyle(20)
-            diff_graph.SetMarkerSize(1.0)
-            diff_graph.SetMarkerColor(ROOT.kGray+2)
-            diff_graph.SetLineColor(ROOT.kGray+2)
-            diff_graph.SetLineStyle(1)
-            # Opcional: banda semitransparente alrededor de los puntos
-            # diff_graph.SetFillColorAlpha(ROOT.kGray+1, 0.25)
+            for pair_idx, pair in enumerate(diff_pairs):
+                lbl_a, lbl_b = pair[0], pair[1]
+                if lbl_a not in list_graph_values or lbl_b not in list_graph_values:
+                    print(f"[WARN] Plot '{fig_name}': diff_line pair "
+                          f"({lbl_a}, {lbl_b}) labels not found in datasets; skipping.")
+                    continue
+
+                x0 = np.asarray(list_graph_values[lbl_a][0], dtype=float)
+                y0 = np.asarray(list_graph_values[lbl_a][1], dtype=float)
+                x1 = np.asarray(list_graph_values[lbl_b][0], dtype=float)
+                y1 = np.asarray(list_graph_values[lbl_b][1], dtype=float)
+
+                min_len = min(len(x0), len(x1), len(y0), len(y1))
+                x0, y0 = x0[:min_len], y0[:min_len]
+                x1, y1 = x1[:min_len], y1[:min_len]
+
+                # Si x difiere entre métodos, aquí podrías interpolar (np.interp); por ahora, por índice.
+                # mode='ratio' → cociente y1/y0 = (valor a comparar lbl_b) / (referencia lbl_a);
+                # por defecto resta y0 - y1.
+                if diff_is_ratio:
+                    with np.errstate(divide="ignore", invalid="ignore"):
+                        diff_vals = np.where(y0 != 0.0, y1 / y0, np.nan)
+                else:
+                    diff_vals = y0 - y1
+
+                e0_lo, e0_hi = _get_yerrs(list_graph_values[lbl_a], min_len)
+                e1_lo, e1_hi = _get_yerrs(list_graph_values[lbl_b], min_len)
+
+                if diff_is_ratio:
+                    # Error del cociente R=y1/y0: sigma_R = |R|·sqrt((s1/y1)^2 + (s0/y0)^2)
+                    with np.errstate(divide="ignore", invalid="ignore"):
+                        rel0_lo = np.where(y0 != 0.0, e0_lo / np.abs(y0), 0.0)
+                        rel0_hi = np.where(y0 != 0.0, e0_hi / np.abs(y0), 0.0)
+                        rel1_lo = np.where(y1 != 0.0, e1_lo / np.abs(y1), 0.0)
+                        rel1_hi = np.where(y1 != 0.0, e1_hi / np.abs(y1), 0.0)
+                        diff_err_lo = np.nan_to_num(np.abs(diff_vals) * np.sqrt(rel1_lo**2 + rel0_lo**2))
+                        diff_err_hi = np.nan_to_num(np.abs(diff_vals) * np.sqrt(rel1_hi**2 + rel0_hi**2))
+                else:
+                    diff_err_lo = np.sqrt(e0_lo**2 + e1_lo**2)
+                    diff_err_hi = np.sqrt(e0_hi**2 + e1_hi**2)
+                g = ROOT.TGraphAsymmErrors(min_len)
+                for i in range(min_len):
+                    xi  = float(x0[i])
+                    yi  = float(diff_vals[i])
+                    if not np.isfinite(yi):            # cociente con referencia 0 → punto en la línea base
+                        yi = 1.0 if diff_is_ratio else 0.0
+                    elo = float(diff_err_lo[i])
+                    ehi = float(diff_err_hi[i])
+                    g.SetPoint(i, xi, yi)
+                    # errores en X = 0; en Y asimétricos (low/high)
+                    g.SetPointError(i, 0.0, 0.0, elo, ehi)
+
+                # Estilo: color/linestyle/marker del dataset que se RESTA (lbl_b),
+                # no el de referencia (la diferencia es y(lbl_a) - y(lbl_b)).
+                g.SetName(f"gdiff_{fig_name}_{pair_idx}")
+                g.SetTitle("")
+                ref_ds = ds_by_label.get(lbl_b, None)
+                if ref_ds is not None:
+                    _apply_style_1d(
+                        g,
+                        ref_ds["color"],
+                        ref_ds["linestyle"],
+                        ref_ds["markerstyle"],
+                        ref_ds["markersize"],
+                        ref_ds.get("linewidth", 2),
+                    )
+                else:
+                    # Fallback al estilo gris original
+                    g.SetMarkerStyle(20)
+                    g.SetMarkerSize(1.0)
+                    g.SetMarkerColor(ROOT.kGray+2)
+                    g.SetLineColor(ROOT.kGray+2)
+                    g.SetLineStyle(1)
+
+                diff_graphs.append(g)
+
+                # Acumular extremos para el rango Y automático (nan-safe para el cociente)
+                if diff_vals.size:
+                    _lo_arr = diff_vals - diff_err_lo
+                    _hi_arr = diff_vals + diff_err_hi
+                    if np.any(np.isfinite(_lo_arr)) and np.any(np.isfinite(_hi_arr)):
+                        dmin_p = float(np.nanmin(_lo_arr))
+                        dmax_p = float(np.nanmax(_hi_arr))
+                        global_dmin = dmin_p if global_dmin is None else min(global_dmin, dmin_p)
+                        global_dmax = dmax_p if global_dmax is None else max(global_dmax, dmax_p)
+
+            # Conservar 'diff_graph' como primer elemento para no romper
+            # las referencias del pad superior (rango X) y compatibilidad.
+            diff_graph = diff_graphs[0] if diff_graphs else None
 
             # --- Rango Y del panel inferior ---
-            dcfg = difference_line if isinstance(difference_line, dict) else {}
             if "y_range" in dcfg:
                 diff_ymin, diff_ymax = float(dcfg["y_range"][0]), float(dcfg["y_range"][1])
             else:
-                if diff_vals.size:
-                    dmin, dmax = float(np.min(diff_vals - diff_err_lo)), float(np.max(diff_vals + diff_err_hi))
+                if global_dmin is not None and global_dmax is not None:
+                    dmin, dmax = global_dmin, global_dmax
                     pad = 0.1 * max(1e-9, (dmax - dmin) if (dmax != dmin) else abs(dmax) + 1.0)
                     diff_ymin, diff_ymax = dmin - pad, dmax + pad
                 else:
-                    diff_ymin, diff_ymax = -0.1, 0.1
+                    diff_ymin, diff_ymax = (0.9, 1.1) if diff_is_ratio else (-0.1, 0.1)
             # gx = array('d', x0.tolist())
             # gy = array('d', diff_vals.tolist())
             # diff_graph = ROOT.TGraph(len(gx), gx, gy)
@@ -2097,6 +2213,8 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
             pad_bot.SetBottomMargin(0.35)   # deja sitio a las etiquetas del eje x
             if cfg.get("gridx", False): pad_top.SetGridx()
             if cfg.get("gridy", False): pad_top.SetGridy()
+            if cfg.get("logy", False):
+                pad_top.SetLogy()
 
             pad_top.Draw()
             pad_bot.Draw()
@@ -2159,6 +2277,31 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                     if is_eff or cfg.get("no_exponent_y", False):
                         o.GetYaxis().SetNoExponent(ROOT.kTRUE)
 
+                # Tamaños de título de ejes (pad principal). El título X solo se aplica aquí
+                # si NO hay panel inferior; si lo hay, el eje X visible es el de abajo.
+                if "ytitle_size" in cfg:
+                    o.GetYaxis().SetTitleSize(float(cfg["ytitle_size"]))
+                if "xtitle_size" in cfg and not have_diff_panel:
+                    o.GetXaxis().SetTitleSize(float(cfg["xtitle_size"]))
+
+                # Divisiones de ticks y longitud (pad principal).
+                # yndiv/xndiv: número de divisiones (ej. 510 = 10 primarias, 5 secundarias).
+                # ytick_length/xtick_length: longitud del tick como fracción del pad.
+                # ylabel_size/xlabel_size: tamaño de las etiquetas numéricas.
+                if "yndiv" in cfg:
+                    o.GetYaxis().SetNdivisions(int(cfg["yndiv"]))
+                if "ytick_length" in cfg:
+                    o.GetYaxis().SetTickLength(float(cfg["ytick_length"]))
+                if "ylabel_size" in cfg:
+                    o.GetYaxis().SetLabelSize(float(cfg["ylabel_size"]))
+                if not have_diff_panel:
+                    if "xndiv" in cfg:
+                        o.GetXaxis().SetNdivisions(int(cfg["xndiv"]))
+                    if "xtick_length" in cfg:
+                        o.GetXaxis().SetTickLength(float(cfg["xtick_length"]))
+                    if "xlabel_size" in cfg:
+                        o.GetXaxis().SetLabelSize(float(cfg["xlabel_size"]))
+
                 # Título del canvas/objeto
                 o.SetTitle(cfg.get("title", ""))
                 # Ocultar etiquetas y título del eje X en el pad superior si hay panel de diferencia
@@ -2177,8 +2320,8 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
                       o.GetXaxis().SetLimits(x_min, x_max)
                   diff_panel_xrange = (x_min, x_max)
                   xax = o.GetXaxis()
-                  xax.SetNdivisions(510)   # mismas divisiones que abajo
-                  xax.SetTickLength(0.03)  # misma longitud de tick
+                  xax.SetNdivisions(int(cfg.get("xndiv", 510)))
+                  xax.SetTickLength(float(cfg.get("xtick_length", 0.03)))
 
                   # Ocultar números/título en el pad superior (manteniendo ticks)
                   xax.SetLabelSize(0)
@@ -2235,7 +2378,8 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
               if show_entries and label in entries_per_dataset and label not in ignore_entries_for:
                   n = entries_per_dataset[label]
                   p = percentages.get(label, 0.0)
-                  if show_entries == "absolute":
+                  if show_entries == "absolute" or str(show_entries).lower() == "raw":
+                    # 'raw' = conteo crudo (GetEntries) ya calculado en entries_per_dataset
                     label_ext = f"{label}  (N={int(n)})"
                   elif show_entries == "percent":
                     label_ext = f"{label}  ({p:.1f}%)"
@@ -2256,14 +2400,27 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
         #     legend.AddEntry(null_obj, extra_text, "")
 
         legend.Draw()
+
+        # Etiqueta de canal / anotación libre (campo `label` del plot).
+        # Soporta LaTeX de ROOT (TLatex). Posición configurable con `label_pos: [x, y]`
+        # en coordenadas NDC; por defecto esquina superior izquierda (0.15, 0.85).
+        _plot_label = cfg.get("label", None)
+        if _plot_label is not None:
+            _lx, _ly = cfg.get("label_pos", [0.15, 0.85])
+            _lt = ROOT.TLatex(_lx, _ly, str(_plot_label))
+            _lt.SetNDC(True)
+            _lt.SetTextSize(float(cfg.get("label_size", 0.045)))
+            _lt.SetTextFont(int(cfg.get("label_font", 42)))
+            _lt.Draw()
+
         if have_diff_panel:
           pad_bot.cd()
 
           # Si quieres que el eje X solo se rotule aquí, reduce el tamaño de labels en el pad superior:
           # (ya hicimos SetBottomMargin en pad_top; esto suele bastar)
           dcfg2 = difference_line if isinstance(difference_line, dict) else {}
-          title = dcfg2.get("label", "#Delta")
-          # Dibuja el scatter con ejes propios
+          title = dcfg2.get("label", "ratio" if diff_is_ratio else "#Delta")
+          # Dibuja el primer scatter con ejes propios; el resto con "P SAME"
           diff_graph.Draw("AP")
           # Forzar el MISMO rango X que el pad superior para que los ejes queden alineados
           if diff_panel_xrange is not None:
@@ -2272,23 +2429,31 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
               x_min = diff_graph.GetXaxis().GetXmin()
               x_max = diff_graph.GetXaxis().GetXmax()
           diff_graph.GetXaxis().SetLimits(x_min, x_max)
-          diff_graph.GetXaxis().SetNdivisions(510)
-          diff_graph.GetXaxis().SetTickLength(0.03)
+          diff_graph.GetXaxis().SetNdivisions(int(cfg.get("diff_xndiv", cfg.get("xndiv", 510))))
+          diff_graph.GetXaxis().SetTickLength(float(cfg.get("diff_xtick_length", cfg.get("xtick_length", 0.03))))
+          diff_graph.GetYaxis().SetNdivisions(int(cfg.get("diff_yndiv", 505)))
+          diff_graph.GetYaxis().SetTickLength(float(cfg.get("diff_ytick_length", 0.03)))
           diff_graph.GetXaxis().SetTitle(cfg.get("x", ""))
           diff_graph.GetYaxis().SetTitle(title)
           diff_graph.GetYaxis().SetRangeUser(diff_ymin, diff_ymax)
 
-          # Fuente un poco más pequeña para encajar
-          diff_graph.GetXaxis().SetTitleSize(0.10)
-          diff_graph.GetYaxis().SetTitleSize(0.10)
-          diff_graph.GetXaxis().SetLabelSize(0.08)
-          diff_graph.GetYaxis().SetLabelSize(0.08)
+          # Tamaños de título y etiquetas (pad inferior). Configurables desde YAML.
+          diff_graph.GetXaxis().SetTitleSize(float(cfg.get("xtitle_size", 0.10)))
+          diff_graph.GetYaxis().SetTitleSize(float(cfg.get("diff_ytitle_size", 0.10)))
+          diff_graph.GetXaxis().SetLabelSize(float(cfg.get("diff_xlabel_size", 0.08)))
+          diff_graph.GetYaxis().SetLabelSize(float(cfg.get("diff_ylabel_size", 0.08)))
           diff_graph.GetYaxis().SetTitleOffset(0.4)
 
-          # Línea horizontal y=0
+          # Dibujar las líneas de diferencia restantes (un par adicional cada una),
+          # cada una con el color/estilo del dataset de referencia del par.
+          for g in diff_graphs[1:]:
+              g.Draw("P SAME")
+
+          # Línea horizontal de referencia: y=1 para cociente, y=0 para resta
           x_min = diff_graph.GetXaxis().GetXmin()
           x_max = diff_graph.GetXaxis().GetXmax()
-          y0line = ROOT.TLine(x_min, 0.0, x_max, 0.0)
+          _yref = 1.0 if diff_is_ratio else 0.0
+          y0line = ROOT.TLine(x_min, _yref, x_max, _yref)
           y0line.SetLineStyle(2)
           y0line.SetLineColor(ROOT.kGray+1)
           y0line.Draw("same")
@@ -2301,10 +2466,46 @@ def plot_compare_1D_across_files(files_info, plots, outdir):
         if show_entries and entries_per_dataset:
             save_entries_csv(entries_per_dataset, percentages, total_entries, outdir, fig_name)
 
+        # Chi2Test entre la referencia (primer dataset) y el resto
+        # Opción: chi2_test: true  (referencia = primer dataset de per_dataset / datasets)
+        # o chi2_test: "label de referencia"  para elegir explícitamente.
+        chi2_cfg = cfg.get("chi2_test", False)
+        if chi2_cfg and len(main_histos) >= 2:
+            labels_ordered = list(main_histos.keys())
+            if isinstance(chi2_cfg, str) and chi2_cfg in main_histos:
+                ref_label = chi2_cfg
+            else:
+                ref_label = labels_ordered[0]
+            h_ref = main_histos[ref_label]
+            chi2_results = []
+            for lbl, h in main_histos.items():
+                if lbl == ref_label:
+                    continue
+                # Chi2Test con WW (ambos histogramas pesados/normalizados)
+                chi2_val = ctypes.c_double(0)
+                ndf_val  = ctypes.c_int(0)
+                igood    = ctypes.c_int(0)
+                pval = h_ref.Chi2TestX(h, chi2_val, ndf_val, igood, "WW P")
+                ndf = int(ndf_val.value)
+                chi2_ndf = chi2_val.value / ndf if ndf > 0 else float("nan")
+                chi2_results.append({
+                    "Plot":      fig_name,
+                    "Reference": ref_label,
+                    "Dataset":   lbl,
+                    "Chi2":      round(chi2_val.value, 4),
+                    "NDF":       ndf,
+                    "Chi2_NDF":  round(chi2_ndf, 4),
+                    "pvalue":    round(float(pval), 6),
+                })
+                print(f"  chi2/ndf({ref_label} vs {lbl}) = {chi2_ndf:.3f}  (p={pval:.4f})")
+            save_chi2_csv(chi2_results, outdir, fig_name)
+
         # Guardar
         os.makedirs(outdir, exist_ok=True)
         outpath = os.path.join(outdir, f"{fig_name}.png")
         c.SaveAs(outpath)
         print(f"[OK] Saved: {outpath}")
         c.Close()
+        if "title_size" in cfg:
+            ROOT.gStyle.SetTitleFontSize(_orig_title_fs)
 

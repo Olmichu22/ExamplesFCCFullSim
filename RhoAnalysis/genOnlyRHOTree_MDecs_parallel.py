@@ -43,15 +43,19 @@ from modules import weightsPol
 
 _DEFAULT_CONFIG = "config/default/taurecolong.yaml"
 _OUTPUT_BASE    = "Results/RhoAnalysis/"
+# Subcarpeta dentro de <outputpath>/logs/ donde se guardan los logs de este script
+_LOG_SOURCE     = "genOnlyRHOTree_MDecs"
 
 # Sufijos de ramas escalares por tau (se prefijan con "tau1_" / "tau2_")
 _TAU_SCALAR_SUFFIXES = [
     "P", "E", "M", "Theta", "Phi",
     "visP", "visE", "visM", "visTheta", "visPhi",
     "pionP", "pionE", "pionM", "pionTheta", "pionPhi",
+    "pionPDG",
     "lepP", "lepE", "lepTheta", "lepPhi", "lepPDG",
     "decayID",
     "tauPDG",
+    "genHelicity",
     "cos_theta", "cos_psi", "cos_beta",
     "omega",
     "weight_P1", "weight_M1",
@@ -110,7 +114,9 @@ def _setup_worker_logging(outputpath, worker_id):
     for h in root_logger.handlers[:]:
         root_logger.removeHandler(h)
         h.close()
-    log_file = os.path.join(outputpath, f"worker_{worker_id}.log")
+    log_dir = os.path.join(outputpath, "logs", _LOG_SOURCE)
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, f"worker_{worker_id}.log")
     logging.basicConfig(
         filename=log_file,
         level=logging.INFO,
@@ -169,21 +175,38 @@ def _fill_tau_branches(branches, prefix, tauObj, beamE, sin_eff):
     branches[f"{prefix}_decayID"].value   = float(decayID)
     branches[f"{prefix}_tauPDG"].value    = float(tauObj.getPDG())
     branches[f"{prefix}_recoTauID"].value = float(decayID)
+    hel = tauObj.getHelicity()
+    branches[f"{prefix}_genHelicity"].value = float(hel) if hel is not None else -999.0
 
     # ── Daughters: charged pion y fotones de π⁰ ───────────────────────────────
     daughters = tauObj.getDaughters()
     pionP4 = ROOT.TLorentzVector()
     pionP4.SetXYZM(0.0, 0.0, 0.0, 0.0)
+    pion_found = False
+    pion_pdg = -999
     for key in daughters:
-        if abs(daughters[key].getPDG()) == 211:
+        # if abs(daughters[key].getPDG()) == 211:
+        if abs(daughters[key].getPDG()) in (211, 321, 323):  # kaones y piones tratados como rho #SOLVED BUG
             pionP4 = _make_p4_from_const(daughters[key])
+            pion_found = True
+            pion_pdg = daughters[key].getPDG()
             break
+
+    # if decayID == 1:
+    #     daughter_pdgs = [int(daughters[key].getPDG()) for key in daughters]
+    #     print(
+    #         f"[rho-debug] {prefix} tauPDG={int(tauObj.getPDG())} "
+    #         f"nDaughters={len(daughters)} foundPion={pion_found} "
+    #         f"pionPDG={pion_pdg} pionM={pionP4.M():.6f} "
+    #         f"daughtersPDG={daughter_pdgs}"
+    #     )
 
     branches[f"{prefix}_pionP"].value      = pionP4.P()
     branches[f"{prefix}_pionE"].value      = pionP4.E()
     branches[f"{prefix}_pionM"].value      = pionP4.M()
     branches[f"{prefix}_pionTheta"].value  = pionP4.Theta()
     branches[f"{prefix}_pionPhi"].value    = pionP4.Phi()
+    branches[f"{prefix}_pionPDG"].value    = float(pion_pdg)
     # reco mirror
     branches[f"{prefix}_recoPionP"].value      = pionP4.P()
     branches[f"{prefix}_recoPionE"].value      = pionP4.E()
@@ -291,12 +314,14 @@ def process_chunk_gen_only(filenames_chunk, config_bundle, worker_id):
     outputpath       = config_bundle["outputpath"]
     gen_filter       = config_bundle["gen_filter"]   # set o None (acepta todo)
     sin_eff          = config_bundle["sin_eff"]
+    helicity        = config_bundle.get("helicity", False)
     fileOutName_base = config_bundle["fileOutName_base"]
 
     loggers        = _setup_worker_logging(outputpath, worker_id)
     logger_process = loggers["processing"]
     logger_io      = loggers["io"]
 
+    
     genparts = "MCParticles"
 
     # ── Crear TTree de salida parcial ─────────────────────────────────────────
@@ -340,7 +365,7 @@ def process_chunk_gen_only(filenames_chunk, config_bundle, worker_id):
             mc_particles = event.get(genparts)
             beamE = mc_particles[0].getEnergy()
 
-            genTaus = tauReco.findAllGenTaus(mc_particles)
+            genTaus = tauReco.findAllGenTaus(mc_particles, getHelicity=helicity)
             n_taus = len(genTaus)
 
             if n_taus < 2:
@@ -425,11 +450,14 @@ def my_hook(parser):
                         help="Lista de decayIDs permitidos para AMBOS taus del par "
                              "(ej: 0 2 -11 -13). 2 se remapea a 1 (rho gen). "
                              "Default: acepta todos los pares.")
+    parser.add_argument("--helicity", action="store_true",
+                        help="Si se activa, se rellenan ramas de helicidad y (si la muestra las tiene)")
 
 
 def main():
     general_configs = myutils.setup_analysis_config(_DEFAULT_CONFIG, _OUTPUT_BASE,
-                                                    parser_hook=my_hook)
+                                                    parser_hook=my_hook,
+                                                    log_subdir=_LOG_SOURCE)
     loggers    = general_configs["loggers"]
     run_config = general_configs["config"]
     args       = general_configs["args"]
@@ -471,6 +499,7 @@ def main():
         "sin_eff":          args.sin_eff,
         "outputpath":       outputpath,
         "fileOutName_base": fileOutName_base,
+        "helicity":        args.helicity,
     }
 
     if n_workers == 1:

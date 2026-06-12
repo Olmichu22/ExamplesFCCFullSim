@@ -11,8 +11,13 @@ Compatible directamente con RhoHistFromTree_MDecs_parallel.py.
 USO:
     python analysisRHOTree_MDecs_parallel.py \\
         -c config/default/taurecolong.yaml \\
-        --decay-pair 2 -13 \\
+        --decay-modes 0 2 10 -11 -13 \\
         --n-workers 4
+
+--decay-modes acepta varias desintegraciones RECO (ρ=2, π=0, a1=10, e=-11, µ=-13)
+y escribe un único árbol con todos los pares cuyos dos hemisferios estén en la
+lista; el emparejamiento por par lo hace después RhoHistFromTree_MDecs (mismo
+pipeline que el gen-only). Sin la flag se aceptan todas las desintegraciones.
 """
 
 import ctypes
@@ -41,6 +46,8 @@ from modules import optimalVariabRho, weightsPol
 
 _DEFAULT_CONFIG = "config/default/taurecolong.yaml"
 _OUTPUT_BASE    = "Results/RhoAnalysis/"
+# Subcarpeta dentro de <outputpath>/logs/ donde se guardan los logs de este script
+_LOG_SOURCE     = "analysisRHOTree_MDecs"
 
 _SHARED_VARIABS = ["GenZMass", "GenZVisMass", "ZMass", "beamE"]
 
@@ -55,6 +62,7 @@ _TAU_SCALAR_SUFFIXES = [
     "recoVisP", "recoVisE", "recoVisM", "recoVisTheta", "recoVisPhi",
     "recoPionP", "recoPionE", "recoPionM", "recoPionTheta", "recoPionPhi",
     "recoTauID", "recoLepP", "recoLepE", "recoLepTheta", "recoLepPhi", "recoLepPDG",
+    "reco_weight_P1", "reco_weight_M1",
 ]
 
 _TAU_VECTOR_SUFFIXES = [
@@ -108,7 +116,9 @@ def _setup_worker_logging(outputpath, worker_id):
     for h in root_logger.handlers[:]:
         root_logger.removeHandler(h)
         h.close()
-    log_file = os.path.join(outputpath, f"worker_{worker_id}.log")
+    log_dir = os.path.join(outputpath, "logs", _LOG_SOURCE)
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, f"worker_{worker_id}.log")
     logging.basicConfig(
         filename=log_file, level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s", force=True,
@@ -135,7 +145,7 @@ def _extract_pion_p4(daughters):
     if daughters is None:
         return pion
     for key in daughters:
-        if abs(daughters[key].getPDG()) == 211:
+        if abs(daughters[key].getPDG()) in (211, 321, 323): #SOLVED BUG
             pion = _make_p4_from_const(daughters[key])
             break
     return pion
@@ -205,6 +215,44 @@ def _select_decay_pair(candidates, decay_pair):
     return cand0, cand1
 
 
+def _select_decay_modes(candidates, genTaus, reco_filter):
+    """
+    Selecciona los dos hemisferios del evento entre los candidatos reco cuyos
+    tau_id están en reco_filter (o todos si reco_filter es None).
+
+    Importante: la ρ reco tiene tau_id == 2 (la gen usa 1). El filtro compara
+    contra los ids RECO tal cual, así que para aceptar ρ hay que incluir 2.
+
+    Para asegurar que los dos candidatos vienen de hemisferios distintos se usa
+    el matching a gen-taus: se queda el candidato líder en P por cada gen-tau
+    (nearest sin exclusión, descartando duplicados del mismo hemisferio).
+    Sin gen-taus disponibles cae a los dos candidatos líderes en P.
+
+    Devuelve (cand0, gen_idx0, cand1, gen_idx1) o None.
+    """
+    pool = [c for c in candidates
+            if reco_filter is None or c["tau_id"] in reco_filter]
+    if len(pool) < 2:
+        return None
+    pool.sort(key=lambda c: c["vis_p4"].P(), reverse=True)
+
+    if len(genTaus) >= 2:
+        chosen = {}  # gen_idx -> candidato líder en P de ese hemisferio
+        for c in pool:
+            gidx = _match_gen_tau(c["vis_p4"], genTaus, set())
+            if gidx == -1 or gidx in chosen:
+                continue
+            chosen[gidx] = c
+            if len(chosen) == 2:
+                break
+        if len(chosen) < 2:
+            return None
+        (g0, c0), (g1, c1) = list(chosen.items())
+        return c0, g0, c1, g1
+
+    return pool[0], -1, pool[1], -1
+
+
 def _match_gen_tau(vis_p4, genTaus, used_indices):
     """Devuelve el índice gen más cercano en dR, excluyendo used_indices. -1 si vacío."""
     best_dr, best_idx = 10.0, -1
@@ -256,6 +304,38 @@ def _fill_tau_branches_mdecs(branches, prefix, reco_cand, gen_tau_obj, beamE, si
             branches[f"{prefix}_reco_photons_theta"].push_back(ph.Theta())
             branches[f"{prefix}_reco_photons_phi"].push_back(ph.Phi())
 
+    # ── Reco-level polarization weights (collinear proxy) ────────────────────
+    # The tau direction is not observable (neutrino escapes). Approximate it
+    # by the visible system direction with E = E_beam (collinear approximation).
+    # This gives x = E_vis_reco / E_beam, which is the correct energy fraction
+    # for the Alcaraz (2026) weight formulas.
+    rw_P1 = rw_M1 = 1.0
+    if beamE > 0:
+        tau_E_proxy = beamE
+        tau_P_proxy = math.sqrt(max(0.0, tau_E_proxy**2 - weightsPol._M_TAU**2))
+        tau_proxy_p4 = ROOT.TLorentzVector()
+        tau_proxy_p4.SetPxPyPzE(
+            tau_P_proxy * math.sin(vis_p4.Theta()) * math.cos(vis_p4.Phi()),
+            tau_P_proxy * math.sin(vis_p4.Theta()) * math.sin(vis_p4.Phi()),
+            tau_P_proxy * math.cos(vis_p4.Theta()),
+            tau_E_proxy,
+        )
+        if reco_id in (1, 2):
+            # ρ reco completo (2) y ρ sin un fotón (1) son ambos ρ: ESTÁNDAR = variable
+            # óptima ω reco (wVariabRECO con cinemática reco), no la H simplificada.
+            _, _, _, omega_reco = optimalVariabRho.wVariabRECO(vis_p4, pion_p4, beamE)
+            rw_P1 = weightsPol.newAtauRhoOmega(tau_proxy_p4, omega_reco, +1, sin_eff=sin_eff)
+            rw_M1 = weightsPol.newAtauRhoOmega(tau_proxy_p4, omega_reco, -1, sin_eff=sin_eff)
+        elif reco_id in (0, 10):
+            # π/a1: su observable óptimo ya es H (z para el π); no hay ω no trivial.
+            rw_P1 = weightsPol.newAtau(tau_proxy_p4, vis_p4, reco_id, +1, sin_eff=sin_eff)
+            rw_M1 = weightsPol.newAtau(tau_proxy_p4, vis_p4, reco_id, -1, sin_eff=sin_eff)
+        elif reco_id in (-11, -13):
+            rw_P1 = weightsPol.newAtauLep(lep_p4, tau_proxy_p4, beamE, +1, sin_eff=sin_eff)
+            rw_M1 = weightsPol.newAtauLep(lep_p4, tau_proxy_p4, beamE, -1, sin_eff=sin_eff)
+    branches[f"{prefix}_reco_weight_P1"].value = rw_P1
+    branches[f"{prefix}_reco_weight_M1"].value = rw_M1
+
     # ── Gen branches ─────────────────────────────────────────────────────────
     if gen_tau_obj is None:
         _no_gen_defaults = {
@@ -290,7 +370,7 @@ def _fill_tau_branches_mdecs(branches, prefix, reco_cand, gen_tau_obj, beamE, si
     gen_pion   = ROOT.TLorentzVector()
     gen_pion.SetXYZM(0, 0, 0, 0)
     for key in daughters:
-        if abs(daughters[key].getPDG()) == 211:
+        if abs(daughters[key].getPDG()) in (211, 321, 323): #SOLVED BUG
             gen_pion = _make_p4_from_const(daughters[key])
             break
 
@@ -332,7 +412,10 @@ def _fill_tau_branches_mdecs(branches, prefix, reco_cand, gen_tau_obj, beamE, si
         omega = -999.0
         opt_var = gen_vis.E() / tauP4.E() if tauP4.E() > 0 else -999.0
     else:
-        cos_theta = cos_psi = cos_beta = omega = 0.0
+        # Unsupported gen modes must not populate the physical omega spectrum.
+        # Keep them as a sentinel so they stay out of the central histogram bin.
+        cos_theta = cos_psi = cos_beta = 0.0
+        omega = -999.0
         w_P1 = w_M1 = 1.0
         opt_var = -999.0
 
@@ -359,7 +442,7 @@ def _fill_tau_branches_mdecs(branches, prefix, reco_cand, gen_tau_obj, beamE, si
 def process_chunk_mdecs(filenames_chunk, mlpf_chunk, global_event_offset,
                          config_bundle, worker_id):
     outputpath       = config_bundle["outputpath"]
-    decay_pair       = config_bundle["decay_pair"]
+    reco_filter      = config_bundle["reco_filter"]
     dRMax            = config_bundle["dRMax"]
     tauPCut          = config_bundle["tauPCut"]
     minPTauPhoton    = config_bundle["minPTauPhoton"]
@@ -370,6 +453,7 @@ def process_chunk_mdecs(filenames_chunk, mlpf_chunk, global_event_offset,
     sin_eff          = config_bundle["sin_eff"]
     minPTauElectron  = config_bundle["minPTauElectron"]
     minPTauMuon      = config_bundle["minPTauMuon"]
+    lepton_xor_p     = config_bundle.get("lepton_xor_p", 0.0)
     gen_taus_sample  = config_bundle.get("gen_taus_sample", True)
     gatr_results_path = config_bundle["gatr_results_path"]
     test_pfo         = config_bundle["test_pfo"]
@@ -439,13 +523,22 @@ def process_chunk_mdecs(filenames_chunk, mlpf_chunk, global_event_offset,
             )
             recoTaus = myutils.sort_by_P(recoTau_raw)
 
-            # Candidate list + pair selection
+            # Single-lepton XOR cut (replicates legacy: exactamente 1 electrón XOR 1 muón con P>threshold)
+            if lepton_xor_p > 0.0:
+                n_e  = sum(1 for e_k in recoElectrons  if recoElectrons[e_k].getMomentum().P()  > lepton_xor_p)
+                n_mu = sum(1 for mu_k in recoMuons     if recoMuons[mu_k].getMomentum().P()     > lepton_xor_p)
+                if not ((n_e == 1) ^ (n_mu == 1)):
+                    eventid += 1
+                    continue
+
+            # Candidate list + selección por decay-modes (dos hemisferios distintos)
             candidates = _build_reco_candidates(
                 recoTaus, recoElectrons, recoMuons, minPTauElectron, minPTauMuon)
-            cand0, cand1 = _select_decay_pair(candidates, decay_pair)
-            if cand0 is None:
+            sel = _select_decay_modes(candidates, genTaus, reco_filter)
+            if sel is None:
                 eventid += 1
                 continue
+            cand0, gen_idx_0, cand1, gen_idx_1 = sel
 
             # Optional momentum cut
             if (cand0["vis_p4"].P() < tauPCut and cand1["vis_p4"].P() < tauPCut):
@@ -455,21 +548,13 @@ def process_chunk_mdecs(filenames_chunk, mlpf_chunk, global_event_offset,
             # ZMass reco
             ZMass = (cand0["vis_p4"] + cand1["vis_p4"]).M()
 
-            # Order tau1/tau2 by energy (tau1 = higher E)
+            # Order tau1/tau2 by energy (tau1 = higher E); conserva su gen-match
             if cand0["vis_p4"].E() >= cand1["vis_p4"].E():
-                tau1_cand, tau2_cand = cand0, cand1
+                tau1_cand, gen_tau1 = cand0, genTaus.get(gen_idx_0)
+                tau2_cand, gen_tau2 = cand1, genTaus.get(gen_idx_1)
             else:
-                tau1_cand, tau2_cand = cand1, cand0
-
-            # Gen matching (greedy dR, no reuse)
-            used_gen = set()
-            gen_idx_1 = _match_gen_tau(tau1_cand["vis_p4"], genTaus, used_gen)
-            if gen_idx_1 != -1:
-                used_gen.add(gen_idx_1)
-            gen_idx_2 = _match_gen_tau(tau2_cand["vis_p4"], genTaus, used_gen)
-
-            gen_tau1 = genTaus.get(gen_idx_1)
-            gen_tau2 = genTaus.get(gen_idx_2)
+                tau1_cand, gen_tau1 = cand1, genTaus.get(gen_idx_1)
+                tau2_cand, gen_tau2 = cand0, genTaus.get(gen_idx_0)
 
             # Fill shared branches
             branches["GenZMass"].value    = GenZMass
@@ -519,14 +604,24 @@ def my_hook(parser):
                         help="Effective sin^2 theta_W for polarization weights")
     parser.add_argument("--n-workers", type=int, default=None,
                         help="Parallel workers (default: min(n_files, n_cpus))")
+    parser.add_argument("--decay-modes", type=int, nargs="+", default=None,
+                        metavar="ID",
+                        help="Lista de decayIDs RECO permitidos (ej: 0 2 -11 -13 10). "
+                             "La ρ reco es 2 (la gen es 1). Se acepta cualquier par "
+                             "cuyos DOS hemisferios estén en la lista; el emparejamiento "
+                             "por par lo hace después RhoHistFromTree_MDecs. "
+                             "Default: todas las desintegraciones.")
     parser.add_argument("--decay-pair", type=int, nargs=2, default=None,
                         metavar=("ID0", "ID1"),
-                        help="Reco decay IDs to select (e.g. 2 -13). "
-                             "Overrides general.decay_pair in YAML.")
-    parser.add_argument("-e", "--electron-cut", type=float, default=10.0,
-                        help="Minimum electron P [GeV] (default: 10)")
-    parser.add_argument("-u", "--muon-cut", type=float, default=10.0,
-                        help="Minimum muon P [GeV] (default: 10)")
+                        help="[DEPRECATED] Par reco único (ej: 2 -13). Si se da y no hay "
+                             "--decay-modes, se trata como lista de dos modos.")
+    parser.add_argument("-e", "--electron-cut", type=float, default=0.0,
+                        help="Minimum electron P [GeV] (default: 0)")
+    parser.add_argument("-u", "--muon-cut", type=float, default=0.0,
+                        help="Minimum muon P [GeV] (default: 0)")
+    parser.add_argument("--lepton-xor-p", type=float, default=0.0,
+                        help="Si >0, aplica corte legacy: exactamente 1 electrón XOR 1 muón "
+                             "con P > este valor [GeV]. Replica analysisRHOTree.py (default: 0 = desactivado)")
     parser.add_argument("--sys-err", type=str,
                         default="config/systematics/err_sys.yml")
     parser.add_argument("--test-extremes", action="store_true",
@@ -535,21 +630,21 @@ def my_hook(parser):
 
 def main():
     general_configs = myutils.setup_analysis_config(_DEFAULT_CONFIG, _OUTPUT_BASE,
-                                                    parser_hook=my_hook)
+                                                    parser_hook=my_hook,
+                                                    log_subdir=_LOG_SOURCE)
     loggers    = general_configs["loggers"]
     run_config = general_configs["config"]
     args       = general_configs["args"]
 
-    # decay_pair: CLI > YAML
-    decay_pair = (list(args.decay_pair) if args.decay_pair
-                  else run_config.get("general", {}).get("decay_pair"))
-    if not decay_pair or len(decay_pair) != 2:
-        loggers["config"].error(
-            "decay_pair not specified. Use --decay-pair ID0 ID1 or set "
-            "general.decay_pair in the YAML config.")
-        sys.exit(1)
-
-    loggers["config"].info("decay_pair (reco): %s", decay_pair)
+    # decay_modes (ids RECO; ρ=2): CLI > YAML. Compat: --decay-pair → lista de 2.
+    decay_modes = args.decay_modes or run_config.get("general", {}).get("decay_modes")
+    if decay_modes is None and args.decay_pair:
+        decay_modes = list(args.decay_pair)
+    reco_filter = set(decay_modes) if decay_modes else None
+    if reco_filter is not None:
+        loggers["config"].info("decay_modes (ids reco, ρ=2): %s", sorted(reco_filter))
+    else:
+        loggers["config"].info("No decay_modes — se aceptan todas las desintegraciones")
 
     dRMax         = run_config["cuts"]["dRMax"]
     tauPCut       = run_config["cuts"]["tauCut"]
@@ -567,7 +662,7 @@ def main():
 
     gatr_results_path = args.gatr_result
 
-    decay_tag        = f"{decay_pair[0]}_{decay_pair[1]}"
+    decay_tag        = "All" if not decay_modes else "_".join(str(d) for d in decay_modes)
     raw_fileOutName  = os.path.join(outputpath, general_configs["fileOutName"])
     fileOutName_base = f"TTree_MDecs_{decay_tag}_{Path(raw_fileOutName).stem}"
     fileOutName      = os.path.join(outputpath, f"{fileOutName_base}.root")
@@ -588,7 +683,7 @@ def main():
     loggers["io"].info("Using %d workers for %d files", n_workers, len(filenames))
 
     config_bundle = {
-        "decay_pair":       decay_pair,
+        "reco_filter":      reco_filter,
         "dRMax":            dRMax,
         "tauPCut":          tauPCut,
         "minPTauPhoton":    minPTauPhoton,
@@ -599,6 +694,7 @@ def main():
         "sin_eff":          args.sin_eff,
         "minPTauElectron":  args.electron_cut,
         "minPTauMuon":      args.muon_cut,
+        "lepton_xor_p":     args.lepton_xor_p,
         "gen_taus_sample":  gen_taus_sample,
         "gatr_results_path": gatr_results_path,
         "test_pfo":         args.test_pfo,
@@ -676,7 +772,7 @@ def main():
     output_config_file = os.path.join(outputpath, "config.yaml")
     run_config["args"]       = vars(args)
     run_config["run_Type"]   = "analysisRHOTree_MDecs"
-    run_config["general"]["decay_pair"] = decay_pair
+    run_config["general"]["decay_modes"] = decay_modes
     with open(output_config_file, "w") as f:
         yaml.dump(run_config, f)
 

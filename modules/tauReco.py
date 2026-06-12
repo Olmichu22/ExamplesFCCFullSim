@@ -1,7 +1,8 @@
 import numpy as np
 import ROOT
 from modules.ParticleObjects import GenParticle, RecoParticle
-
+import warnings
+warnings.filterwarnings("once", category=UserWarning)
 from modules import myutils
 
 import logging
@@ -65,11 +66,12 @@ def MatchRecoGenTau(genTau, recoTaus, nTausType, maxDRMatch=1, selectDecay=-777)
 
 # Check a generator level tau candidate, find the decay, 
 # and compute visible (meson) variables 
-def visTauGen(candTau):
+def visTauGen(candTau, getHelicity=False):
    """ Check a generator level tau candidate, find the decay, and compute visible (meson) variables.
 
    Args:
-       candTau (Particle ObjefindAllGenZs
+       candTau (Particle Object): The generator level tau candidate.
+       getHelicity (bool): Whether to compute the helicity of the tau.
    Returns:
        Tuple: Tuple with the visible 4-momentum, the tau ID, the charge, the true 4-momentum, the maximum angle between constituents, the number of constituents, and the constituents.
    """
@@ -93,6 +95,18 @@ def visTauGen(candTau):
    maxAngleConsts=0
    nConsts=0
    const={}
+   if getHelicity:
+      try:
+         helicity = candTau.getHelicity()
+      except AttributeError:
+         warnings.warn(
+               "getHelicity is True but the tau candidate does not have helicity information. Setting helicity to None.",
+               UserWarning,
+               stacklevel=2
+         )
+         helicity = None
+   else: 
+      helicity = None
 
    # loop over daughter particles of the tau 
    for dTau in daughters:
@@ -171,7 +185,7 @@ def visTauGen(candTau):
          cum_momentum += daup4
          logger.debug(f"Constituent {const_key} PDG {const[const_key].getPDG()}: {daup4.P()}")
          logger.debug(f"Total Visible Momentum: {cum_momentum.P()}")
-   return (visTauP4,tauID,chargeTau,genTauP4,maxAngleConsts,nConsts,const)                 
+   return {"visP4": visTauP4, "ID": tauID, "charge": chargeTau, "genP4": genTauP4, "maxAngleConsts": maxAngleConsts, "nConsts": nConsts, "const": const, "helicity": helicity}                 
 
 # Reversed procedure for reconstructed pfos
 # Starting from a pion, find particles in a cone around it, and 
@@ -471,7 +485,7 @@ def normal_sample(mean, stddev, size=1):
    return samples                 
 
 # loop over all gen taus 
-def findAllGenTaus(mc_particles):
+def findAllGenTaus(mc_particles, getHelicity=False):
    """ Find all generator level taus.
    
    Args:
@@ -497,8 +511,9 @@ def findAllGenTaus(mc_particles):
       # tauP4=ROOT.TLorentzVector()
       # tauP4.SetXYZM(particle.getMomentum().x,particle.getMomentum().y,particle.getMomentum().z,particle.getMass())
 
-      genTau_data=visTauGen(particle)
-      genTau = GenParticle(genTau_data[0], genTau_data[1], genTau_data[2], genTau_data[3], genTau_data[4], genTau_data[5], genTau_data[6])
+      genTau_data=visTauGen(particle, getHelicity=getHelicity)
+      genTau = GenParticle(**genTau_data)
+      
       if genTau.getCharge()<0:
          genTau.setPDG(15)
       else:

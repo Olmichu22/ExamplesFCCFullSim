@@ -271,6 +271,7 @@ class GenParticle(Particle):
         PDGID=-1,
         mcp=None,
         idx=-1,
+        helicity=None,
     ):
         """Constructor of the Particle class."""
         # Initialize the parent class
@@ -281,6 +282,7 @@ class GenParticle(Particle):
         self.nConst = nConsts
         self.const = const if const is not None else {}
         self.mcp = mcp
+        self.helicity = helicity
 
     def copy(self):
         """Create a copy of the GenParticle."""
@@ -295,8 +297,13 @@ class GenParticle(Particle):
             PDGID=self.PDGID,
             mcp=self.mcp,
             idx=self.idx,
+            helicity=self.helicity,
         )
         return new_particle
+    
+    def getHelicity(self):
+        return self.helicity
+    
     def getPDG(self):
         return self.PDGID
 
@@ -326,6 +333,9 @@ class GenParticle(Particle):
 
     def getMaxAngle(self):
         return self.maxAngle
+    
+    def setHelicity(self, helicity):
+        self.helicity = helicity
 
     def setID(self, ID):
         self.ID = ID

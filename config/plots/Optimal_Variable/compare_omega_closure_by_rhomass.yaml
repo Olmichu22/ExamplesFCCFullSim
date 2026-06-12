@@ -245,6 +245,7 @@ plots:
     title: \omega \text{ rho - M1 scenario - m_{\rho} 1.05-1.50 GeV}
     x: \omega
     y: "Norm Events"
+    # ignore_entries_for: ["#omega corr"]   # opcional: excluir labels concretos
     normalize: "max"
     legend: [0.55, 0.55, 0.92, 0.88]
     rebin: 4

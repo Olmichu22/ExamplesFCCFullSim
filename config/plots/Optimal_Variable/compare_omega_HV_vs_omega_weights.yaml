@@ -22,7 +22,7 @@ datasets:
   - path: Results/RhoAnalysis/PolAnalysis_GEN_M1_NewWeights_tau_trained0.4_tph0.35_tpi0_n3_g0.0/HistosMDecs_single2_sineff0.2312_tau_traineddecayAll_0.4_tph0.35_tpi0_n3_g0.0.root
     label: M1
     color: ROOT.kBlack
-    linestyle: 2
+    linestyle: 1
     markerstyle: 25
     markersize: 1.
     linewidth: 3
@@ -79,10 +79,11 @@ plots:
     x: \omega
     y: "Norm Events"
     normalize: "max"
-    legend: [0.55, 0.55, 0.92, 0.88]
+    legend: [0.45, 0.65, 0.65, 0.88]
+    legend_txt_size: 0.035
     rebin: 4
-    diff_line:
-      y_range: [-0.15, 0.15]
+    # diff_line:
+      # y_range: [-0.15, 0.15]
 
   # ── Escenario M1: verdad M1 vs 4 estrategias de repesado de SM ──
   # diff_line: M1 - SM_HV (primer par)
@@ -98,7 +99,9 @@ plots:
     x: \omega
     y: "Norm Events"
     normalize: "max"
-    legend: [0.55, 0.55, 0.92, 0.88]
+    legend: [0.45, 0.65, 0.65, 0.88]
+    legend_txt_size: 0.035
+    legend_margin: 0.2
     rebin: 4
-    diff_line:
-      y_range: [-0.15, 0.15]
+    # diff_line:
+      # y_range: [-0.15, 0.15]
